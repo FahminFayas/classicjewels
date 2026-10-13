@@ -32,21 +32,21 @@ export default defineConfig({
   /**
    * Self-hosted variable fonts, served from /_astro/fonts/ with metric-matched fallbacks that
    * Astro generates (zero layout shift on swap). Files come from the npm packages, so builds
-   * never touch a font CDN. Bodoni carries its optical-size axis; Plex Sans is weight-only.
+   * never touch a font CDN. Cormorant Garamond is weight-variable (300-700); Plex Sans is weight-only.
    */
   fonts: [
     {
       provider: fontProviders.local(),
-      name: 'Bodoni Moda',
+      name: 'Cormorant Garamond',
       cssVariable: '--font-display',
       fallbacks: ['Georgia', 'Times New Roman', 'serif'],
       options: {
         variants: [
           {
             src: [
-              './node_modules/@fontsource-variable/bodoni-moda/files/bodoni-moda-latin-opsz-normal.woff2',
+              './node_modules/@fontsource-variable/cormorant-garamond/files/cormorant-garamond-latin-wght-normal.woff2',
             ],
-            weight: '400 900',
+            weight: '300 700',
             style: 'normal',
           },
         ],

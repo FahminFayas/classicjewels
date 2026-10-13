@@ -55,7 +55,7 @@
   /* ---- Typography ---- */
   /* --font-display and --font-text are declared by Astro's <Font> components (self-hosted,
      with metric-matched fallbacks). These aliases keep component CSS readable. */
-  --ff-display: var(--font-display, 'Bodoni Moda', Georgia, serif);
+  --ff-display: var(--font-display, 'Cormorant Garamond', Georgia, serif);
   --ff-text: var(--font-text, 'IBM Plex Sans', Arial, sans-serif);
 
   /* Fluid scale, 360 → 1280 px viewport */
@@ -73,9 +73,9 @@
   --t-eyebrow: 0.75rem;
   --t-note: 1.125rem;
 
-  --track-display: -0.012em;
-  --track-h1: -0.008em;
-  --track-h2: -0.004em;
+  --track-display: -0.005em;
+  --track-h1: 0;
+  --track-h2: 0;
   --track-eyebrow: 0.14em;
 
   /* ---- Spacing (4 px base) ---- */

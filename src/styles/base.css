@@ -132,20 +132,20 @@ h4 {
 
 h1 {
   font-size: var(--t-h1);
-  line-height: 1.05;
+  line-height: 1.12;
   letter-spacing: var(--track-h1);
 }
 
 h2 {
   font-size: var(--t-h2);
-  line-height: 1.12;
+  line-height: 1.18;
   letter-spacing: var(--track-h2);
 }
 
 h3 {
   font-size: var(--t-h3);
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.28;
 }
 
 h4 {
