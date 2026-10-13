@@ -13,19 +13,20 @@ npm run dev
 
 Opens `http://localhost:4321/`. In development the gold-rate feed is proxied to the live host, so the rate board works without PHP.
 
-| Command                       | What it does                                                        |
-| ----------------------------- | ------------------------------------------------------------------- |
-| `npm run dev`                 | Dev server with hot reload                                          |
-| `npm run build`               | Production build to `dist/`                                         |
-| `npm run preview`             | Serve `dist/` locally                                               |
-| `npm run check`               | Type-check pages, components and content                            |
-| `npm run lint` / `format`     | ESLint / Prettier                                                   |
-| `npm run validate`            | check + lint + format check (what CI runs)                          |
-| `npm run rates:snapshot`      | Fetch today's gold rate into `src/content/rates/`                   |
-| `npm run assets:fetch-legacy` | Pull photography and logos from the previous site                   |
-| `npm run assets:placeholders` | Generate stand-in images for any missing asset path                 |
-| `npm run assets:brand`        | Regenerate favicons, app icons and the default share image          |
-| `npm run lighthouse`          | Lighthouse (mobile) reports for the key pages, into `./lighthouse/` |
+| Command                       | What it does                                                                                                                      |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                 | Dev server with hot reload                                                                                                        |
+| `npm run build`               | Production build to `dist/`                                                                                                       |
+| `npm run preview`             | Serve `dist/` locally                                                                                                             |
+| `npm run check`               | Type-check pages, components and content                                                                                          |
+| `npm run lint` / `format`     | ESLint / Prettier                                                                                                                 |
+| `npm run validate`            | check + lint + format check (what CI runs)                                                                                        |
+| `npm run audit`               | After a build: one h1, title and description lengths, canonicals, broken links, alt text, JSON-LD, no inline scripts, banned copy |
+| `npm run rates:snapshot`      | Fetch today's gold rate into `src/content/rates/`                                                                                 |
+| `npm run assets:fetch-legacy` | Pull photography and logos from the previous site                                                                                 |
+| `npm run assets:placeholders` | Generate stand-in images for any missing asset path                                                                               |
+| `npm run assets:brand`        | Regenerate favicons, app icons and the default share image                                                                        |
+| `npm run lighthouse`          | Lighthouse (mobile) reports for the key pages, into `./lighthouse/`                                                               |
 
 Requires Node 22 (`.nvmrc`).
 
@@ -72,7 +73,7 @@ Three rules keep it maintainable:
 - Images go through `astro:assets`: AVIF and WebP, responsive widths, explicit dimensions (no layout shift), lazy-loaded below the fold. Product photos are only ever shown on a white plate.
 - Two self-hosted variable fonts with metric-matched fallbacks; preloaded.
 - Under 10 KB of JavaScript on any page. The rate board is server-rendered and only patched in place when the feed reports a newer value.
-- Security headers, caching and compression in `public/.htaccess` (and `_headers` for Netlify/Cloudflare). Lighthouse CI runs on every push with thresholds in `lighthouserc.json`.
+- Security headers, caching and compression in `public/.htaccess` (and `_headers` for Netlify/Cloudflare). The build never inlines scripts, so the Content-Security-Policy can stay strict; `npm run audit` fails if one ever appears. CI runs the audit and Lighthouse on every push (thresholds in `lighthouserc.json`).
 
 ## The gold rate
 

@@ -1,7 +1,7 @@
 ---
 /**
  * Catalogue index (/jewellery/): every category with its piece count, then every published
- * piece in one filterable tray. Follows docs/design-spec.md §7.2, adapted to the four branches.
+ * piece in one filterable tray. Follows docs/design-spec.md §7.2, adapted to the branch network.
  */
 import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
 import CategoryTile from '@/components/sections/CategoryTile.astro';
@@ -18,7 +18,7 @@ import SectionHead from '@/components/ui/SectionHead.astro';
 import { emirates, openBranches } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getCategories, getDesignCollections, getFaqGroup, getProducts } from '@/lib/content';
-import { countWord } from '@/lib/format';
+import { countWord, formatDate, listWords } from '@/lib/format';
 import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
 import { itemListSchema } from '@/lib/schema';
@@ -50,7 +50,17 @@ const collectionsInTray = collections
 const categoryLinks = categories.map((c) => ({ id: c.id, name: c.data.shortName ?? c.data.name }));
 
 const branchCount = countWord(openBranches.length).toLowerCase();
-const emirateList = emirates.join(', ').replace(/, ([^,]*)$/, ' and $1');
+const emirateList = listWords(emirates);
+
+/** Name only the facets the Filters block will actually offer (it renders nothing under three). */
+const facets = [
+  karats.length > 1 ? 'karat' : null,
+  collectionsInTray.length > 1 ? 'collection' : null,
+].filter(Boolean);
+const filterLine =
+  products.length >= 3 && facets.length > 0
+    ? `Filter by ${facets.join(' or ')}; the address stays the same. `
+    : '';
 
 const jsonLd = [
   itemListSchema(
@@ -66,7 +76,7 @@ const jsonLd = [
 
 <BaseLayout
   title="Gold & Diamond Jewellery in Dubai, Sharjah & Abu Dhabi"
-  description={`22K and 18K hallmarked gold, certified diamonds and 24K coins, each listed with karat and weight and priced at today’s Dubai rate. Enquire on WhatsApp or view at ${branchCount} branches.`}
+  description={`22K and 18K hallmarked gold, tested diamonds and 24K coins, each listed with its karat and hallmark. Priced at today’s Dubai rate at ${branchCount} branches.`}
   jsonLd={jsonLd}
 >
   <div class="container container--wide">
@@ -87,8 +97,15 @@ const jsonLd = [
     </Button>
     {rate && (
       <Fragment slot="note">
-        22K today: AED <span data-rate="22k">{rate.perGram['22k'].toFixed(2)}</span> per gram, as
-        posted on the board.
+        The 22K rate of
+        <span data-rate-date={rate.date}>
+          <span data-rate-date-text>{formatDate(rate.date, { year: undefined })}</span>
+        </span>
+        is
+        <span class="nowrap">
+          AED <span data-rate="22k">{rate.perGram['22k'].toFixed(2)}</span>
+        </span>
+        per gram, before making charge and VAT.
       </Fragment>
     )}
   </Hero>
@@ -96,8 +113,8 @@ const jsonLd = [
   <section class="section section--ruled">
     <div class="container">
       <SectionHead eyebrow="By piece" title="Necklaces to anklets, coins to bars.">
-        {countWord(categories.length)} trays. The count beside each is what is online; the trays
-        in store hold more.
+        {countWord(categories.length)} trays. The count beside each is what is online; the trays in
+        store hold more.
       </SectionHead>
       <div class="tiles">
         {categories.map((c) => (
@@ -105,10 +122,12 @@ const jsonLd = [
         ))}
       </div>
       <p class="also small">
-        By material:
-        <a href={routes.diamonds}>Diamonds</a> ·
-        <a href={routes.collection('gemstone')}>Gemstones</a> ·
-        <a href={routes.customJewellery}>Made to order</a> ·
+        By material: <a href={routes.diamonds}>Diamonds</a>
+        {' · '}
+        <a href={routes.collection('gemstone')}>Gemstones</a>
+        {' · '}
+        <a href={routes.customJewellery}>Made to order</a>
+        {' · '}
         <a href={routes.collections}>All collections</a>
       </p>
     </div>
@@ -120,8 +139,8 @@ const jsonLd = [
         eyebrow="All pieces"
         title={`${countWord(products.length)} pieces online, weighed and ready to quote.`}
       >
-        Filter by karat or collection; the address stays the same. Tap a piece for its
-        specification, or Enquire to send its reference straight to the counter.
+        {filterLine}Tap a piece for its specification, or Enquire to send its reference straight to
+        the counter.
       </SectionHead>
       <Filters
         gridId="tray-all"
@@ -132,21 +151,13 @@ const jsonLd = [
       />
       <TrayGrid id="tray-all" filterable>
         {products.map((p) => (
-          <div
-            class="cell"
-            data-karat={String(p.data.karat)}
-            data-collection={p.data.collection?.id ?? ''}
-            data-name={p.data.name}
-            data-new={p.data.isNew ? '1' : '0'}
-          >
-            <ProductCard
-              product={p}
-              collectionName={
-                p.data.collection ? collectionName.get(p.data.collection.id) : undefined
-              }
-              rate={rate}
-            />
-          </div>
+          <ProductCard
+            product={p}
+            collectionName={
+              p.data.collection ? collectionName.get(p.data.collection.id) : undefined
+            }
+            rate={rate}
+          />
         ))}
       </TrayGrid>
     </div>
@@ -200,15 +211,6 @@ const jsonLd = [
     margin-block-start: var(--space-6);
     padding-block-start: var(--space-4);
     border-block-start: 1px solid var(--rule-1);
-  }
-
-  .cell {
-    display: grid;
-    min-inline-size: 0;
-  }
-
-  .cell[hidden] {
-    display: none;
   }
 
   /* Nine trays sit as a 3 × 3 block from tablet width up. */

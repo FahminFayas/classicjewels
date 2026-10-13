@@ -6,6 +6,11 @@
 @import './tokens.css';
 
 /* ---------- Reset ---------- */
+/* Components set display:flex/grid freely; the hidden attribute must still win. */
+[hidden] {
+  display: none !important;
+}
+
 *,
 *::before,
 *::after {
@@ -121,6 +126,8 @@ h4 {
   font-weight: 500;
   color: var(--ink-900);
   text-wrap: balance;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 h1 {
@@ -331,6 +338,7 @@ a:hover {
 /* ---------- Forms ---------- */
 .field {
   display: grid;
+  align-content: start;
   gap: var(--space-2);
 }
 
@@ -462,6 +470,10 @@ textarea.field__input {
 
 .prose > h2 {
   margin-block-start: var(--space-7);
+}
+
+.prose > :first-child {
+  margin-block-start: 0;
 }
 
 .prose > h3 {
@@ -607,5 +619,25 @@ textarea.field__input {
 
   .no-print {
     display: none !important;
+  }
+}
+
+/* Keeps an amount and its currency together: "AED 3,734.00" never breaks across lines. */
+.nowrap {
+  white-space: nowrap;
+}
+
+/* An enquiry block that opens its own ruled section needs no second rule above it. */
+.section--ruled > .container > .enquiry:first-child,
+.section--ruled > .container > :first-child > .enquiry:first-child {
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
+/* Stacked under a FAQ on narrow screens, the FAQ's last row already draws the rule. */
+@media (max-width: 63.99em) {
+  .faq + .enquiry {
+    border-block-start: 0;
+    padding-block-start: var(--space-5);
   }
 }

@@ -1,7 +1,8 @@
 ---
 /**
  * Category link tile: the cut-out photo in a 5:2 box, the name and the piece count.
- * The whole tile is one anchor.
+ * Categories without a photograph (coins & bars, until it is shot) get a typeset tile in the
+ * same box instead of a placeholder image. The whole tile is one anchor.
  */
 import { Picture } from 'astro:assets';
 
@@ -16,23 +17,32 @@ export interface Props {
 
 const { category, count, class: className } = Astro.props;
 const { data } = category;
-const widths = [400, 800].filter((w) => w <= data.image.width);
-if (widths.length === 0) widths.push(data.image.width);
+const image = data.image;
+const widths = image ? [...new Set([...[400, 800].filter((w) => w < image.width), image.width])] : [];
+const label = data.shortName ?? data.name;
 ---
 
 <a class:list={['tile', className]} href={routes.category(category.id)}>
-  <span class="tile__media">
-    <Picture
-      src={data.image}
-      alt=""
-      formats={['avif', 'webp']}
-      widths={widths}
-      sizes="(min-width: 64em) 25vw, 50vw"
-      fit="cover"
-    />
+  <span class:list={['tile__media', !image && 'tile__media--type']}>
+    {
+      image ? (
+        <Picture
+          src={image}
+          alt=""
+          formats={['avif', 'webp']}
+          widths={widths}
+          sizes="(min-width: 64em) 25vw, 50vw"
+          fit="cover"
+        />
+      ) : (
+        <span class="tile__type" aria-hidden="true">
+          {label}
+        </span>
+      )
+    }
   </span>
   <span class="tile__text">
-    <span class="tile__name">{data.shortName ?? data.name}</span>
+    <span class="tile__name">{label}</span>
     {typeof count === 'number' && count > 0 && (
       <span class="tile__count small">
         {count} {count === 1 ? 'piece' : 'pieces'}
@@ -44,6 +54,7 @@ if (widths.length === 0) widths.push(data.image.width);
 <style>
   .tile {
     display: grid;
+    align-content: start;
     min-inline-size: 0;
     gap: var(--space-3);
     color: var(--ink-900);
@@ -60,11 +71,31 @@ if (widths.length === 0) widths.push(data.image.width);
     border: 1px solid var(--rule-1);
   }
 
+  .tile__media :global(picture) {
+    display: block;
+    block-size: 100%;
+  }
+
   .tile__media :global(img) {
     inline-size: 100%;
-    max-inline-size: 100%;
     block-size: 100%;
     object-fit: cover;
+  }
+
+  /* Typeset tile: the plum "velvet tray" with the name in champagne, for coins and bars. */
+  .tile__media--type {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-plum);
+    border-color: var(--surface-plum);
+  }
+
+  .tile__type {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 500;
+    color: var(--gold-300);
   }
 
   .tile__text {

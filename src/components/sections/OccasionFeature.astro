@@ -44,6 +44,8 @@ if (widths.length === 0) widths.push(data.image.width);
 <style>
   .occasion {
     display: grid;
+    /* Rows stay at their content height so captions share a baseline across the row. */
+    align-content: start;
     min-inline-size: 0;
     gap: var(--space-3);
     color: var(--ink-900);

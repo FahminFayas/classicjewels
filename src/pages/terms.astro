@@ -1,8 +1,9 @@
 ---
 /**
- * Terms of use. Design-spec §7.18: typographic hero, dated, prose with numbered H2s. Restates
- * the return and exchange terms from site.promises with the statutory-rights sentence. The sale
- * itself is governed by the invoice and the written promises, not by these website terms.
+ * Terms of use. Design-spec §7.18: typographic hero, dated, prose with numbered H2s. The return
+ * section renders site.returnPolicy verbatim (the same wording as /our-promise/), so the two pages
+ * can never differ. The sale itself is governed by the invoice and the written promises, not by
+ * these website terms.
  * No enquiry block on legal pages.
  */
 import Hero from '@/components/sections/Hero.astro';
@@ -14,7 +15,6 @@ import { routes } from '@/lib/routes';
 
 const updated = '2026-10-13';
 const days = site.returnPolicy.days;
-const law = site.returnPolicy.lawReference;
 
 const sections = [
   { id: 'acceptance', title: 'Acceptance' },
@@ -69,7 +69,10 @@ const description = `Terms for using classicjewels.ae: prices follow the daily g
 
       <div class="legal__body prose">
         <h2 id="acceptance">
-          <span class="legal__no" aria-hidden="true">01</span>Acceptance
+          <span class="legal__no" aria-hidden="true">
+            01
+          </span>
+          Acceptance
         </h2>
         <p>
           By using classicjewels.ae you accept these terms. If you do not accept them, please do not
@@ -78,15 +81,22 @@ const description = `Terms for using classicjewels.ae: prices follow the daily g
         </p>
 
         <h2 id="who-we-are">
-          <span class="legal__no" aria-hidden="true">02</span>Who we are
+          <span class="legal__no" aria-hidden="true">
+            02
+          </span>
+          Who we are
         </h2>
         <p>
           The site is published by {site.legalName}, registration number {site.registrationNumber},
-          the jewellery division of the {site.group.name}. Registered office: {site.address.oneLine}.
+          the jewellery division of the {site.group.name}. Registered office: {site.address.oneLine}
+          .
         </p>
 
         <h2 id="information">
-          <span class="legal__no" aria-hidden="true">03</span>Information, not an offer
+          <span class="legal__no" aria-hidden="true">
+            03
+          </span>
+          Information, not an offer
         </h2>
         <p>
           The site describes jewellery, coins and bars that we sell in our branches. A listing is
@@ -101,7 +111,10 @@ const description = `Terms for using classicjewels.ae: prices follow the daily g
         </p>
 
         <h2 id="pricing">
-          <span class="legal__no" aria-hidden="true">04</span>Prices and the gold rate
+          <span class="legal__no" aria-hidden="true">
+            04
+          </span>
+          Prices and the gold rate
         </h2>
         <p>
           The website shows no prices. Jewellery is priced per piece at the counter: the day’s rate
@@ -120,7 +133,10 @@ const description = `Terms for using classicjewels.ae: prices follow the daily g
         </p>
 
         <h2 id="intellectual-property">
-          <span class="legal__no" aria-hidden="true">05</span>Intellectual property
+          <span class="legal__no" aria-hidden="true">
+            05
+          </span>
+          Intellectual property
         </h2>
         <p>
           The text, photographs, logos, collection names and wordmarks on this site belong to{' '}
@@ -129,7 +145,10 @@ const description = `Terms for using classicjewels.ae: prices follow the daily g
         </p>
 
         <h2 id="images">
-          <span class="legal__no" aria-hidden="true">06</span>Product images and weights
+          <span class="legal__no" aria-hidden="true">
+            06
+          </span>
+          Product images and weights
         </h2>
         <p>
           Photographs show the piece, or a representative piece of the same design. They may differ
@@ -139,23 +158,24 @@ const description = `Terms for using classicjewels.ae: prices follow the daily g
         </p>
 
         <h2 id="returns">
-          <span class="legal__no" aria-hidden="true">07</span>Returns and exchange
+          <span class="legal__no" aria-hidden="true">
+            07
+          </span>
+          Returns and exchange
         </h2>
+        <p>{site.returnPolicy.text}</p>
+        <p>{site.returnPolicy.statutory}</p>
         <p>
-          Our {days}-day return and exchange policy is our own commitment. Unworn pieces in their
-          original condition, with the invoice and certificate, can be returned within {days} days
-          of purchase. Customised, engraved and resized pieces are exchange-only. A piece bought
-          from us can be exchanged for a different design at its gold value, by weight at the day’s
-          rate; making charges and VAT apply to the new piece.
-        </p>
-        <p>
-          This policy is in addition to, and never limits, your rights for defective goods under{' '}
-          {law}. The full conditions, including what each promise does not cover, are on{' '}
-          <a href={routes.promise}>our promise page</a>.
+          A piece bought from us can also be exchanged for a different design, credited at its gold
+          value; making charges and VAT apply to the new piece. The full conditions, including what
+          each promise does not cover, are on <a href={routes.promise}>our promise page</a>.
         </p>
 
         <h2 id="third-party-links">
-          <span class="legal__no" aria-hidden="true">08</span>Links to other sites
+          <span class="legal__no" aria-hidden="true">
+            08
+          </span>
+          Links to other sites
         </h2>
         <p>
           Links to Google Maps, WhatsApp, social networks and other sites are provided for
@@ -164,7 +184,10 @@ const description = `Terms for using classicjewels.ae: prices follow the daily g
         </p>
 
         <h2 id="governing-law">
-          <span class="legal__no" aria-hidden="true">09</span>Governing law
+          <span class="legal__no" aria-hidden="true">
+            09
+          </span>
+          Governing law
         </h2>
         <p>
           These terms are governed by the laws of the United Arab Emirates as applied in the Emirate
@@ -173,7 +196,10 @@ const description = `Terms for using classicjewels.ae: prices follow the daily g
         </p>
 
         <h2 id="contact">
-          <span class="legal__no" aria-hidden="true">10</span>Contact
+          <span class="legal__no" aria-hidden="true">
+            10
+          </span>
+          Contact
         </h2>
         <p>
           Questions about these terms: <a href={`mailto:${site.email}`}>{site.email}</a>, or call{' '}

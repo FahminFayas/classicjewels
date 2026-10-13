@@ -2,11 +2,18 @@
  * Header behaviour: mobile drawer (<dialog>), mega-panel keyboard and hover-intent handling,
  * the hairline under the sticky header once the page has scrolled, hiding the mobile action bar
  * while a field is focused, and highlighting today's row in opening-hours tables.
- * Everything degrades: without this script the drawer still opens via the native dialog
- * fallback link and the mega panel is reachable from the Jewellery index page.
+ *
+ * The mega panel follows the disclosure-navigation pattern: the "Jewellery" link goes to the
+ * jewellery index, the toggle beside it opens the panel, Escape closes it and Tab moves through
+ * its links. There are deliberately no menu roles or arrow-key handling.
+ *
+ * Without this script the Menu button does nothing, but every page stays reachable through the
+ * footer links and the Jewellery index.
  */
 
 const HOVER_INTENT_MS = 120;
+const HOVER_CLOSE_MS = 200;
+const CLICK_AFTER_HOVER_MS = 500;
 
 // ---------- Mobile drawer ----------
 const drawer = document.querySelector<HTMLDialogElement>('#site-drawer');
@@ -33,7 +40,9 @@ for (const trigger of document.querySelectorAll<HTMLButtonElement>('[data-mega-t
   const item = trigger.closest<HTMLElement>('[data-mega-item]');
   if (!panel || !item) continue;
 
-  let hoverTimer: number | undefined;
+  let openTimer: number | undefined;
+  let closeTimer: number | undefined;
+  let openedByHoverAt = 0;
   const setOpen = (open: boolean) => {
     trigger.setAttribute('aria-expanded', String(open));
     panel.hidden = !open;
@@ -41,14 +50,25 @@ for (const trigger of document.querySelectorAll<HTMLButtonElement>('[data-mega-t
   };
   const isOpen = () => trigger.getAttribute('aria-expanded') === 'true';
 
-  trigger.addEventListener('click', () => setOpen(!isOpen()));
+  trigger.addEventListener('click', () => {
+    // A click that lands just after hover opened the panel should not close it again.
+    if (isOpen() && Date.now() - openedByHoverAt < CLICK_AFTER_HOVER_MS) return;
+    setOpen(!isOpen());
+  });
   item.addEventListener('pointerenter', (event) => {
     if ((event as PointerEvent).pointerType !== 'mouse') return;
-    hoverTimer = window.setTimeout(() => setOpen(true), HOVER_INTENT_MS);
+    window.clearTimeout(closeTimer);
+    if (isOpen()) return;
+    openTimer = window.setTimeout(() => {
+      setOpen(true);
+      openedByHoverAt = Date.now();
+    }, HOVER_INTENT_MS);
   });
-  item.addEventListener('pointerleave', () => {
-    window.clearTimeout(hoverTimer);
-    setOpen(false);
+  item.addEventListener('pointerleave', (event) => {
+    if ((event as PointerEvent).pointerType !== 'mouse') return;
+    window.clearTimeout(openTimer);
+    // A short grace period lets the pointer travel from the trigger into the panel.
+    closeTimer = window.setTimeout(() => setOpen(false), HOVER_CLOSE_MS);
   });
   item.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && isOpen()) {

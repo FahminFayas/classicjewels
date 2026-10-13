@@ -54,7 +54,9 @@ The sixteen pieces shipped with the site were built from the previous website's 
 
 ## Categories
 
-`src/content/categories/<slug>.json`. Fields: `name`, `shortName`, `title`, `description`, `intro` (first paragraph), `image`, `imageAlt`, `order`, `inNav`. Category pages list every piece whose `category` matches the file name.
+`src/content/categories/<slug>.json`. Fields: `name`, `shortName`, `title`, `description`, `intro` (first paragraph), `image` and `imageAlt` (optional), `order`, `inNav`. Category pages list every piece whose `category` matches the file name.
+
+The category photograph is a 5:2 cut-out (for example 800 x 320 px). Leave `image` out until a real photograph exists: the tile is then typeset on the plum ground and the category page opens with a text hero. Never ship a placeholder image; Coins & bars has no photograph for this reason.
 
 ## Occasions
 
@@ -78,7 +80,9 @@ Articles should answer a question a customer actually asks and be specific to th
 
 ## Branches and business facts
 
-Branches, addresses, phones, hours, the WhatsApp number, email, social links, the six promises and the Google rating snapshot are in `src/data/site.ts`. To add a branch, add an entry to the `branches` array: the store page, the footer, the home-page strip and the structured data all follow. Set `status: 'opening-soon'` for an announced branch; it is listed without links until you change it to `'open'`.
+Branches, addresses, phones, hours, the WhatsApp number, email, social links, the six promises and the Google rating snapshot are in `src/data/site.ts`. To add a branch, add an entry to the `branches` array: the store page, the footer, the home-page strip and the structured data all follow. Set `status: 'opening-soon'` for an announced branch; it is listed without links until you change it to `'open'`. For an announced branch, `publicNote` is the line customers see ("Opening soon. Dates to follow.") and `ownerNote` is for the team only; it is never rendered. `venueType` (`'souq'`, `'mall'` or `'district'`) decides whether mall-specific directions appear.
+
+The group's history is stated in one approved sentence, `site.group.experience`. The 14-day return policy is stated once, in `site.returnPolicy.text` and `site.returnPolicy.statutory`, and every page renders those strings; change the policy there, never in a page.
 
 Hours: fill in `weekly` (24-hour `HH:MM:SS`) and any `breaks`, then set `confirmed: true` once the company has checked them. Until then the pages say the hours are as listed on Google and the structured data omits them.
 

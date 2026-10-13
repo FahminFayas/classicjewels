@@ -3,7 +3,8 @@
  * The one contact form on the site. It posts natively to PUBLIC_FORM_ENDPOINT (by default the PHP
  * endpoint in public/api/contact.php, which redirects to /thank-you/); with src/scripts/form.ts it
  * submits in place and shows the reply under the button. Spam defences match the endpoint: a
- * honeypot named "website" and a render timestamp in "started_at".
+ * honeypot named "website", and "fill_ms" (how long the form was open, measured on the device by
+ * form.ts at submit; absent without JavaScript, in which case the endpoint skips the check).
  */
 import { PUBLIC_FORM_ENDPOINT } from 'astro:env/client';
 
@@ -30,8 +31,6 @@ const topics = [
   'Current offer',
 ];
 
-/** Baked at build on a static site; the inline script below re-stamps it at page load. */
-const startedAt = Math.floor(Date.now() / 1000);
 ---
 
 <form class:list={['form', className]} method="post" action={PUBLIC_FORM_ENDPOINT} data-enhance>
@@ -130,24 +129,18 @@ const startedAt = Math.floor(Date.now() / 1000);
         aria-hidden="true"
       />
     </div>
-    <input type="hidden" name="started_at" value={startedAt} />
+    <input type="hidden" name="fill_ms" value="" data-fill-ms />
 
     <p class="form__privacy small">We use your details only to reply.</p>
     <div class="form__actions">
       <Button type="submit" iconEnd="arrow-right">Send message</Button>
     </div>
   </div>
-  <p class="form__status" data-form-status hidden aria-live="polite"></p>
+  <!-- Rendered (empty) from the start so assistive technology registers the live region before
+       its text changes; an element revealed and filled in the same tick is often not announced. -->
+  <p class="form__status" data-form-status role="status" aria-live="polite" tabindex="-1"></p>
 </form>
 
-<script>
-  // On a static build the hidden timestamp is the build time, which would disable the endpoint's
-  // minimum-fill-time check. Stamp it with the page load time instead.
-  const stamp = document.querySelector<HTMLInputElement>(
-    'form[data-enhance] input[name="started_at"]',
-  );
-  if (stamp) stamp.value = String(Math.floor(Date.now() / 1000));
-</script>
 <script src="@/scripts/form.ts"></script>
 
 <style>
@@ -191,8 +184,10 @@ const startedAt = Math.floor(Date.now() / 1000);
     color: var(--ink-900);
   }
 
-  .form__status[hidden] {
-    display: none;
+  /* Empty until there is something to say; stays in the accessibility tree either way. */
+  .form__status:empty {
+    padding: 0;
+    border: 0;
   }
 
   .form__status[data-tone='ok'] {

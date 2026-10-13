@@ -8,7 +8,9 @@
  *    on the white cell with no visible rectangle.
  *  - Photographs (JPG) carry their own backdrop (the current shots are busts on velvet). They
  *    fill the square edge to edge; a padded photo would read as a framed print inside a frame.
- *    A future white-ground JPG also bleeds, which looks identical to padding on white.
+ *
+ * The plate never grows beyond 1.25x its source width, so a small source is shown smaller and
+ * centred rather than stretched soft across a wide column.
  */
 import { Picture } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -37,15 +39,15 @@ const {
   class: className,
 } = Astro.props;
 
-/** Never ask sharp to upscale: drop widths larger than the source. */
-const safeWidths = widths.filter((w) => w <= image.width);
-if (safeWidths.length === 0) safeWidths.push(image.width);
+/** Requested widths below the source, plus the source itself: never upscale, never skip it. */
+const safeWidths = [...new Set([...widths.filter((w) => w < image.width), image.width])];
+const maxWidth = Math.round(image.width * 1.25);
+const style = [`--plate-max:${maxWidth}px`, bleed ? '' : `--plate-pad:${padding}`]
+  .filter(Boolean)
+  .join(';');
 ---
 
-<div
-  class:list={['plate', bleed && 'plate--bleed', className]}
-  style={bleed ? undefined : `--plate-pad:${padding}`}
->
+<div class:list={['plate', bleed && 'plate--bleed', className]} style={style}>
   <Picture
     class="plate__img"
     src={image}
@@ -61,6 +63,8 @@ if (safeWidths.length === 0) safeWidths.push(image.width);
 <style>
   .plate {
     min-inline-size: 0;
+    max-inline-size: var(--plate-max, none);
+    margin-inline: auto;
     aspect-ratio: 1;
     padding: var(--plate-pad, 8%);
     background: var(--surface-0);
@@ -69,6 +73,12 @@ if (safeWidths.length === 0) safeWidths.push(image.width);
 
   .plate--bleed {
     padding: 0;
+  }
+
+  /* <picture> is inline by default; it needs a definite height for object-fit to centre. */
+  .plate :global(picture) {
+    display: block;
+    block-size: 100%;
   }
 
   .plate :global(img) {

@@ -6,7 +6,8 @@
  *
  * Checks per page: one <h1>; <title> and meta description present and within length; canonical
  * matches the page URL; no links to "#"; every internal link and asset resolves to a file in
- * dist/; every <img> has an alt attribute; every JSON-LD block parses; no banned phrases, em
+ * dist/; every <img> has an alt attribute; every JSON-LD block parses; no inline executable
+ * scripts (the CSP would block them); no banned phrases, em
  * dashes or leftover TODO / placeholder text in visible copy.
  */
 import { readdir, readFile, stat } from 'node:fs/promises';
@@ -88,7 +89,8 @@ for (const file of files.sort()) {
   const urlPath = '/' + rel.replace(/index\.html$/, '').replace(/\.html$/, '');
   const html = await readFile(file, 'utf8');
   const problems = [];
-  const isUtility = rel === '404.html';
+  // noindex pages (thank-you, 404) deliberately carry no canonical.
+  const isUtility = /<meta name="robots" content="noindex/i.test(html);
 
   const h1s = html.match(/<h1[\s>]/gi)?.length ?? 0;
   if (h1s !== 1) problems.push(`${h1s} <h1> elements`);
@@ -125,6 +127,13 @@ for (const file of files.sort()) {
   for (const tag of html.match(/<img\s[^>]*>/gi) ?? []) {
     // Astro renders an empty alt as the bare attribute `alt`, which HTML treats as alt="".
     if (!/\salt(=|\s|>|\/)/i.test(tag)) problems.push(`img without alt: ${attr(tag, 'src')}`);
+  }
+
+  // The CSP allows same-origin script files only; an inline executable script would be blocked.
+  for (const [tag] of html.matchAll(/<script\b[^>]*>/gi)) {
+    if (!/\ssrc=/i.test(tag) && !/application\/ld\+json/i.test(tag)) {
+      problems.push(`inline script (blocked by the CSP): ${tag}`);
+    }
   }
 
   for (const [, json] of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)) {

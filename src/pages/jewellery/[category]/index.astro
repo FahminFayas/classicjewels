@@ -69,6 +69,16 @@ const otherCategories = categories
   .filter((c) => c.id !== category.id)
   .map((c) => ({ id: c.id, name: c.data.shortName ?? c.data.name }));
 
+/** Name only the facets the Filters block will actually offer (it renders nothing under three). */
+const facets = [
+  karats.length > 1 ? 'karat' : null,
+  collectionsHere.length > 1 ? 'collection' : null,
+].filter(Boolean);
+const filterLine =
+  products.length >= 3 && facets.length > 0
+    ? `Filter by ${facets.join(' or ')}; the address stays the same. `
+    : '';
+
 /** The lead is the first sentence of the intro; the prose block repeats the whole intro. */
 const firstSentence = data.intro.match(/^[^.!?]+[.!?]/)?.[0]?.trim() ?? data.intro;
 const title = data.title.length <= TITLE_MAX ? data.title : `${data.name} in Dubai`;
@@ -80,7 +90,7 @@ const whatsapp = whatsappForRange(`${data.name} range`);
  */
 const guides: Record<string, string[]> = {
   necklaces: [
-    'Most necklaces here are 22K, hallmarked 916 (91.6% gold), which is the karat the Kolkata, Rajkot, temple and antique workshops make in. Diamond-set necklaces are made in 18K (750) because the harder alloy holds a stone’s claws better.',
+    'Most necklaces here are 22K, hallmarked 916 (91.6% gold), the usual karat for Kolkata, Rajkot, temple and antique styles. Diamond-set necklaces are made in 18K (750) because the harder alloy holds a stone’s claws better.',
     'Weight is the first number to ask for. A haar carries most of a bridal set’s gold, a fine chain carries very little, so the same move in the day’s rate changes their prices very differently.',
     'The making charge is where quotes differ. Hand filigree takes more hours per gram than a machine-cut link, so ask for the charge per gram and the net gold weight as separate figures and compare those two lines across shops. VAT at 5% is added to both.',
   ],
@@ -92,12 +102,12 @@ const guides: Record<string, string[]> = {
   rings: [
     'Plain and engraved bands are 22K (916). Anything set with a diamond or a coloured stone is made in 18K (750), the standard alloy for claw and pavé settings because it is harder and holds the stone.',
     'A ring is priced as gold value plus making charge plus the stone, if any, with 5% VAT on the subtotal. On a band the weight does most of the work; on a solitaire the stone does, so ask for its carat weight and report alongside the gold figures.',
-    'Resizing is done in house. If you are buying for someone else, bring a ring that fits them and we will measure it.',
+    'Resizing is separate work, quoted before it starts. If you are buying for someone else, bring a ring that fits them and we will measure it.',
   ],
   pendants: [
     'Religious motifs, initials and hearts are 22K (916); diamond solitaires and halos are set in 18K (750). Chains are sold separately or as a set and are weighed and priced on their own line.',
     'Pendants are among the lightest pieces in the trays, so the making charge is a larger share of the total than on a necklace. Ask for the charge per gram and the net gold weight; on a stone-set pendant the gold is priced on the net weight and the stone separately.',
-    'A plain 22K pendant holds its value by weight, which is why it is the most-given gift in the shop. Keep the invoice: it records the weight and fineness you will need for any later exchange.',
+    'A plain 22K pendant holds its value by weight, which makes it an easy gift to choose. Keep the invoice: it records the weight and fineness you will need for any later exchange.',
   ],
   bangles: [
     'Bangles are the piece most often bought by weight and most often exchanged later, so the karat matters: 22K, stamped 916, with the weight and fineness printed on the invoice.',
@@ -105,12 +115,12 @@ const guides: Record<string, string[]> = {
     'Price is net gold weight times the day’s rate, plus the making charge, plus 5% VAT, each on its own line. Bring a bangle that fits and we will match the size.',
   ],
   bracelets: [
-    'Italian curb, rope and Figaro chains are made in 22K (916) and 18K (750); diamond tennis bracelets are 18K so the settings hold. Children’s bracelets are 22K with safety clasps.',
-    'A chain bracelet is priced like a chain: net weight times the day’s rate plus a making charge that depends on the link, plus 5% VAT. Machine-made Italian links keep the charge low. A tennis bracelet is priced mostly on its stones, so ask for the carat weight and the report as well as the gold figures.',
+    'Italian-style curb, rope and Figaro chains come in 22K (916) and 18K (750); diamond tennis bracelets are 18K so the settings hold. Children’s bracelets are 22K; ask for a safety clasp.',
+    'A chain bracelet is priced like a chain: net weight times the day’s rate plus a making charge that depends on the link, plus 5% VAT. Machine-made links keep the charge low. A tennis bracelet is priced mostly on its stones, so ask for the carat weight and the report as well as the gold figures.',
     'Check the clasp before you decide. A box clasp with a safety catch adds little to the price and is the difference between a bracelet you keep and one you lose.',
   ],
   chains: [
-    '22K (916) is the standard for a chain that will be worn daily; 18K (750) chains from the Italian collection are harder-wearing and lighter in colour. Both carry the UAE hallmark and the fineness is printed on the invoice.',
+    '22K (916) is the standard for a chain that will be worn daily; 18K (750) chains in the Italian style are harder-wearing and lighter in colour. Both carry the UAE hallmark and the fineness is printed on the invoice.',
     'Length and gauge set the weight, and the weight sets the price. A diamond-cut Singapore link weighs very little, so its gold value is small and the making charge is a larger share of the total; a heavy rope chain is the reverse.',
     'If the chain will carry a pendant, bring the pendant: the bail has to pass over the clasp and the chain should be able to bear the weight without stretching.',
   ],
@@ -120,7 +130,7 @@ const guides: Record<string, string[]> = {
     'For a child, ask for a lobster clasp and smooth edges. For an adult, check the length on the ankle before you decide; a chain that sits too tight wears faster.',
   ],
   'gold-coins-bars': [
-    'Coins come in 22K (916) and 24K (999); bars are 24K, 999.9 fine, and the PAMP Suisse bars we stock come with the assay card. Investment gold is priced at the day’s rate with a small premium over it and no making charge, so ask for the premium before you come in.',
+    'Coins are struck in 22K (916) and 24K (999). PAMP Suisse bars are 24K at 999.9 fineness and come sealed with their assay card. Ask for the premium over the day’s rate as a separate figure, so two quotes can be compared on the same basis.',
     'VAT differs by purity. Bars and coins of 99% purity or more are zero-rated under UAE VAT law; 22K coins, like jewellery, carry 5%.',
     'Check the bar’s serial number against its assay card, and keep the invoice: it records the weight, fineness and rate you will need for any later sale or exchange.',
   ],
@@ -130,16 +140,22 @@ const guide = guides[category.id] ?? [
   'Price is net gold weight times the day’s rate for the karat, plus a making charge for the work, plus 5% VAT on both. Ask for the three figures as separate lines so quotes can be compared across shops.',
 ];
 
-const jsonLd = [
-  itemListSchema(
-    products.map((p) => ({
-      name: p.data.name,
-      url: new URL(routes.product(category.id, p.id), origin).toString(),
-      image: p.data.images[0] ? new URL(p.data.images[0].src.src, origin).toString() : undefined,
-    })),
-    data.name,
-  ),
-];
+/** No ItemList for an empty tray: a list of zero items tells a search engine nothing. */
+const jsonLd =
+  products.length > 0
+    ? [
+        itemListSchema(
+          products.map((p) => ({
+            name: p.data.name,
+            url: new URL(routes.product(category.id, p.id), origin).toString(),
+            image: p.data.images[0]
+              ? new URL(p.data.images[0].src.src, origin).toString()
+              : undefined,
+          })),
+          data.name,
+        ),
+      ]
+    : [];
 ---
 
 <BaseLayout title={title} description={data.description} jsonLd={jsonLd}>
@@ -156,9 +172,9 @@ const jsonLd = [
     eyebrow="By piece"
     title={data.name}
     lead={firstSentence}
-    media="plate"
+    media={data.image ? 'banner' : 'none'}
     image={data.image}
-    imageAlt={data.imageAlt}
+    imageAlt={data.imageAlt ?? ''}
   >
     <Button href={routes.goldRate}>Today’s gold rate</Button>
     <Button href={whatsapp} variant="secondary" icon="whatsapp" external>
@@ -174,8 +190,7 @@ const jsonLd = [
             eyebrow="In the trays"
             title={`${countWord(products.length)} ${products.length === 1 ? 'piece' : 'pieces'} online. More in store.`}
           >
-            Filter by karat or collection; the address stays the same. Enquire sends the piece’s
-            reference straight to the counter.
+            {filterLine}Enquire sends the piece’s reference straight to the counter.
           </SectionHead>
           <Filters
             gridId="tray-category"
@@ -186,21 +201,13 @@ const jsonLd = [
           />
           <TrayGrid id="tray-category" filterable>
             {products.map((p) => (
-              <div
-                class="cell"
-                data-karat={String(p.data.karat)}
-                data-collection={p.data.collection?.id ?? ''}
-                data-name={p.data.name}
-                data-new={p.data.isNew ? '1' : '0'}
-              >
-                <ProductCard
-                  product={p}
-                  collectionName={
-                    p.data.collection ? collectionName.get(p.data.collection.id) : undefined
-                  }
-                  rate={rate}
-                />
-              </div>
+              <ProductCard
+                product={p}
+                collectionName={
+                  p.data.collection ? collectionName.get(p.data.collection.id) : undefined
+                }
+                rate={rate}
+              />
             ))}
           </TrayGrid>
         </Fragment>
@@ -209,8 +216,8 @@ const jsonLd = [
           <div class="empty__text">
             <h2 class="empty__title">Nothing from this tray is online yet.</h2>
             <p class="lead">
-              Ask us on WhatsApp; we have more in the trays than on the site. Tell us the weight
-              and karat you have in mind and we will reply with what is in stock.
+              Ask us on WhatsApp; we have more in the trays than on the site. Tell us the weight and
+              karat you have in mind and we will reply with what is in stock.
             </p>
           </div>
           <Button href={whatsapp} icon="whatsapp" external>
@@ -276,12 +283,16 @@ const jsonLd = [
         </Fragment>
       </SectionHead>
       <AssuranceLedger variant="condensed" />
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
       <EnquiryBlock
         heading={`Ask about ${shortName.toLowerCase()}`}
         text={`Send a photo of what you are looking for, or the weight and karat you have in mind, and we will reply with what is in the ${shortName.toLowerCase()} trays and today’s price.`}
         whatsappUrl={whatsapp}
         whatsappLabel="Enquire on WhatsApp"
-        class="enquiry-end"
       />
     </div>
   </section>
@@ -296,21 +307,11 @@ const jsonLd = [
     color: var(--plum-700);
   }
 
-  .cell {
-    display: grid;
-    min-inline-size: 0;
-  }
-
-  .cell[hidden] {
-    display: none;
-  }
-
+  /* The section rule above already divides the tray; no second rule around the empty state. */
   .empty {
     display: grid;
     gap: var(--space-5);
     align-items: start;
-    padding-block: var(--space-7);
-    border-block: 1px solid var(--rule-1);
   }
 
   .empty__text {
@@ -354,11 +355,6 @@ const jsonLd = [
 
   .also__link .icon {
     color: var(--gold-600);
-  }
-
-  .enquiry-end {
-    margin-block-start: var(--space-7);
-    border-block-end: 0;
   }
 
   @media (min-width: 64em) {

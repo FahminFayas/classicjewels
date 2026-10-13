@@ -13,7 +13,7 @@ import SectionHead from '@/components/ui/SectionHead.astro';
 import { branches, emirates, flagship, openBranches } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getFaqGroup } from '@/lib/content';
-import { countWord } from '@/lib/format';
+import { countWord, listWords } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { jewelryStoreSchema } from '@/lib/schema';
 import { whatsappVisit } from '@/lib/whatsapp';
@@ -23,19 +23,21 @@ const soon = branches.filter((b) => b.status === 'opening-soon');
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const storeImage = new URL('/og/default.png', origin).toString();
 
-/** "Dubai, Sharjah and Abu Dhabi" */
-const listWords = (items: string[]) =>
-  items.length > 1
-    ? `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
-    : (items[0] ?? '');
-
-/** site.ts keeps owner reminders inline after "TODO"; only the sentence before them is public. */
-const publicNote = (note?: string) => note?.split('TODO')[0]?.trim() || 'Opening soon.';
-
 const count = countWord(openBranches.length);
-const description = `${count} Classic Jewels branches in ${listWords(emirates)}: ${listWords(
+const emirateList = listWords(emirates);
+const description = `${count} Classic Jewels branches in ${emirateList}: ${listWords(
   openBranches.map((b) => b.shortName),
-)}. Hours, directions and WhatsApp for each.`;
+)}. Address, directions and WhatsApp for each.`;
+
+/** "Deira in Dubai, Safari Mall and Rolla Mall in Sharjah and Madinat Zayed in Abu Dhabi" */
+const byEmirate = new Map<string, string[]>();
+for (const b of openBranches) {
+  byEmirate.set(b.emirate, [...(byEmirate.get(b.emirate) ?? []), b.shortName]);
+}
+const places = listWords(
+  [...byEmirate].map(([emirate, names]) => `${listWords(names)} in ${emirate}`),
+);
+const lead = `${places}${soon.length > 0 ? ', with more opening' : ''}. The day’s rate on the board is the same at every counter.`;
 
 /** The flagship's JewelryStore is already in every page head (BaseLayout); the rest go here. */
 const jsonLd = openBranches
@@ -43,37 +45,28 @@ const jsonLd = openBranches
   .map((b) => jewelryStoreSchema(b, storeImage));
 ---
 
-<BaseLayout
-  title="Our Stores in Dubai, Sharjah and Abu Dhabi"
-  description={description}
-  jsonLd={jsonLd}
->
+<BaseLayout title={`Our Stores in ${emirateList}`} description={description} jsonLd={jsonLd}>
   <div class="container">
     <Breadcrumbs items={[{ name: 'Stores', href: routes.stores }]} />
   </div>
 
-  <Hero
-    eyebrow="Stores"
-    title={`${count} branches across the UAE`}
-    display
-    lead="Gold Souq Extension in Deira, two malls in Sharjah and Madinat Zayed in Abu Dhabi, with more opening. Same gold rate, same promises, at every counter."
-  >
+  <Hero eyebrow="Stores" title={`${count} branches across the UAE`} display lead={lead}>
     <Button href={whatsappVisit()} icon="whatsapp" external>
       WhatsApp before you visit
     </Button>
     <Button href={routes.store(flagship.id)} variant="secondary" icon="map-pin">
-      The Deira flagship
+      The {flagship.shortName} flagship
     </Button>
   </Hero>
 
   <section class="section section--ruled">
     <div class="container">
       <SectionHead eyebrow="Open now" title="Where to find us.">
-        Each branch page lists the address, the hours as listed, and how to reach the counter.
+        Each branch page has the address, how to reach the counter and the hours we have for it.
       </SectionHead>
       <div class="rows">
         {openBranches.map((b) => (
-          <StoreCard branch={b} />
+          <StoreCard branch={b} compact />
         ))}
       </div>
     </div>
@@ -94,7 +87,7 @@ const jsonLd = openBranches
                 <h3 class="soon__name">{b.name}</h3>
                 <p class="soon__venue">{b.venue}</p>
               </div>
-              <p class="soon__note small">{publicNote(b.openingNote)}</p>
+              <p class="soon__note small">{b.publicNote ?? 'Opening soon.'}</p>
             </li>
           ))}
         </ul>
@@ -104,11 +97,11 @@ const jsonLd = openBranches
 
   <section class="section section--ruled">
     <div class="container">
-      <Faq heading="Visiting the Deira flagship" items={faq.data.items} />
+      <Faq heading={faq.data.heading} items={faq.data.items} />
     </div>
   </section>
 
-  <section class="section">
+  <section class="section section--ruled">
     <div class="container">
       <EnquiryBlock
         heading="Check before you set out"

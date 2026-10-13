@@ -1,4 +1,5 @@
 # Netlify / Cloudflare Pages equivalent of the security + caching headers in .htaccess.
+# If PUBLIC_FORM_ENDPOINT points at another origin, add it to form-action and connect-src below.
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff

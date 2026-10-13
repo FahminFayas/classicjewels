@@ -1,15 +1,15 @@
 ---
 name: 'Diamonds Collection'
-title: 'Diamond Jewellery Dubai – Certified Rings, Studs, Pendants'
-description: 'Certified diamond jewellery in Dubai: engagement rings, studs, pendants and tennis bracelets in 18K gold from Classic Jewels, Deira. GIA and IGI certified.'
-origin: 'Certified diamonds, set in 18K'
-summary: 'Certified solitaires, clusters and tennis pieces in 18K white, yellow and rose gold.'
+title: 'Diamond Jewellery Dubai – 18K Rings, Studs, Pendants'
+description: 'Diamond jewellery in Dubai: engagement rings, studs, pendants and tennis bracelets in 18K gold from Classic Jewels. Every stone tested in the shop.'
+origin: 'Diamonds set in 18K'
+summary: 'Solitaires, clusters and tennis pieces in 18K white, yellow and rose gold, every stone tested.'
 hallmarks:
   [
-    'Tested and certified stones',
+    'Every stone tested',
     '18K settings',
     'Solitaires to tennis bracelets',
-    'Lab certificates available',
+    'Grading reports for larger stones',
   ]
 karats: [18]
 image: '../../assets/collections/diamonds.jpg'
@@ -18,4 +18,4 @@ order: 12
 featured: true
 ---
 
-Every diamond we sell is tested on the premises and larger stones come with a GIA or IGI certificate. The collection is set in 18K because it holds a stone better than 22K: solitaire and halo rings, studs, pendants and tennis bracelets in white, yellow and rose gold.
+Every diamond we sell is tested on the premises, and larger stones come with an independent laboratory grading report. The collection is set in 18K because it holds a stone better than 22K: solitaire and halo rings, studs, pendants and tennis bracelets in white, yellow and rose gold.

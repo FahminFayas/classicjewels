@@ -15,4 +15,4 @@ isNew: false
 order: 14
 ---
 
-Heavy curb links with a box clasp and safety catch. Made in the Italian way, so the links lie flat. For men and women; weight to order.
+Heavy curb links with a box clasp and safety catch. The links are Italian-style, cut to lie flat. For men and women; weight to order.

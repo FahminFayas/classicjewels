@@ -5,8 +5,8 @@
  */
 import { PUBLIC_GOLD_RATE_ENDPOINT } from 'astro:env/client';
 
-import { formatDate } from '@/lib/format';
-import { KARATS, fetchGoldRate, parseGoldRate, type GoldRate } from '@/lib/gold-rate';
+import { formatAed, formatDate } from '@/lib/format';
+import { KARATS, fetchGoldRate, parseGoldRate, type GoldRate, type Karat } from '@/lib/gold-rate';
 
 const CACHE_KEY = 'cj:rate';
 const CACHE_TTL_MS = 30 * 60 * 1000;
@@ -46,10 +46,18 @@ function currentValue(karat: string): number | null {
   return el ? Number.parseFloat(el.textContent ?? '') : null;
 }
 
+/**
+ * Writes a newer rate into the page. Three kinds of hook:
+ *  - [data-rate="22k"]                      the rate itself, "468.25"
+ *  - [data-rate-calc="22k"][data-grams="8"] a derived amount, rate × grams, "AED 3,746"
+ *  - [data-rate-date]                       the posting date (a <time> or a wrapper with
+ *                                           [data-rate-date-text]); "full" formats with the year
+ * A posting older than the one baked into the page is never applied.
+ */
 function apply(rate: GoldRate) {
   const date = currentDate();
-  const changed =
-    !date || rate.date > date || KARATS.some((k) => currentValue(k) !== rate.perGram[k]);
+  if (date && rate.date < date) return;
+  const changed = !date || rate.date > date || KARATS.some((k) => currentValue(k) !== rate.perGram[k]);
   if (!changed) return;
 
   for (const k of KARATS) {
@@ -57,11 +65,18 @@ function apply(rate: GoldRate) {
       el.textContent = rate.perGram[k].toFixed(2);
     }
   }
+  for (const el of document.querySelectorAll<HTMLElement>('[data-rate-calc]')) {
+    const karat = el.dataset.rateCalc as Karat;
+    const grams = Number.parseFloat(el.dataset.grams ?? '');
+    if (!KARATS.includes(karat) || !Number.isFinite(grams)) continue;
+    el.textContent = formatAed(Math.round(rate.perGram[karat] * grams));
+  }
   for (const el of document.querySelectorAll<HTMLElement>('[data-rate-date]')) {
     el.dataset.rateDate = rate.date;
     if (el instanceof HTMLTimeElement) el.dateTime = rate.date;
     const text = el.querySelector<HTMLElement>('[data-rate-date-text]') ?? el;
-    text.textContent = formatDate(rate.date, { year: undefined });
+    text.textContent =
+      text.dataset.format === 'full' ? formatDate(rate.date) : formatDate(rate.date, { year: undefined });
   }
   for (const el of document.querySelectorAll<HTMLElement>('[data-rate-board]')) {
     el.dataset.state = 'refreshed';

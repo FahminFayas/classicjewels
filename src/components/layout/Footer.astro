@@ -7,6 +7,7 @@ import Icon from '@/components/ui/Icon.astro';
 import Logo from '@/components/ui/Logo.astro';
 import { branches, flagship, site } from '@/data/site';
 import { getDesignCollections, getNavCategories } from '@/lib/content';
+import { hoursSummary } from '@/lib/hours';
 import { routes } from '@/lib/routes';
 import { whatsappGeneral } from '@/lib/whatsapp';
 
@@ -20,7 +21,6 @@ const services = [
   { label: 'Occasions', href: routes.occasions },
   { label: 'Offers', href: routes.offers },
   { label: "Today's gold rate", href: routes.goldRate },
-  { label: 'Coins & bars', href: routes.goldCoinsBars },
 ];
 const company = [
   { label: 'About', href: routes.about },
@@ -33,7 +33,7 @@ const legal = [
   { label: 'Terms', href: routes.terms },
   { label: 'Disclaimer', href: routes.disclaimer },
 ];
-const hours = flagship.hours;
+const flagshipHours = flagship.hours ? hoursSummary(flagship) : null;
 ---
 
 <footer class="footer" data-surface="plum">
@@ -67,8 +67,8 @@ const hours = flagship.hours;
           </li>
         </ul>
         <p class="footer__hours small">
-          {hours?.confirmed
-            ? `Deira: ${hours.weekly[0]?.opens.slice(0, 5)}–${hours.weekly[0]?.closes.slice(0, 5)} daily.`
+          {flagshipHours
+            ? `${flagship.shortName}: ${flagshipHours}${flagship.hours?.confirmed ? '' : ' (as listed on Google)'}. Other branches: see each store page.`
             : 'Branch hours are on each store page. Call ahead for Friday timings.'}
         </p>
       </div>
@@ -164,7 +164,6 @@ const hours = flagship.hours;
 
 <style>
   .footer {
-    margin-block-start: var(--section-y);
     padding-block: var(--space-8) var(--space-7);
     background: var(--surface-plum-deep);
     color: var(--ink-on-plum-muted);
@@ -198,7 +197,7 @@ const hours = flagship.hours;
 
   .footer__contact {
     display: grid;
-    gap: var(--space-2);
+    gap: 0;
     font-size: var(--t-small);
   }
 
@@ -226,13 +225,23 @@ const hours = flagship.hours;
 
   .footer__col ul {
     display: grid;
-    gap: var(--space-1);
+    gap: 0;
+  }
+
+  /* Every footer link is at least 44 px tall: they sit close together on a phone. */
+  .footer__contact a,
+  .footer__legal a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: var(--tap);
   }
 
   .footer__col a,
   .footer__soon {
-    display: inline-block;
-    padding-block: var(--space-1);
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--tap);
     font-size: var(--t-small);
   }
 
@@ -293,7 +302,8 @@ const hours = flagship.hours;
 
   @media (max-width: 63.99em) {
     .footer {
-      padding-block-end: calc(var(--space-7) + var(--action-bar-h));
+      /* The body already reserves room for the fixed action bar (BaseLayout). */
+      padding-block-end: var(--space-7);
     }
   }
 </style>

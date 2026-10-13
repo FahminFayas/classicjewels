@@ -86,14 +86,21 @@ export default defineConfig({
     },
   },
   integrations: [
+    // No changefreq/priority (Google ignores both) and no build-time lastmod: a date that changes on
+    // every deploy teaches crawlers to ignore it. Add a content-derived lastmod via `serialize` if
+    // the content collections ever carry an updated date for every page.
     sitemap({
       filter: (page) => !SITEMAP_EXCLUDE.some((path) => page.endsWith(path)),
-      changefreq: 'weekly',
-      priority: 0.7,
-      lastmod: new Date(),
     }),
   ],
   vite: {
+    build: {
+      // Never inline scripts into the HTML. The Content-Security-Policy in public/.htaccess and
+      // public/_headers allows only same-origin script files, so an inlined <script> would be
+      // blocked in production (the mobile menu would stop working). scripts/audit-dist.mjs fails
+      // the build check if an inline script ever appears.
+      assetsInlineLimit: 0,
+    },
     server: {
       // In dev, proxy the gold-rate feed to the live host so the widget works without PHP.
       proxy: {

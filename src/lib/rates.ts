@@ -28,14 +28,21 @@ export function getRates(): Promise<RatesAtBuild> {
 }
 
 async function load(): Promise<RatesAtBuild> {
-  const history = (await getCollection('rates'))
-    .map((entry) => entry.data as RateSnapshot)
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const snapshots = (await getCollection('rates')).map((entry) => entry.data as RateSnapshot);
 
+  // The live feed, when it is as new as the newest snapshot, replaces that day's snapshot, so the
+  // board, the history table and the change column all describe the same figures.
   const live = await fetchGoldRateAtBuild(site.url);
-  let latest: GoldRate | null = history[0] ?? null;
-  if (live && (!latest || live.date >= latest.date)) latest = live;
+  const newestSnapshot = snapshots.reduce<string>((max, s) => (s.date > max ? s.date : max), '');
+  if (live && live.date >= newestSnapshot) {
+    const merged: RateSnapshot = { ...live, fetchedAt: new Date().toISOString() };
+    const i = snapshots.findIndex((s) => s.date === live.date);
+    if (i >= 0) snapshots[i] = merged;
+    else snapshots.push(merged);
+  }
 
+  const history = snapshots.sort((a, b) => b.date.localeCompare(a.date));
+  const latest: GoldRate | null = history[0] ?? null;
   return { latest, history, stale: latest ? isStale(latest.date) : false };
 }
 
@@ -46,9 +53,13 @@ export function isStale(date: string, now: Date = new Date()): boolean {
   return (today.getTime() - posted.getTime()) / 86_400_000 > 2;
 }
 
-/** Change against the previous snapshot for one karat, or null when there is no previous day. */
+/**
+ * Change of the displayed rate against the newest posting from an earlier day, for one karat.
+ * Null when no earlier day has been recorded.
+ */
 export function rateDelta(history: RateSnapshot[], karat: Karat): number | null {
-  const [latest, previous] = history;
+  const [latest] = history;
+  const previous = latest ? history.find((s) => s.date < latest.date) : undefined;
   if (!latest || !previous) return null;
   return Math.round((latest.perGram[karat] - previous.perGram[karat]) * 100) / 100;
 }

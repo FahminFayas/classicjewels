@@ -2,7 +2,7 @@
 name: 'Gemstone Jewellery'
 title: 'Gemstone Jewellery Dubai – Ruby, Emerald & Sapphire'
 description: 'Ruby, emerald and sapphire jewellery set in 22K and 18K gold from Classic Jewels, Deira. Natural stones, certificates on request. Enquire on WhatsApp.'
-origin: 'Coloured stones, set in Dubai'
+origin: 'Coloured stones set in gold'
 summary: 'Ruby, emerald and sapphire pieces set in gold, with stones you can see in daylight.'
 hallmarks:
   [
@@ -18,4 +18,4 @@ order: 4
 featured: false
 ---
 
-Colour is the point. We buy ruby, emerald and sapphire in calibrated sizes for sets, and single stones for rings and pendants, and set them in 22K for traditional designs or 18K where the setting needs strength. Ask to see the stones under daylight at the shop door; it is the honest way to judge colour.
+Colour is the point. Ruby, emerald and sapphire come in matched sizes for sets and as single stones for rings and pendants, set in 22K for traditional designs or 18K where the setting needs strength. Ask to see the stones under daylight at the shop door; it is the honest way to judge colour.

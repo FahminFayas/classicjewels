@@ -10,9 +10,9 @@ karat: 18
 images:
   - src: '../../assets/products/p04.jpg'
     alt: 'Flat mirror-polished gold collar necklace on a white bust'
-featured: false
+featured: true
 isNew: false
 order: 4
 ---
 
-A single flat collar with no stones and no pattern, just a polished surface that follows the neckline. Made in the Italian way, with a hidden box clasp. The piece to wear with everything.
+A single flat collar with no stones and no pattern, just a polished surface that follows the neckline. Italian in style, with a hidden box clasp. The piece to wear with everything.

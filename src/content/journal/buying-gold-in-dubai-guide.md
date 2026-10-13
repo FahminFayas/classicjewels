@@ -4,8 +4,8 @@ description: 'How a Dubai gold price is built (rate x net weight + making charge
 headline: "Buying gold in Dubai: a Gold Souq Extension jeweller's guide to rates, hallmarks and the tourist VAT refund"
 pubDate: 2026-10-13
 author: 'Classic Jewels & Diamonds'
-cover: '../../assets/journal/gold-souq-extension-guide.jpg'
-coverAlt: 'Shopfront of a gold jeweller at the Gold Souq Extension in Deira, Dubai, with 22K necklaces displayed in the window'
+cover: '../../assets/journal/gold-sun-pendant.jpg'
+coverAlt: 'Gold sun-shaped pendant set with small white stones, on navy leather'
 tags: ['buying guide', 'gold souq', 'vat refund']
 relatedCollections: ['kolkata', 'temple', 'diamonds']
 ---
@@ -26,7 +26,7 @@ A Dubai jewellery price has three lines:
 2. Making charge: quoted per gram in dirhams, or as a percentage of the gold value.
 3. VAT at 5% on the subtotal, gold and making charge together.
 
-A worked example: on 13 October 2026 the 22K rate was AED 468.25 per gram, so the gold in an 8 g chain came to 8 x 468.25 = AED 3,746.00, before the making charge and VAT.
+A worked example, at an example rate of AED 460 per gram for 22K (a round number for the arithmetic, not today's price): the gold in an 8 g chain comes to 8 x 460 = AED 3,680, before the making charge and VAT.
 
 Making charges are where shops differ. A plain machine-made chain carries a low charge; a hand-filigreed [Kolkata](/collections/kolkata/) choker or a [temple](/collections/temple/) haar carries more. The charge is negotiable within reason; the rate is not.
 
@@ -60,7 +60,7 @@ Old gold can be put towards a new piece; how it is weighed, tested and valued is
 
 The Gold Souq Extension is the newer, shaded part of the Deira gold district, opened in April 2022 with 295 retail units across Maryam Plaza and Hind Plaza. Our Deira shop is Shop No. 6 on the ground floor of the Gold Souk Parking Building in Mariyam Plaza (also spelt Maryam Plaza), behind RAK Bank.
 
-By metro, take the Green Line to Gold Souq or Al Ras station; each is a 7 to 10 minute walk. By car, the Extension has more than 1,700 parking spaces, over 600 of them in the multi-storey Gold Souk Parking Building, the building we trade from. The Extension opens daily from 10:00 to 22:00; message us to confirm our own hours and Friday timings, or see the [stores page](/stores/).
+By metro, take the Green Line to Gold Souq or Al Ras station; each is a 7 to 10 minute walk. By car, the Extension has more than 1,700 parking spaces, over 600 of them in the multi-storey Gold Souk Parking Building, the building we trade from. The Extension opens daily from 10:00 to 22:00; our own hours, including the Friday prayer break, are on the [stores page](/stores/).
 
 ## What to bring
 
@@ -79,4 +79,4 @@ Tourists can reclaim most of the VAT on jewellery through the Federal Tax Author
 
 On an invoice subtotal of AED 4,000, VAT at 5% is AED 200. Planet keeps 13% of that (AED 26) plus AED 3.60, leaving AED 170.40.
 
-If you have a piece in mind, send a photo or a weight and karat to +971 50 566 1416 on WhatsApp and we will quote at the day's rate with the making charge as its own line; our other details are on the [contact page](/contact/). Or come to Shop No. 6 and we will put the stamp under the loupe for you.
+If you have a piece in mind, send a photo or a weight and karat on WhatsApp and we will quote at the day's rate with the making charge as its own line; our other details are on the [contact page](/contact/). Or come to the counter and we will put the stamp under the loupe for you.

@@ -1,7 +1,7 @@
 ---
 name: 'Turkish Filigree Necklace'
 sku: 'CJ-NK-005'
-description: 'Turkish-style gold necklace with openwork filigree medallions and a matte-bright finish. Ottoman form, Dubai hallmark. Enquire on WhatsApp for today’s price.'
+description: 'Turkish-style gold necklace with openwork filigree medallions and a matte-bright finish. Ottoman form, UAE hallmark. Enquire on WhatsApp for today’s price.'
 category: 'necklaces'
 collection: 'turkish'
 occasions: ['festivals']

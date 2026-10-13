@@ -22,7 +22,15 @@ export interface Props {
 const { rate } = Astro.props;
 const [categories, collections] = await Promise.all([getNavCategories(), getDesignCollections()]);
 const path = Astro.url.pathname;
-const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+/**
+ * aria-current: "page" only for the exact page; "true" for a section the page sits inside (e.g.
+ * Jewellery while on a product). Screen readers announce only the first as "current page".
+ */
+const current = (href: string): 'page' | 'true' | undefined => {
+  if (path === href) return 'page';
+  if (href !== '/' && path.startsWith(href)) return 'true';
+  return undefined;
+};
 
 const primary = [
   { label: 'Collections', href: routes.collections },
@@ -69,7 +77,7 @@ const whatsapp = whatsappGeneral();
           <a
             class="nav__link link-quiet"
             href={routes.jewellery}
-            aria-current={isActive(routes.jewellery) ? 'page' : undefined}
+            aria-current={current(routes.jewellery)}
           >
             Jewellery
           </a>
@@ -137,7 +145,7 @@ const whatsapp = whatsappGeneral();
             <a
               class="nav__link link-quiet"
               href={item.href}
-              aria-current={isActive(item.href) ? 'page' : undefined}
+              aria-current={current(item.href)}
             >
               {item.label}
             </a>
@@ -226,7 +234,7 @@ const whatsapp = whatsappGeneral();
       <ul class="drawer__links" role="list">
         {drawerLinks.map((item) => (
           <li>
-            <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>
+            <a href={item.href} aria-current={current(item.href)}>
               {item.label}
             </a>
           </li>
@@ -293,6 +301,13 @@ const whatsapp = whatsappGeneral();
     gap: var(--space-4);
   }
 
+  /* The nav fills the header's height, so the mega item touches the panel below it and the
+     pointer never crosses a gap that would close the panel. */
+  .header__nav {
+    align-self: stretch;
+    display: flex;
+  }
+
   .nav__item {
     display: flex;
     align-items: center;
@@ -310,7 +325,7 @@ const whatsapp = whatsappGeneral();
     text-underline-offset: 0.35em;
   }
 
-  .nav__link[aria-current='page'] {
+  .nav__link[aria-current] {
     text-decoration: underline;
     text-decoration-color: var(--gold-600);
   }
@@ -534,7 +549,7 @@ const whatsapp = whatsappGeneral();
     font-weight: 500;
   }
 
-  .drawer__links a[aria-current='page'] {
+  .drawer__links a[aria-current] {
     color: var(--gold-300);
   }
 

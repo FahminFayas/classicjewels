@@ -7,6 +7,7 @@ import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
 import Hero from '@/components/sections/Hero.astro';
 import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
 import Button from '@/components/ui/Button.astro';
+import { flagship } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { routes } from '@/lib/routes';
 ---
@@ -38,11 +39,11 @@ import { routes } from '@/lib/routes';
     </Button>
   </Hero>
 
-  <section class="section">
+  <section class="section section--ruled">
     <div class="container">
       <EnquiryBlock
         heading="Need an answer sooner?"
-        text="WhatsApp is fastest during shop hours. Calls go to the Deira counter."
+        text={`WhatsApp is fastest during shop hours. Calls go to the ${flagship.shortName} counter.`}
       />
     </div>
   </section>

@@ -44,7 +44,12 @@ const dateLabel = rate ? formatDate(rate.date, { year: undefined }) : '';
   {rate ? (
     <table class="board__table" data-rate-board data-state={stale ? 'stale' : 'baked'}>
       <caption class:list={variant === 'full' ? 'board__caption' : 'sr-only'}>
-        Gold rate in Dubai, AED per gram, {formatDate(rate.date)}
+        Gold rate in Dubai, AED per gram,{' '}
+        <span data-rate-date={rate.date}>
+          <span data-rate-date-text data-format="full">
+            {formatDate(rate.date)}
+          </span>
+        </span>
       </caption>
       <thead class="sr-only">
         <tr>
@@ -122,8 +127,12 @@ const dateLabel = rate ? formatDate(rate.date, { year: undefined }) : '';
 
   {variant === 'band' && (
     <p class="board__links">
-      <a href={`${routes.goldRate}#pricing`}>How a piece is priced</a>
-      <a href={routes.goldExchange}>Exchange old gold</a>
+      <a href={`${routes.goldRate}#pricing`}>
+        How a piece is priced <span aria-hidden="true">&rarr;</span>
+      </a>
+      <a href={routes.goldExchange}>
+        Exchange old gold <span aria-hidden="true">&rarr;</span>
+      </a>
     </p>
   )}
 </div>
@@ -139,8 +148,9 @@ const dateLabel = rate ? formatDate(rate.date, { year: undefined }) : '';
     padding-inline: var(--gutter);
   }
 
+  /* Content lines up with every other section: the container width minus its gutters. */
   .board--band > * {
-    max-inline-size: var(--container);
+    max-inline-size: calc(var(--container) - 2 * var(--gutter));
     margin-inline: auto;
   }
 
@@ -221,7 +231,7 @@ const dateLabel = rate ? formatDate(rate.date, { year: undefined }) : '';
 
   .board__fineness,
   .board__unit {
-    color: var(--gold-500);
+    color: var(--gold-300);
   }
 
   .board--mini .board__fineness,
@@ -303,6 +313,26 @@ const dateLabel = rate ? formatDate(rate.date, { year: undefined }) : '';
     flex-wrap: wrap;
     gap: var(--space-5);
     margin-block-start: var(--space-6);
+  }
+
+  .board__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--t-small);
+    font-weight: 500;
+    color: var(--ink-on-plum);
+    text-decoration: underline;
+    text-decoration-color: var(--rule-gold);
+    text-underline-offset: 0.25em;
+    transition:
+      color var(--dur-fast) var(--ease),
+      text-decoration-color var(--dur-fast) var(--ease);
+  }
+
+  .board__links a:hover {
+    color: var(--gold-300);
+    text-decoration-color: var(--gold-300);
   }
 
   @media (max-width: 29.99em) {

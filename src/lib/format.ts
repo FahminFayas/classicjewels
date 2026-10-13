@@ -64,3 +64,10 @@ export function countWord(n: number): string {
   const w = WORDS[n];
   return w ? w.charAt(0).toUpperCase() + w.slice(1) : String(n);
 }
+
+const list = new Intl.ListFormat('en-GB', { style: 'long', type: 'conjunction' });
+
+/** ["Dubai", "Sharjah", "Abu Dhabi"] -> "Dubai, Sharjah and Abu Dhabi". */
+export function listWords(items: readonly string[]): string {
+  return list.format(items);
+}

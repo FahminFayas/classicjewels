@@ -1,9 +1,11 @@
 ---
 /**
  * Collections index (design-spec §7.5): a typographic hero, then every collection as one
- * numbered ruled row (wordmark stamp, name, origin, summary, karats, pieces online), each row a
- * single link. The number of collections is read from content, never hard-coded.
+ * numbered ruled row (wordmark stamp, name, style, summary, karats, pieces online), each row a
+ * single link. The number of collections is read from content, never hard-coded. The `origin`
+ * field describes a style or tradition, not where a piece was made, so it is shown as the style.
  */
+import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 
 import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
@@ -14,7 +16,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
 import { emirates } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getDesignCollections, getFaqGroup, getProducts } from '@/lib/content';
-import { countWord, formatKarat } from '@/lib/format';
+import { countWord, formatKarat, listWords } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { itemListSchema } from '@/lib/schema';
 import { whatsappGeneral } from '@/lib/whatsapp';
@@ -41,11 +43,12 @@ const wordmarkFor = (id: string) =>
   Object.entries(wordmarks).find(([path]) => path.endsWith(`/${id}.png`))?.[1].default;
 
 const shortName = (name: string) => name.replace(/ Collection$/i, '');
-const piecesLabel = (n: number) => (n === 0 ? 'Ask in store' : `${n} ${n === 1 ? 'piece' : 'pieces'}`);
+const piecesLabel = (n: number) =>
+  n === 0 ? 'Ask in store' : `${n} ${n === 1 ? 'piece' : 'pieces'}`;
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const count = countWord(collections.length);
-const places = emirates.join(', ').replace(/, ([^,]*)$/, ' and $1');
+const places = listWords(emirates);
 
 const jsonLd = [
   itemListSchema(
@@ -105,7 +108,10 @@ const jsonLd = [
                 </span>
                 <span class="cindex__text">
                   <span class="cindex__name">{shortName(c.data.name)}</span>
-                  <span class="cindex__origin small">{c.data.origin}</span>
+                  <span class="cindex__style small">
+                    <span class="sr-only">Style: </span>
+                    {c.data.origin}
+                  </span>
                   <span class="cindex__summary">{c.data.summary}</span>
                 </span>
                 <span class="cindex__karat small tabular">

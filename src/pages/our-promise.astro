@@ -22,9 +22,7 @@ import { itemListSchema } from '@/lib/schema';
 const faq = await getFaqGroup('our-promise');
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 
-const years = site.group.yearsInGold;
 const days = site.returnPolicy.days;
-const law = site.returnPolicy.lawReference;
 
 interface Terms {
   covers: string[];
@@ -33,12 +31,17 @@ interface Terms {
   links?: { label: string; href: string }[];
 }
 
+/*
+ * Scope is phrased generically until the owner signs off the exact terms (launch checklist item 9):
+ * no "every branch", no free repairs or re-plating, and the exchange scope is something to ask
+ * about. The return wording is site.returnPolicy, verbatim, as on the terms page.
+ */
 const terms: Record<string, Terms> = {
   'certified-diamonds': {
     covers: [
-      'Every diamond we sell is tested on an instrument at the counter before it is sold. Ask to watch the test; most customers do.',
+      'Every diamond we sell is tested on an instrument at the counter before it is sold. Ask to watch the test.',
       'Larger diamonds come with a grading report from an independent laboratory, stating carat, colour, clarity and cut.',
-      'Keep the report with your invoice. Both are needed for a return or an exchange.',
+      'Keep the report with your invoice. A return or an exchange of a stone with a report needs both.',
     ],
     excludes: [
       'The counter test shows that a stone is a diamond; it is not a grading. Only the laboratory report states carat, colour, clarity and cut.',
@@ -49,7 +52,7 @@ const terms: Record<string, Terms> = {
     claim: [
       'Ask to see the test at the counter before you pay.',
       'For a stone with a report, ask for the report and check its number against the laboratory’s verification page.',
-      'If a question comes up later, bring the piece, the invoice and the report to any branch, or WhatsApp us with the invoice number.',
+      'If a question comes up later, bring the piece, the invoice and the report to the branch that sold it, or WhatsApp us with the invoice number.',
     ],
     links: [{ label: 'Diamond jewellery', href: routes.diamonds }],
   },
@@ -57,7 +60,7 @@ const terms: Record<string, Terms> = {
     covers: [
       'Every piece of gold jewellery we sell carries a hallmark, as UAE Federal Law No. 11 of 2015 requires. 22K is stamped 916: 916 parts per thousand, or 91.6% gold.',
       '18K is stamped 750, 21K 875 and 24K 999. The stamp is applied after assay, so the purity is verified rather than promised.',
-      'Dubai Municipality’s Dubai Central Laboratory inspects jewellers and their scales. Your invoice states the weight and the fineness of what you bought.',
+      'Your invoice states the weight and the fineness of what you bought. In Dubai, jewellers and their scales are inspected by Dubai Municipality’s Dubai Central Laboratory.',
     ],
     excludes: [
       'Pieces under one gram of gold are exempt from stamping under the law, and a piece too small to stamp comes with an identification card instead.',
@@ -66,42 +69,43 @@ const terms: Record<string, Terms> = {
     ],
     claim: [
       'Ask to see the stamp before you pay. On a very small piece, ask for the identification card.',
-      'If you ever doubt a piece we sold, bring it with the invoice to any branch and we will test it in front of you.',
+      'If you ever doubt a piece we sold, bring it with the invoice to the branch that sold it and we will test it in front of you.',
       'Any piece can also be tested independently by Dubai Municipality’s Dubai Central Laboratory.',
     ],
     links: [{ label: 'Today’s rate by karat', href: routes.goldRate }],
   },
   'lifetime-maintenance': {
     covers: [
-      'Cleaning, polishing, stone tightening and minor repairs on any piece bought from us, for as long as you own it.',
-      'There is no charge for routine care. Bring the piece in whenever it needs attention, at any branch.',
-      'Surface finishes wear with daily use: rhodium on white gold, matte and antique finishes. Restoring them is maintenance, not a defect.',
+      'Cleaning, polishing and a check of the settings on a piece bought from us, for as long as you own it.',
+      'Bring the piece in whenever it looks dull or a setting feels loose; we tell you what we find before any other work is done.',
     ],
     excludes: [
+      'Repairs, re-plating, resizing, remodelling and replacing a lost stone are separate work, quoted before we start.',
+      'Surface finishes wear with daily use: rhodium on white gold, matte and antique finishes. Restoring a finish is re-plating, quoted separately.',
       'Accidental damage, and alterations made by another jeweller: ask in store before you assume these are covered.',
-      'Resizing, remodelling and replacing a lost stone are separate work, quoted before we start.',
       'Wear of a finish is not a defect. Your rights for a genuinely defective piece under UAE consumer law are separate and unaffected.',
     ],
     claim: [
-      'Bring the piece and, if you have it, the invoice to any branch.',
-      'Tell us what you have noticed: a loose stone, a dull finish, a bent clasp.',
-      'Message us on WhatsApp first if you want to know whether a particular repair falls under maintenance.',
+      'Bring the piece and, if you have it, the invoice to the branch that sold it, or WhatsApp us to ask which counter to bring it to.',
+      'Tell us what you have noticed: a dull finish, a loose stone, a bent clasp.',
+      'Message us on WhatsApp first if you want to know whether the work you have in mind is cleaning and polishing or a quoted repair.',
     ],
     links: [{ label: 'Remaking old jewellery', href: routes.customJewellery }],
   },
   'gold-exchange': {
     covers: [
-      'Any old gold jewellery, bought from us or anywhere else, in any condition, with or without its receipt.',
-      'We test its purity and weigh it in front of you, then credit its full gold weight at the day’s rate for its karat against a new piece. No deduction for wear or design.',
-      `The Classic Group has bought and refined scrap gold in Dubai for over ${years} years; we price old gold the way traders do.`,
+      'Old gold is tested and weighed in front of you and credited by weight at the day’s rate for its karat against a new piece.',
+      'No weight deduction: the credit is the weight the scale shows, at the rate for the karat the test shows.',
+      `The Classic Group has been ${site.group.experience}; we price old gold the way traders do.`,
     ],
     excludes: [
+      'Ask whether a promotion or the type of gold changes the terms, for example for gold bought elsewhere.',
       'The credit is against a new piece. Terms for a cash sale of old gold differ; ask before you come in.',
       'Making charges and 5% VAT apply to the new piece as normal. The credit covers the gold value only.',
       'Stones and non-gold parts are not gold weight. Ask in store how stones in an old piece are treated before it is weighed.',
     ],
     claim: [
-      'Bring the gold to any branch, with or without the receipt, and photo identification (Emirates ID or passport).',
+      'Bring the gold to a branch with photo identification (Emirates ID or passport), and the receipt if you have it.',
       'Watch the test and the weighing, and ask for the weight and the rate used to be shown on the new invoice.',
       'If you want an idea before you travel, WhatsApp first with the karat stamped on the piece and its approximate weight.',
     ],
@@ -112,17 +116,17 @@ const terms: Record<string, Terms> = {
   },
   returns: {
     covers: [
-      `Unworn pieces in their original condition, with the invoice and, where one was issued, the certificate, returned within ${days} days of purchase.`,
-      `This is our own commitment, over and above the law. It never limits your rights for defective goods under ${law}, under which a defective item must be repaired, replaced or refunded.`,
-      'The policy is the same at every branch. Ask in store whether a return must go back to the branch of purchase.',
+      site.returnPolicy.text,
+      site.returnPolicy.statutory,
+      'Under that law a defective item must be repaired, replaced or refunded.',
     ],
     excludes: [
       'Customised, engraved and resized pieces, which are exchange-only.',
-      'Pieces that have been worn, altered or damaged, or that come back without the invoice or the certificate.',
+      'Pieces that have been worn, altered or damaged.',
       'Coins, bars and deposits on a booked rate: ask in store how these are treated, before you buy.',
     ],
     claim: [
-      `Bring the piece, the invoice and the certificate to any branch within ${days} days of the invoice date.`,
+      `Bring the piece and the invoice, with the certificate where one was issued, to the branch that sold it within ${days} days of purchase.`,
       'Tell us whether you want a refund or an exchange. If how a refund is paid matters to you, ask in store before you buy.',
       `For a defective piece at any time, bring it in with the invoice; your statutory rights apply regardless of the ${days} days.`,
     ],
@@ -140,7 +144,7 @@ const terms: Record<string, Terms> = {
       'Pieces altered by another jeweller: ask in store before you bring them in.',
     ],
     claim: [
-      'Bring the piece and its invoice to any branch and choose the new design.',
+      'Bring the piece and its invoice to the branch that sold it and choose the new design. Ask on WhatsApp if another branch suits you better.',
       'We weigh the old piece and credit its gold at the day’s rate. Any difference is paid at the counter; if the new piece is lighter, ask in store how the balance is handled.',
       'Want an idea first? Message us on WhatsApp with the invoice number and the piece you have in mind.',
     ],
@@ -171,7 +175,7 @@ const jsonLd = [
 ];
 
 const title = 'Our Promises: Hallmark, Diamonds, Returns and Exchange';
-const description = `${countWord(site.promises.length)} written commitments: UAE hallmark, tested diamonds, ${days}-day returns, lifetime care and old gold credited by weight, at every branch. Ask on WhatsApp.`;
+const description = `${countWord(site.promises.length)} written commitments: the UAE hallmark, tested diamonds, ${days}-day returns, cleaning for life and old gold credited by weight. Ask on WhatsApp.`;
 ---
 
 <BaseLayout title={title} description={description} jsonLd={jsonLd}>
@@ -180,9 +184,9 @@ const description = `${countWord(site.promises.length)} written commitments: UAE
   </div>
 
   <Hero
-    eyebrow="Our terms, in writing"
+    eyebrow="Our promise"
     title="Our terms, in writing"
-    lead={`${countWord(site.promises.length)} commitments, each with its conditions stated. They apply at every branch.`}
+    lead={`${countWord(site.promises.length)} commitments, each with what it covers, what it does not and how to claim it. If a term is unclear for your piece, ask before you buy.`}
   />
 
   <section class="section">
@@ -263,7 +267,7 @@ const description = `${countWord(site.promises.length)} written commitments: UAE
               </tbody>
             </table>
             <p class="caption">
-              Parts per thousand of gold, as stamped under UAE Federal Law No. 11 of 2015 and
+              Parts per thousand of gold, as stamped under UAE Federal Law No. 11 of 2015; in Dubai,
               inspected by Dubai Municipality’s Dubai Central Laboratory.
             </p>
           </div>

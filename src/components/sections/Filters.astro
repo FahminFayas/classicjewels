@@ -24,6 +24,8 @@ export interface Props {
 }
 
 const { gridId, total, karats, collections = [], categories, class: className } = Astro.props;
+/** Filtering or sorting fewer than three pieces is noise: the block renders nothing. */
+const show = total >= 3;
 const sorts = [
   { value: 'featured', label: 'Featured order' },
   { value: 'newest', label: 'Newest first' },
@@ -31,6 +33,7 @@ const sorts = [
 ];
 ---
 
+{show && (
 <div class:list={['filters', className]} data-filters={gridId}>
   <noscript>
     <nav class="filters__nojs" aria-label="Browse by piece">
@@ -50,6 +53,7 @@ const sorts = [
       {karats.length > 1 && (
         <div class="filters__group" role="group" aria-label="Karat">
           <span class="filters__label small">Karat</span>
+          <span class="filters__chips">
           {karats.map((k) => (
             <button
               type="button"
@@ -61,11 +65,13 @@ const sorts = [
               {k}K
             </button>
           ))}
+          </span>
         </div>
       )}
       {collections.length > 1 && (
         <div class="filters__group" role="group" aria-label="Collection">
           <span class="filters__label small">Collection</span>
+          <span class="filters__chips">
           {collections.map((c) => (
             <button
               type="button"
@@ -77,6 +83,7 @@ const sorts = [
               {c.name}
             </button>
           ))}
+          </span>
         </div>
       )}
     </div>
@@ -107,8 +114,9 @@ const sorts = [
       : we have more in the trays than online.
     </p>
   </div>
-  <script src="@/scripts/filter.ts"></script>
 </div>
+)}
+<script src="@/scripts/filter.ts"></script>
 
 <style>
   .filters {
@@ -151,10 +159,23 @@ const sorts = [
     gap: var(--space-3);
   }
 
+  /* Label column, then chips that wrap under the first chip rather than under the label. */
   .filters__group {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-2);
+  }
+
+  .filters__group > .filters__label {
+    min-block-size: var(--tap);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .filters__chips {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
     gap: var(--space-2);
   }
 

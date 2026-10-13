@@ -34,8 +34,9 @@ const categories = defineCollection({
       ...seoFields,
       /** First paragraph on the category page, plain text. */
       intro: z.string(),
-      image: image(),
-      imageAlt: z.string(),
+      /** 5:2 cut-out photograph. Leave out until a real one exists; the tile is then typeset. */
+      image: image().optional(),
+      imageAlt: z.string().optional(),
       order: z.number().int(),
       /** Shown in the main navigation. */
       inNav: z.boolean().default(true),
@@ -166,7 +167,7 @@ const faqs = defineCollection({
       .array(
         z.object({
           question: z.string(),
-          /** Plain text. Also emitted as FAQPage JSON-LD. */
+          /** Plain text. Rendered as <details>; no FAQPage JSON-LD (Google retired that result). */
           answer: z.string(),
         }),
       )

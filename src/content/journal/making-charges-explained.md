@@ -4,8 +4,8 @@ description: 'Dubai jewellery is priced as gold rate x net weight + making charg
 headline: 'Making charges explained, with two worked examples'
 pubDate: 2026-10-13
 author: 'Classic Jewels & Diamonds'
-cover: '../../assets/journal/gold-rate-explained.jpg'
-coverAlt: "22K gold bangles on a jeweller's scale beside an itemised invoice"
+cover: '../../assets/journal/chain-tassel-earrings.jpg'
+coverAlt: 'Long chain tassel earrings, one draped over a white stone on a marble disc, with a looped earring, a ring and a speckled pebble on a peach background'
 tags: ['making charges', 'pricing']
 relatedCollections: ['rajkot', 'kolkata', 'singapore']
 ---
@@ -38,7 +38,7 @@ On very light pieces, such as a [Singapore chain](/collections/singapore/), the 
 
 The rate is published for the whole market and is the same in our shop as in the next one. No jeweller in the Souq will move it for one customer; if a shop offers to, check what else on the invoice changed to pay for it.
 
-The making charge is the shop's own charge for labour, so it is the figure to ask about when you compare quotes; the gold rate is not open to discussion. Zero making charge offers are real but usually apply to selected older stock, so ask which pieces qualify.
+The making charge is the shop's own charge for labour, so it is the figure to ask about when you compare quotes; the gold rate is not open to discussion. Zero making charge offers are real but usually apply to selected pieces, so ask which ones qualify.
 
 ## How VAT applies to both
 
@@ -50,16 +50,16 @@ Visitors can reclaim most of that VAT through the Federal Tax Authority's touris
 
 Both examples use an example rate of AED 450 per gram for 22K: a round number chosen for the arithmetic, not a live price. Today's rate is on the [gold-rate page](/gold-rate/), and the weights and charges are illustrations, not quotes for any piece.
 
-|                          | Rajkot bangle pair | Kolkata choker    |
-| ------------------------ | ------------------ | ----------------- |
-| Karat and fineness       | 22K, 916           | 22K, 916          |
-| Net gold weight          | 16 g               | 22 g              |
-| Gold value at AED 450/g  | AED 7,200          | AED 9,900         |
-| Making charge as quoted  | AED 25 per gram    | 12% of gold value |
-| Making charge in dirhams | AED 400            | AED 1,188         |
-| Subtotal                 | AED 7,600          | AED 11,088        |
-| VAT at 5%                | AED 380            | AED 554.40        |
-| Total                    | AED 7,980          | AED 11,642.40     |
+|                              | Rajkot bangle pair   | Kolkata choker         |
+| ---------------------------- | -------------------- | ---------------------- |
+| Karat and fineness           | 22K, 916             | 22K, 916               |
+| Net gold weight              | 16&nbsp;g            | 22&nbsp;g              |
+| Gold value at AED&nbsp;450/g | AED&nbsp;7,200       | AED&nbsp;9,900         |
+| Making charge as quoted      | AED&nbsp;25 per gram | 12% of gold value      |
+| Making charge in dirhams     | AED&nbsp;400         | AED&nbsp;1,188         |
+| Subtotal                     | AED&nbsp;7,600       | AED&nbsp;11,088        |
+| VAT at 5%                    | AED&nbsp;380         | AED&nbsp;554.40        |
+| **Total**                    | **AED&nbsp;7,980**   | **AED&nbsp;11,642.40** |
 
 Converted, the bangle's AED 25 per gram is 5.6% of its gold value and the choker's 12% is AED 54 per gram: more than double the labour per gram, as you would expect from hand filigree against machine finishing.
 
@@ -82,4 +82,4 @@ Before you pay, check the invoice shows:
 
 UAE consumer rules require the invoice to be in Arabic, with English or another language alongside if you prefer, and you will need it for any return, repair or exchange. Keep it with the piece's hallmark card or certificate.
 
-For a quote on a specific piece, send a photo or reference to WhatsApp +971 50 566 1416 and we will reply with weight, rate, making charge and VAT as separate figures. Or [come to Shop No. 6](/stores/) at the Gold Souq Extension in Deira and we will weigh it in front of you.
+For a quote on a specific piece, send a photo or reference on WhatsApp and we will reply with weight, rate, making charge and VAT as separate figures. Or [come to a branch](/stores/) and we will weigh it in front of you.

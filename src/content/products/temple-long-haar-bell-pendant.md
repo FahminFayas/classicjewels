@@ -1,7 +1,7 @@
 ---
 name: 'Temple Long Haar with Bell Pendant'
 sku: 'CJ-NK-008'
-description: '22K temple-style long haar with a large bell pendant and antique finish, from South India. A statement bridal necklace, 916 hallmarked. Enquire on WhatsApp.'
+description: '22K temple-style long haar with a large bell pendant and antique finish, in the South Indian tradition. A statement bridal necklace, 916 hallmarked.'
 category: 'necklaces'
 collection: 'temple'
 occasions: ['wedding']

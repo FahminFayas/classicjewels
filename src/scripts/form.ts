@@ -3,6 +3,8 @@
  *  - [data-copy]: copies a product reference to the clipboard and confirms inline.
  *  - form[data-enhance]: submits the contact form with fetch and shows the result in place.
  *    Without JavaScript the form posts normally and the endpoint redirects to /thank-you/.
+ *    Before sending, it records how long the form was open (fill_ms, from performance.now(), so
+ *    it never depends on the device clock agreeing with the server's).
  */
 
 // ---------- Copy reference ----------
@@ -30,16 +32,17 @@ const form = document.querySelector<HTMLFormElement>('form[data-enhance]');
 if (form) {
   const status = form.querySelector<HTMLElement>('[data-form-status]');
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+  const fill = form.querySelector<HTMLInputElement>('[data-fill-ms]');
   const say = (message: string, tone: 'ok' | 'err') => {
     if (!status) return;
     status.textContent = message;
     status.dataset.tone = tone;
-    status.hidden = false;
   };
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!form.reportValidity()) return;
+    if (fill) fill.value = String(Math.round(performance.now()));
     submit?.setAttribute('aria-busy', 'true');
     submit?.setAttribute('disabled', '');
     try {
@@ -55,6 +58,8 @@ if (form) {
       if (res.ok && body?.ok !== false) {
         say(body?.message ?? 'Thank you. We will reply within one working day.', 'ok');
         form.reset();
+        // Move focus to the confirmation before hiding the fields (the button had focus).
+        status?.focus();
         form.querySelector<HTMLElement>('[data-form-fields]')?.setAttribute('hidden', '');
       } else {
         say(body?.message ?? 'We could not send your message. Please WhatsApp us instead.', 'err');

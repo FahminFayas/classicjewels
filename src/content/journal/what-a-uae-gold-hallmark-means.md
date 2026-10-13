@@ -4,13 +4,13 @@ description: 'What the 916, 875 and 750 stamps on Dubai gold mean, who inspects 
 headline: 'What the 999, 916, 875 and 750 stamps on UAE gold mean, and how to check them'
 pubDate: 2026-10-13
 author: 'Classic Jewels & Diamonds'
-cover: '../../assets/journal/22k-vs-18k.jpg'
-coverAlt: 'A 22-karat gold bangle and an 18-karat gold ring side by side, showing the deeper yellow of 916 gold against the paler 750 alloy'
+cover: '../../assets/journal/diamond-rings-in-a-row.jpg'
+coverAlt: 'Diamond rings standing upright in a row on a grey-blue surface: a round stone between two baguettes, and a solitaire on a yellow gold band'
 tags: ['hallmark', '22k', 'purity']
 relatedCollections: ['rajkot', 'kolkata', 'kuwait']
 ---
 
-Gold jewellery sold in the UAE has to carry a small stamp that says how pure it is. On a 22-karat bangle it reads 916. On a diamond ring it is usually 750. Those three digits are the most useful thing on the piece, and most people never look. Here is how to read them, who stands behind them, and what to ask for at the counter.
+Gold jewellery sold in the UAE has to carry a small stamp that says how pure it is. On a 22-karat bangle it reads 916. On a diamond ring it is usually 750. Those three digits are the most useful thing on the piece, and they are easy to miss. Here is how to read them, who stands behind them, and what to ask for at the counter.
 
 ## Fineness marks and karats
 
@@ -74,4 +74,4 @@ The invoice should itemise the net weight, the karat, the rate per gram, the mak
 
 The same reading is the first thing we do when you bring old pieces in for [gold exchange](/gold-exchange/): stamp, weight, then the day's rate.
 
-Bring any gold you own, ours or anyone else's, and we will read the stamp with you. Message us on WhatsApp at +971 50 566 1416, or [visit Shop No. 6 at the Gold Souq Extension in Deira](/stores/) and ask for the loupe.
+Bring any gold you own, ours or anyone else's, and we will read the stamp with you. Message us on WhatsApp, or [visit a branch](/stores/) and ask for the loupe.

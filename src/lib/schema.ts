@@ -140,6 +140,8 @@ export interface ProductSchemaInput {
   colour?: string;
   category: string;
   collection?: string;
+  /** Absolute URL of the collection page, linked as isRelatedTo. */
+  collectionUrl?: string;
   weightGrams?: number;
   stones?: string;
   certification?: string;
@@ -147,8 +149,10 @@ export interface ProductSchemaInput {
 
 /**
  * Product markup without an Offer: prices are quoted on enquiry because they move with the daily
- * gold rate. Google will not show a price rich result, but the entity still supports image and
- * shopping-intent queries.
+ * gold rate (design-spec §5.4, Option A). Google's product-snippet report will list these pages
+ * as missing "offers, review or aggregateRating" until indicative prices ship (Option B); that is
+ * expected and recorded in docs/launch-checklist.md. The entity still describes the piece for
+ * image and shopping-intent queries.
  */
 export function productSchema(p: ProductSchemaInput): WithContext<Product> {
   const attributes: { name: string; value: string }[] = [
@@ -178,6 +182,10 @@ export function productSchema(p: ProductSchemaInput): WithContext<Product> {
       ? { '@type': 'QuantitativeValue', value: p.weightGrams, unitCode: 'GRM' }
       : undefined,
     additionalProperty: attributes.map((a) => ({ '@type': 'PropertyValue', ...a })),
+    itemCondition: 'https://schema.org/NewCondition',
+    isRelatedTo: p.collectionUrl
+      ? { '@type': 'ProductCollection', name: p.collection, url: p.collectionUrl }
+      : undefined,
     manufacturer: { '@id': ORG_ID },
   };
 }

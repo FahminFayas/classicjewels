@@ -25,6 +25,9 @@ const category = (n) => `assets/images/category/${n}`;
  * [remote path on the old site, local path in this repo, options?]
  * options.square: pad a wide cut-out to a square with its own background colour, so it can sit
  * in a square product plate edge to edge instead of floating as a strip.
+ * options.extract: { left, top, width, height } in source pixels. Crops the photo before it is
+ * saved, so a wide banner can give a 3:2 journal cover framed on the piece rather than on
+ * whatever the CSS centre crop happens to leave.
  */
 const MAP = [
   ...Array.from({ length: 9 }, (_, i) => [product(i + 1), `src/assets/products/p0${i + 1}.jpg`]),
@@ -87,9 +90,28 @@ const MAP = [
     'kuwait',
     'diamonds',
   ].map((n) => [`assets/images/brand/${n}.png`, `src/assets/collections/wordmarks/${n}.png`]),
-  [product(2), 'src/assets/journal/gold-rate-explained.jpg'],
-  [product(4), 'src/assets/journal/22k-vs-18k.jpg'],
-  ['assets/images/about-us/wedding.jpg', 'src/assets/journal/gold-souq-extension-guide.jpg'],
+  // Journal covers: one photograph per article, none shared with another article, the home page
+  // hero or story, or a product plate. Each is cropped to the 3:2 frame the cover and card use.
+  [
+    'assets/images/about-us/3.jpg',
+    'src/assets/journal/two-tone-oval-pendant-set.jpg',
+    { extract: { left: 0, top: 125, width: 750, height: 500 } },
+  ],
+  [
+    'assets/images/breadcrumb/about.jpg',
+    'src/assets/journal/gold-sun-pendant.jpg',
+    { extract: { left: 864, top: 0, width: 717, height: 478 } },
+  ],
+  [
+    'assets/images/breadcrumb/contact.jpg',
+    'src/assets/journal/chain-tassel-earrings.jpg',
+    { extract: { left: 700, top: 0, width: 717, height: 478 } },
+  ],
+  [
+    'assets/images/about-us/2.jpg',
+    'src/assets/journal/diamond-rings-in-a-row.jpg',
+    { extract: { left: 717, top: 0, width: 732, height: 488 } },
+  ],
 ];
 
 /** Placeholders from make-placeholders.mjs are flat ivory images; real photos have far more detail. */
@@ -152,7 +174,7 @@ for (const [remote, local, options = {}] of MAP) {
   const buffer = options.square ? await squareUp(original) : original;
   await ensureDir(file);
   // Normalise: JPG targets become progressive JPEGs, PNG targets stay PNG. Astro optimises at build.
-  const image = sharp(buffer);
+  const image = options.extract ? sharp(buffer).extract(options.extract) : sharp(buffer);
   const out = local.endsWith('.png')
     ? await image.png({ compressionLevel: 9 }).toBuffer()
     : await image

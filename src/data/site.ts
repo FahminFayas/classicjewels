@@ -27,6 +27,8 @@ export interface Branch {
   shortName: string;
   /** Mall or district line. */
   venue: string;
+  /** Where the branch sits; mall branches get mall-specific directions copy. */
+  venueType: 'souq' | 'mall' | 'district';
   city: string;
   emirate: 'Dubai' | 'Sharjah' | 'Abu Dhabi' | 'Al Ain';
   status: 'open' | 'opening-soon';
@@ -56,8 +58,10 @@ export interface Branch {
   instagram?: string;
   /** One-sentence directions. */
   directions?: string;
-  /** Expected opening, for opening-soon branches. */
-  openingNote?: string;
+  /** Customer-facing line for an opening-soon branch. Shown on the site. */
+  publicNote?: string;
+  /** Internal note for the owner. Never rendered. */
+  ownerNote?: string;
 }
 
 export interface SocialProfile {
@@ -87,6 +91,7 @@ export const branches: Branch[] = [
     name: 'Gold Souq Extension, Deira',
     shortName: 'Deira',
     venue: 'Mariyam Plaza, Gold Souq Extension',
+    venueType: 'souq',
     city: 'Dubai',
     emirate: 'Dubai',
     status: 'open',
@@ -130,6 +135,7 @@ export const branches: Branch[] = [
     name: 'Safari Mall, Sharjah',
     shortName: 'Safari Mall',
     venue: 'Safari Mall',
+    venueType: 'mall',
     city: 'Sharjah',
     emirate: 'Sharjah',
     status: 'open',
@@ -149,6 +155,7 @@ export const branches: Branch[] = [
     name: 'Rolla Mall, Sharjah',
     shortName: 'Rolla Mall',
     venue: 'Rolla Mall',
+    venueType: 'mall',
     city: 'Sharjah',
     emirate: 'Sharjah',
     status: 'open',
@@ -168,6 +175,7 @@ export const branches: Branch[] = [
     name: 'Madinat Zayed, Abu Dhabi',
     shortName: 'Madinat Zayed',
     venue: 'Madinat Zayed',
+    venueType: 'district',
     city: 'Abu Dhabi',
     emirate: 'Abu Dhabi',
     status: 'open',
@@ -188,6 +196,7 @@ export const branches: Branch[] = [
     name: 'Mohamed bin Zayed City, Abu Dhabi',
     shortName: 'MBZ City',
     venue: 'Opposite Etihad Rail Mohamed bin Zayed City Station',
+    venueType: 'district',
     city: 'Abu Dhabi',
     emirate: 'Abu Dhabi',
     status: 'opening-soon',
@@ -197,13 +206,15 @@ export const branches: Branch[] = [
       region: 'Abu Dhabi',
       countryCode: 'AE',
     },
-    openingNote: 'Announced as coming soon. TODO(owner): opening date.',
+    publicNote: 'Opening soon, opposite the Etihad Rail station. Dates to follow.',
+    ownerNote: 'Announced on Instagram on 16 July 2026. TODO(owner): opening date.',
   },
   {
     id: 'musaffah-al-ain',
     name: 'Musaffah and Al Ain',
     shortName: 'Musaffah / Al Ain',
     venue: 'Musaffah, Abu Dhabi and Al Ain',
+    venueType: 'district',
     city: 'Abu Dhabi',
     emirate: 'Abu Dhabi',
     status: 'opening-soon',
@@ -213,8 +224,9 @@ export const branches: Branch[] = [
       region: 'Abu Dhabi',
       countryCode: 'AE',
     },
-    openingNote:
-      'Advertised as opening soon in September 2026. TODO(owner): confirm whether this is one branch or two, and the opening dates.',
+    publicNote: 'Opening soon. Dates to follow.',
+    ownerNote:
+      'Advertised as opening soon on 23 September 2026. TODO(owner): confirm whether this is one branch or two, and the opening dates.',
   },
 ];
 
@@ -238,7 +250,7 @@ export const site = {
   /** The inherited brand line, kept as the voice of the site. */
   slogan: 'Every jewel has a tale',
   defaultDescription:
-    'Classic Jewels & Diamonds sells 22K and 18K hallmarked gold jewellery, certified diamonds and gold coins and bars from four branches in Dubai, Sharjah and Abu Dhabi, priced at the daily Dubai rate.',
+    'Classic Jewels & Diamonds sells 22K and 18K hallmarked gold jewellery, tested diamonds and gold coins and bars in Dubai, Sharjah and Abu Dhabi, priced at the daily Dubai rate.',
 
   group: {
     name: 'Classic Group of Companies',
@@ -255,6 +267,8 @@ export const site = {
      */
     yearsInGold: 35,
     yearsInUae: 16,
+    /** The one approved way to state the group's history in copy. */
+    experience: 'in the gold trade for over 35 years, more than 16 of them in the UAE',
     trade: 'bullion trading, scrap gold buying and refining',
   },
 
@@ -332,8 +346,9 @@ export const site = {
   ] as SocialProfile[],
 
   /**
-   * The six promises from the previous home page, reworded as Classic-specific, verifiable
-   * statements. TODO(owner): confirm the exact terms of each before launch.
+   * The six promises from the previous home page, reworded as Classic-specific statements. Scope
+   * is deliberately generic until the owner signs off the exact terms (launch checklist item 9).
+   * TODO(owner): confirm the exact terms of each before launch.
    */
   promises: [
     {
@@ -344,32 +359,32 @@ export const site = {
     },
     {
       id: 'hallmark-916',
-      title: 'UAE-hallmarked 22K, stamped 916',
+      title: 'The UAE hallmark on every piece',
       detail:
-        '91.6% pure gold, assayed and stamped as UAE law requires. Weight and fineness are printed on your invoice.',
+        '22K is stamped 916, 21K 875 and 18K 750, as UAE law requires. Weight and fineness are printed on your invoice.',
     },
     {
       id: 'lifetime-maintenance',
-      title: 'Free cleaning and polishing for life',
+      title: 'Cleaning and polishing for life',
       detail:
-        'Bring any piece back for cleaning, polishing and stone tightening, for as long as you own it.',
+        'Bring a piece back for cleaning, polishing and a check of its settings, for as long as you own it.',
     },
     {
       id: 'gold-exchange',
       title: 'Old gold exchanged with no weight deduction',
       detail:
-        'Your old gold is tested and credited at its full gold value, by weight, at the day’s rate against a new piece.',
+        'Old gold is tested in front of you and credited by weight at the day’s rate against a new piece.',
     },
     {
       id: 'returns',
       title: '14 days to change your mind',
       detail:
-        'Unworn pieces in original condition can be returned within 14 days with the invoice. Custom pieces are exchange-only.',
+        'Unworn pieces can be returned within 14 days with the invoice. Customised, engraved and resized pieces are exchange-only.',
     },
     {
       id: 'easy-exchange',
       title: 'Exchange for another design',
-      detail: 'Swap a piece for a different design at its gold value, without the paperwork.',
+      detail: 'Exchange a piece for a different design, credited at its gold value. Ask for the terms.',
     },
   ] as Promise_[],
 
@@ -377,6 +392,10 @@ export const site = {
   returnPolicy: {
     days: 14,
     lawReference: 'UAE Federal Law No. 15 of 2020 on Consumer Protection',
+    /** The canonical wording, rendered on the promise page, the terms and the FAQ. */
+    text: 'Unworn pieces in their original condition can be returned within 14 days of purchase with the invoice, and the certificate where one was issued. Customised, engraved and resized pieces are exchange-only. Returns are taken at the branch that sold the piece.',
+    statutory:
+      'This is our own commitment. It does not limit your rights for defective goods under UAE Federal Law No. 15 of 2020 on Consumer Protection.',
   },
 
   /** Payment methods accepted in store (Google listing and the old site's footer). */

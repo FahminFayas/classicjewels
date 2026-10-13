@@ -1,10 +1,11 @@
 ---
 /**
- * Gold rate. Section order follows docs/design-spec.md §7.8, adapted to the four-branch brand:
- * typographic hero, the plum board, prose with anchored H2s beside an on-page index, the history
- * table once a week of snapshots exists, the rate FAQ and the enquiry block. Every figure is
- * baked at build from src/content/rates (refreshed in place by src/scripts/rate.ts); nothing on
- * this page is typed by hand. Prints as a black-on-white board with the address and URL.
+ * Gold rate. Section order follows docs/design-spec.md §7.8: typographic hero (eyebrow, H1, lead,
+ * no buttons) followed directly by the plum board, prose with anchored H2s beside an on-page index,
+ * the history table once a week of snapshots exists, the rate FAQ and the enquiry block. Every
+ * figure is baked at build from src/content/rates and carries a rate.ts hook (data-rate,
+ * data-rate-calc, data-rate-date), so a refresh in the browser updates the derived amounts and the
+ * dates too. Prints as a black-on-white board with the address and URL.
  */
 import type { Dataset, WithContext } from 'schema-dts';
 
@@ -13,7 +14,6 @@ import Faq from '@/components/sections/Faq.astro';
 import Hero from '@/components/sections/Hero.astro';
 import RateBoard from '@/components/sections/RateBoard.astro';
 import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
-import Button from '@/components/ui/Button.astro';
 import { openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getActiveOffers, getFaqGroup, type Offer } from '@/lib/content';
@@ -33,21 +33,34 @@ const [faq, offers, { latest, history, stale }] = await Promise.all([
 const branchCount = countWord(openBranches.length).toLowerCase();
 const updated = latest ? formatDate(latest.date) : null;
 
-/* Worked example for the pricing section, computed from the baked 22K rate. */
+/*
+ * Worked example for the pricing section, computed from the baked 22K rate. Rounded to the dirham
+ * exactly as rate.ts recomputes [data-rate-calc], so the baked and refreshed figures match.
+ */
 const EXAMPLE_GRAMS = 8;
+const METHOD_LABEL = 'How it is worked out';
+const AMOUNT_LABEL = `${EXAMPLE_GRAMS} g, 22K`;
 const k22 = latest ? latest.perGram['22k'] : null;
-const exampleGold = k22 === null ? null : Math.round(EXAMPLE_GRAMS * k22 * 100) / 100;
+const exampleGold = k22 === null ? null : Math.round(EXAMPLE_GRAMS * k22);
 
-/* The first active offer that lets customers book the rate, and the term that says how. */
-let booking: { offer: Offer; term: string } | undefined;
+/*
+ * The first active offer that lets customers book the rate. The sentence is written here rather
+ * than spliced from the offer's headline and term: only the deposit figure and a short offer name
+ * ("Diwali 2026 offer", the headline before its colon) are taken from the content.
+ */
+let booking: { offer: Offer; deposit: string; name: string } | undefined;
 for (const offer of offers) {
   const term = offer.data.terms.find(
     (t) => /\brate\b/i.test(t) && /\b(book|lock|deposit|advance)/i.test(t),
   );
-  if (term) {
-    booking = { offer, term };
-    break;
-  }
+  if (!term) continue;
+  const pct = /(\d+(?:\.\d+)?)\s*%\s*deposit/i.exec(term)?.[1];
+  const deposit = pct ? `${/^(8|11|18)\b/.test(pct) ? 'an' : 'a'} ${pct}% deposit` : 'a deposit';
+  const short = (offer.data.headline.split(':')[0] ?? offer.data.headline)
+    .replace(/[.!]$/, '')
+    .trim();
+  booking = { offer, deposit, name: /\boffers?$/i.test(short) ? short : `${short} offer` };
+  break;
 }
 
 const HISTORY_KARATS: Karat[] = ['24k', '22k', '21k', '18k'];
@@ -89,14 +102,16 @@ const jsonLd: WithContext<Dataset>[] = latest
     ]
   : [];
 
+/* The posting date sits under the lead, with rate.ts hooks, so it changes with the board. */
 const lead = latest
-  ? `AED per gram for 24K, 22K, 21K, 18K and 14K, as posted on the boards in our ${branchCount} branches. Updated ${updated}.`
+  ? `AED per gram for 24K, 22K, 21K, 18K and 14K, as posted on the boards in our ${branchCount} branches.`
   : `AED per gram for 24K, 22K, 21K, 18K and 14K, as posted on the boards in our ${branchCount} branches. Call ${site.phone.landline.display} for today’s figure.`;
+const description = `Today’s gold rate in Dubai, AED per gram for 24K, 22K, 21K, 18K and 14K, as posted in our ${branchCount} branches, with a worked pricing example.`;
 ---
 
 <BaseLayout
   title="Gold Rate in Dubai Today: 24K, 22K, 21K, 18K per gram"
-  description="Today’s gold rate in Dubai, AED per gram for 24K, 22K, 21K, 18K and 14K, as posted in our four branches, with a worked pricing example. Ask on WhatsApp."
+  description={description}
   jsonLd={jsonLd}
 >
   <div class="container">
@@ -104,13 +119,17 @@ const lead = latest
   </div>
 
   <Hero eyebrow="Gold rate · Dubai" title="Today’s gold rate in Dubai" lead={lead} display>
-    <Button href={whatsappGoldRate()} icon="whatsapp" external class="no-print">
-      Ask for a quote at today’s rate
-    </Button>
-    <Button href="#pricing" variant="secondary" class="no-print">
-      How a piece is priced
-    </Button>
-    <Fragment slot="note">The board, as it reads in the shop.</Fragment>
+    {latest && (
+      <p class="posted small">
+        {stale ? 'Last posted' : 'Updated'}{' '}
+        <time datetime={latest.date} data-rate-date={latest.date}>
+          <span data-rate-date-text data-format="full">
+            {updated}
+          </span>
+        </time>
+        .
+      </p>
+    )}
   </Hero>
 
   <section class="board-section">
@@ -140,9 +159,8 @@ const lead = latest
           <p>
             The figure on our board is the Dubai Jewellery Group’s suggested retail rate for gold
             jewellery: AED per gram, one figure for each karat. It is derived from the international
-            gold price converted to dirhams per gram, plus a retail margin, and it is the rate posted
-            on the boards of member jewellers across Dubai, supervised by Dubai Economy’s consumer
-            protection department.
+            gold price converted to dirhams per gram, plus a retail margin, and it is the rate
+            posted on the boards of member jewellers across Dubai.
           </p>
           <p>
             We post the latest rate from our board and refresh this page during the day; the date
@@ -159,7 +177,14 @@ const lead = latest
           </p>
           {exampleGold !== null && k22 !== null ? (
             <p>
-              An {EXAMPLE_GRAMS} g 22K bangle at AED {k22.toFixed(2)}/g is {formatAed(exampleGold)}{' '}
+              An {EXAMPLE_GRAMS} g 22K bangle at{' '}
+              <span class="nowrap">
+                AED <span data-rate="22k">{k22.toFixed(2)}</span>
+              </span>{' '}
+              per gram is{' '}
+              <span class="nowrap" data-rate-calc="22k" data-grams={EXAMPLE_GRAMS}>
+                {formatAed(exampleGold)}
+              </span>{' '}
               in gold, plus the making charge for the work, plus VAT.
             </p>
           ) : (
@@ -170,33 +195,46 @@ const lead = latest
             </p>
           )}
           <table class="example">
-            <caption class="sr-only">How the price of an {EXAMPLE_GRAMS} g 22K bangle is built</caption>
+            <caption class="sr-only">
+              How the price of an{EXAMPLE_GRAMS}g 22K bangle is built
+            </caption>
             <thead>
               <tr>
                 <th scope="col">Line</th>
-                <th scope="col">How it is worked out</th>
-                <th scope="col">{EXAMPLE_GRAMS} g, 22K</th>
+                <th scope="col">{METHOD_LABEL}</th>
+                <th scope="col">{AMOUNT_LABEL}</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <th scope="row">Gold</th>
-                <td>22K rate × net gold weight</td>
-                <td>
-                  {exampleGold !== null && k22 !== null
-                    ? `${EXAMPLE_GRAMS} g × AED ${k22.toFixed(2)} = ${formatAed(exampleGold)}`
-                    : `${EXAMPLE_GRAMS} g × today’s 22K rate`}
+                <td data-label={METHOD_LABEL}>22K rate × net gold weight</td>
+                <td data-label={AMOUNT_LABEL}>
+                  {exampleGold !== null && k22 !== null ? (
+                    <>
+                      {EXAMPLE_GRAMS} g ×{' '}
+                      <span class="nowrap">
+                        AED <span data-rate="22k">{k22.toFixed(2)}</span>
+                      </span>{' '}
+                      ={' '}
+                      <span class="nowrap" data-rate-calc="22k" data-grams={EXAMPLE_GRAMS}>
+                        {formatAed(exampleGold)}
+                      </span>
+                    </>
+                  ) : (
+                    `${EXAMPLE_GRAMS} g × today’s 22K rate`
+                  )}
                 </td>
               </tr>
               <tr>
                 <th scope="row">Making charge</th>
-                <td>Quoted per piece for the work</td>
-                <td>Quoted at the counter</td>
+                <td data-label={METHOD_LABEL}>Quoted per piece for the work</td>
+                <td data-label={AMOUNT_LABEL}>Quoted at the counter</td>
               </tr>
               <tr>
                 <th scope="row">VAT</th>
-                <td>5% of the gold value plus the making charge</td>
-                <td>5% of the subtotal</td>
+                <td data-label={METHOD_LABEL}>5% of the gold value plus the making charge</td>
+                <td data-label={AMOUNT_LABEL}>5% of the subtotal</td>
               </tr>
             </tbody>
           </table>
@@ -205,9 +243,9 @@ const lead = latest
           {booking ? (
             <>
               <p>
-                Until {formatDate(booking.offer.data.endsOn)} you can book the rate under our{' '}
-                <a href={routes.offer(booking.offer.id)}>{booking.offer.data.headline}</a> offer:{' '}
-                {booking.term}
+                Until {formatDate(booking.offer.data.endsOn)} you can lock the day’s rate with{' '}
+                {booking.deposit}, as part of our{' '}
+                <a href={routes.offer(booking.offer.id)}>{booking.name}</a>.
               </p>
               <p>
                 The rate on the day you pay the deposit is the rate on your invoice, whatever the
@@ -215,7 +253,10 @@ const lead = latest
               </p>
             </>
           ) : (
-            <p>For wedding orders we can lock the rate against an advance; ask on WhatsApp.</p>
+            <p>
+              No rate-booking offer is running at the moment. Ask on WhatsApp whether the rate can
+              be booked for your order.
+            </p>
           )}
 
           <h2 id="coins">Coins and bars</h2>
@@ -230,8 +271,9 @@ const lead = latest
 
           <h2 id="exchange">Exchanging old gold</h2>
           <p>
-            Old gold is tested and weighed in front of you and credited at the day’s rate for its
-            karat against a new piece, with no deduction for wear, design or making.
+            Old gold is tested and weighed in front of you and credited by weight at the day’s rate
+            for its karat against a new piece. Ask whether a promotion or the type of gold changes
+            the terms.
           </p>
           <p>
             Making charges and VAT apply to the new piece.{' '}
@@ -241,9 +283,7 @@ const lead = latest
           <h2 id="history">Rate history</h2>
           {showHistory ? (
             <table class="history tabular">
-              <caption class="sr-only">
-                Posted gold rates in AED per gram, newest first
-              </caption>
+              <caption class="sr-only">Posted gold rates in AED per gram, newest first</caption>
               <thead>
                 <tr>
                   <th scope="col">Date</th>
@@ -280,9 +320,9 @@ const lead = latest
             soft for jewellery that is worn every day.
           </p>
           <p>
-            22K (916) for most Indian and Gulf jewellery: bridal sets, bangles, chains and haar. Hard
-            enough to wear, pure enough to hold its value by weight; most of what is on our trays is
-            22K.
+            22K (916) for most Indian and Gulf jewellery: bridal sets, bangles, chains and haar.
+            Hard enough to wear, pure enough to hold its value by weight; most of what is on our
+            trays is 22K.
           </p>
           <p>
             21K (875) for Arabic and Turkish designs. It is the long-standing Gulf standard for
@@ -359,6 +399,55 @@ const lead = latest
 
   .history td {
     text-align: end;
+  }
+
+  /* The hero's action row holds only the posting date on this page. */
+  .posted {
+    color: var(--ink-500);
+  }
+
+  /* Below 40em the three columns become label/value pairs, one row per line of the price. */
+  @media (max-width: 39.99em) {
+    .example,
+    .example tbody,
+    .example tr,
+    .example th,
+    .example td {
+      display: block;
+    }
+
+    .example thead {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+
+    .example tr {
+      display: grid;
+      gap: var(--space-2);
+      padding-block: var(--space-4);
+      border-block-end: 1px solid var(--rule-1);
+    }
+
+    .example tr:last-child {
+      border-block-end: 0;
+    }
+
+    .example th[scope='row'],
+    .example td {
+      padding: 0;
+      border: 0;
+    }
+
+    .example td::before {
+      content: attr(data-label);
+      display: block;
+      font-size: var(--t-caption);
+      color: var(--ink-500);
+    }
   }
 
   .history thead th:not(:first-child) {

@@ -19,18 +19,13 @@ import SectionHead from '@/components/ui/SectionHead.astro';
 import { branches, emirates, flagship, openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getDesignCollections, getNavCategories } from '@/lib/content';
-import { countWord, formatDate } from '@/lib/format';
+import { countWord, formatDate, listWords } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { jewelryStoreSchema } from '@/lib/schema';
 import { whatsappGeneral } from '@/lib/whatsapp';
 
 const [collections, categories] = await Promise.all([getDesignCollections(), getNavCategories()]);
 
-/** "a, b and c" */
-const listWords = (items: string[]) =>
-  items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`;
-
-const years = site.group.yearsInGold;
 const brandYear = site.founded.brandYear;
 const branchWord = countWord(openBranches.length).toLowerCase();
 const emirateList = listWords(emirates);
@@ -43,6 +38,7 @@ for (const b of openBranches.filter((b) => !b.isFlagship)) {
 const expansion = listWords(
   [...venuesByEmirate].map(([emirate, venues]) => `${listWords(venues)} in ${emirate}`),
 );
+const followed = openBranches.filter((b) => !b.isFlagship).length;
 const soon = branches.filter((b) => b.status === 'opening-soon');
 
 const pieceNames = categories
@@ -51,18 +47,32 @@ const pieceNames = categories
 const collectionNames = collections.map((c) => c.data.name.replace(/ Collection$/i, ''));
 
 const steps = [
-  { title: 'We weigh the piece in front of you.', text: 'The gross weight is read off the scale before anything else is discussed.' },
-  { title: 'We apply the day’s rate per gram for its karat.', text: 'The same rate is posted on the board in the shop and on this site, in AED per gram.' },
-  { title: 'We quote the making charge for the work.', text: 'Per piece, for the work in that piece. Then 5% VAT is added on the invoice.' },
-  { title: 'You leave with the hallmark on the piece and the facts on the invoice.', text: 'Weight, fineness, rate, making charge and VAT are itemised, so you can compare shops line by line.' },
+  {
+    title: 'We weigh the piece in front of you.',
+    text: 'The gross weight is read off the scale before anything else is discussed.',
+  },
+  {
+    title: 'We apply the day’s rate per gram for its karat.',
+    text: 'The same rate is posted on the board in the shop and on this site, in AED per gram.',
+  },
+  {
+    title: 'We quote the making charge for the work.',
+    text: 'Per piece, for the work in that piece. Then 5% VAT is added on the invoice.',
+  },
+  {
+    title: 'You leave with the hallmark on the piece and the facts on the invoice.',
+    text: 'Weight, fineness, rate, making charge and VAT are itemised, so you can compare shops line by line.',
+  },
 ];
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const storeImage = new URL('/og/default.png', origin).toString();
-const jsonLd = openBranches.filter((b) => !b.isFlagship).map((b) => jewelryStoreSchema(b, storeImage));
+const jsonLd = openBranches
+  .filter((b) => !b.isFlagship)
+  .map((b) => jewelryStoreSchema(b, storeImage));
 
 const title = 'About Classic Jewels & Diamonds, Classic Group, Dubai';
-const description = `The Classic Group has traded and refined gold in Dubai for over ${years} years; its jewellery house opened in ${brandYear} and has ${branchWord} UAE branches. Visit or WhatsApp us.`;
+const description = `The Classic Group has been ${site.group.experience}. Its jewellery house opened in ${brandYear} and has ${branchWord} UAE branches.`;
 ---
 
 <BaseLayout title={title} description={description} jsonLd={jsonLd}>
@@ -73,7 +83,7 @@ const description = `The Classic Group has traded and refined gold in Dubai for 
   <Hero
     eyebrow="Classic Group · Dubai"
     title="About Classic Jewels & Diamonds"
-    lead={`The jewellery house of the Classic Group: bullion traders and refiners in Dubai for over ${years} years, jewellers since ${brandYear}, now in ${branchWord} branches across ${emirateList}.`}
+    lead={`The jewellery house of the Classic Group, ${site.group.experience}. Jewellers since ${brandYear}, now with ${branchWord} branches in ${emirateList}.`}
     media="image"
     image={heroImage}
     imageAlt="Oval diamond pendant and matching earrings on a mint box"
@@ -92,12 +102,14 @@ const description = `The Classic Group has traded and refined gold in Dubai for 
         <div class="story__body prose">
           <h2>Gold traders first</h2>
           <p>
-            The Classic Group began with Classic Bullion. Its trade is {site.group.trade}, and it
-            has done that work in Dubai for over {years} years. Jewellery came later: in {brandYear}
-            the group opened Classic Jewels &amp; Diamonds to sell the metal it already traded,
-            tested and refined, at the weight and karat it was used to standing behind.
+            The Classic Group began with Classic Bullion. Its trade is {site.group.trade}, and the
+            group has been {site.group.experience}. Jewellery came later: in {brandYear} the group
+            opened Classic Jewels &amp; Diamonds to sell the metal it already traded, tested and
+            refined, at the weight and karat it was used to standing behind.
           </p>
-          <p>The group today has {countWord(site.group.divisions.length).toLowerCase()} divisions.</p>
+          <p>
+            The group today has {countWord(site.group.divisions.length).toLowerCase()} divisions.
+          </p>
           <ol class="divisions rows" role="list">
             {site.group.divisions.map((d, i) => (
               <li class="divisions__row">
@@ -131,9 +143,9 @@ const description = `The Classic Group has traded and refined gold in Dubai for 
         <div class="story__body prose">
           <h2>From one shop to {branchWord}</h2>
           <p>
-            The first shop opened in {brandYear} at {flagship.venue}, Deira: Shop No. 6, inside the
-            multistorey car-park building behind RAK Bank. Since then {expansion} have followed, so
-            there are now {branchWord} branches across {emirateList}.
+            The first shop opened in {brandYear} in {site.address.locality}, at{' '}
+            {site.address.street}. Since then {expansion} {followed === 1 ? 'has' : 'have'}{' '}
+            followed, so there are now {branchWord} branches across {emirateList}.
           </p>
           {soon.length > 0 && (
             <p>
@@ -142,8 +154,8 @@ const description = `The Classic Group has traded and refined gold in Dubai for 
             </p>
           )}
           <p>
-            The written terms on this site apply at every branch. Hours, directions and parking for
-            each one are on the <a href={routes.stores}>stores page</a>.
+            Each branch, with directions and the hours we have for it, is on the{' '}
+            <a href={routes.stores}>stores page</a>.
           </p>
         </div>
       </div>
@@ -163,8 +175,8 @@ const description = `The Classic Group has traded and refined gold in Dubai for 
             {listWords(pieceNames).replace(/^./, (c) => c.toUpperCase())} in 22K and 18K gold, every
             piece hallmarked and listed with its karat. <a href={routes.diamonds}>Diamond pieces</a>{' '}
             are set in 18K and tested in front of you.{' '}
-            <a href={routes.goldCoinsBars}>Coins and bars</a> in 22K and 24K are priced near the rate
-            with no making charge.
+            <a href={routes.goldCoinsBars}>Coins and bars</a> are priced near the rate with no
+            making charge; ask which are in stock.
           </p>
           <p>
             The jewellery is arranged in{' '}
@@ -205,8 +217,7 @@ const description = `The Classic Group has traded and refined gold in Dubai for 
         <div class="story__body prose">
           <h2>How we sell</h2>
           <p>
-            A sale at any of our counters has the same four steps, whatever the piece or the
-            branch.
+            A sale at any of our counters has the same four steps, whatever the piece or the branch.
           </p>
           <ol class="steps rows" role="list">
             {steps.map((s, i) => (
@@ -296,7 +307,7 @@ const description = `The Classic Group has traded and refined gold in Dubai for 
     <div class="container">
       <EnquiryBlock
         heading="Ask us anything about the group or the shops"
-        text="WhatsApp is fastest during shop hours. Calls go to the Deira counter."
+        text={`WhatsApp is fastest during shop hours. Calls go to the ${flagship.shortName} counter.`}
       />
     </div>
   </section>
@@ -398,6 +409,14 @@ const description = `The Classic Group has traded and refined gold in Dubai for 
     block-size: auto;
     aspect-ratio: 4 / 1;
     object-fit: cover;
+  }
+
+  /* On phones the 4:1 panorama is too thin to show the rings; crop to the centre instead. */
+  @media (max-width: 39.99em) {
+    .rings :global(img) {
+      aspect-ratio: 3 / 2;
+      object-position: center;
+    }
   }
 
   .rings figcaption {

@@ -48,9 +48,13 @@ $field = static fn(string $key, int $max): string => mb_substr(trim((string) ($_
 if ($field('website', 10) !== '') {
     respond(200, 'Thank you.', $wantsJson); // pretend success so bots learn nothing
 }
-// Time trap: the form stamps when it was rendered.
-$startedAt = (int) ($_POST['started_at'] ?? 0);
-if ($startedAt > 0 && (time() - $startedAt) < MIN_FILL_SECS) {
+// Time trap: src/scripts/form.ts sends how long the form was open, measured on the visitor's
+// device (fill_ms). Comparing two clocks would drop real enquiries whenever a phone's clock runs
+// ahead of the server, so only the device's own elapsed time is used. Without JavaScript the field
+// is absent and the check is skipped. Suppressed submissions are logged for audit.
+$fillMs = isset($_POST['fill_ms']) ? (int) $_POST['fill_ms'] : -1;
+if ($fillMs >= 0 && $fillMs < MIN_FILL_SECS * 1000) {
+    error_log('classicjewels contact: submission suppressed by time trap (' . $fillMs . ' ms)');
     respond(200, 'Thank you.', $wantsJson);
 }
 
@@ -66,7 +70,9 @@ if ($name === '' || $message === '' || !filter_var($email, FILTER_VALIDATE_EMAIL
     respond(422, 'Please fill in your name, a valid email address and a message.', $wantsJson);
 }
 
-$clean = static fn(string $s): string => str_replace(["\r", "\n", '%0a', '%0d'], ' ', $s);
+// Header values: strip line breaks (header injection) and MIME-encode anything non-ASCII.
+$clean = static fn(string $s): string => str_replace(["\r", "\n"], ' ', $s);
+$encode = static fn(string $s): string => mb_encode_mimeheader($clean($s), 'UTF-8', 'Q');
 
 $body = implode("\n", [
     'Name:    ' . $name,
@@ -82,12 +88,15 @@ $body = implode("\n", [
 
 $headers = [
     'From: Classic Jewels Website <no-reply@classicjewels.ae>',
-    'Reply-To: ' . $clean($name) . ' <' . $clean($email) . '>',
+    // Only the validated address: a display name could smuggle extra recipients into the header.
+    'Reply-To: ' . $clean($email),
+    'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=utf-8',
     'X-Mailer: classicjewels.ae',
 ];
 
-$sent = mail(RECIPIENT, SUBJECT . ' - ' . $clean($topic !== '' ? $topic : 'General'), $body, implode("\r\n", $headers));
+$subject = $encode(SUBJECT . ' - ' . ($topic !== '' ? $topic : 'General'));
+$sent = mail(RECIPIENT, $subject, $body, implode("\r\n", $headers));
 if (!$sent) {
     respond(500, 'We could not send your message. Please WhatsApp us instead.', $wantsJson);
 }

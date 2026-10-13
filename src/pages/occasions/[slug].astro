@@ -55,52 +55,71 @@ const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const collectionName = new Map(collections.map((c) => [c.id, c.data.name]));
 const offer = offers[0];
 
-/** H1 and lead per design-spec §5.1 and §7.15; unknown occasions fall back to the content. */
-const copy: Record<string, { h1: string; lead: string; ask: string; note: string }> = {
+/**
+ * H1 and lead per design-spec §5.1 and §7.15; unknown occasions fall back to the content.
+ * `forPhrase` gives headings their article ("for a wedding", "for festivals").
+ * `note` is printed after the Markdown body, so it carries only facts the body does not already
+ * give; leave it out where the body says it all.
+ */
+interface OccasionCopy {
+  h1: string;
+  lead: string;
+  ask: string;
+  forPhrase: string;
+  note?: string;
+}
+const copy: Record<string, OccasionCopy> = {
   wedding: {
     h1: 'Bridal gold sets',
     lead: '22K bridal sets, bangles and haars for Indian, Pakistani and Arab weddings, hallmarked 916 and priced at the day’s rate.',
     ask: 'I’m planning wedding jewellery. Could we arrange a consultation?',
-    note: 'A wedding order is usually agreed three months out. Once the design and gold weight are fixed, an advance can lock the day’s rate for the whole order, so a rise in the market before the date does not change the price. Every piece is invoiced with its karat, weight, rate, making charge and 5% VAT on separate lines.',
+    forPhrase: 'for a wedding',
   },
   anniversary: {
     h1: 'Anniversary jewellery',
     lead: '18K diamond pieces with their paperwork, and 22K classics that hold their value by weight.',
     ask: 'I’m looking for an anniversary gift. Could you suggest a few pieces?',
-    note: 'Diamonds are set in 18K because it holds a stone better than 22K. Every stone is instrument-tested in the shop before it reaches the tray, and larger diamonds come with an independent grading report that goes in the box with the invoice.',
+    forPhrase: 'for an anniversary',
+    note: 'Diamonds are set in 18K because it holds a stone better than 22K. Every stone is instrument-tested in the shop, and larger diamonds come with an independent grading report.',
   },
   birthday: {
     h1: 'Birthday gold',
     lead: 'Pendants, light earrings and children’s bangles, weighed and invoiced, boxed and ready to give.',
     ask: 'I’m looking for a birthday gift in gold. What would you suggest?',
-    note: 'For a child, a 22K bangle or a small coin is the gift that keeps its value: both are priced by weight, and the invoice records the karat and grams for any later exchange. For adults, an initial pendant or a pair of hoops is the safe choice.',
+    forPhrase: 'for a birthday',
+    note: 'Keep the invoice with the gift: it records the karat and the weight in grams, which is what any later exchange is based on.',
   },
   festivals: {
     h1: 'Gold for Diwali, Dhanteras, Akshaya Tritiya and Eid',
     lead: 'Coins, Lakshmi pendants and 22K sets, reserved on WhatsApp and collected from the branch of your choice.',
     ask: 'I’d like to buy gold for the festival. What do you have in coins and sets?',
-    note: 'The rate is set each morning and can move during the day. Coins and plain chains are the easiest pieces to compare across shops because they are bought almost entirely by weight; 24K coins and bars of 99% purity or more are zero-rated for VAT, while 22K coins and jewellery carry 5%.',
+    forPhrase: 'for festivals',
+    note: 'On VAT: 24K coins and bars of 99% purity or more are zero-rated, while 22K coins and jewellery carry 5%.',
   },
 };
-const page = copy[occasion.id] ?? {
+const page: OccasionCopy = copy[occasion.id] ?? {
   h1: data.name,
   lead: data.summary,
   ask: `I’m looking for jewellery for ${data.name.toLowerCase()}.`,
-  note: '',
+  forPhrase: `for ${data.name.toLowerCase()}`,
 };
 
 const title = data.title.length <= TITLE_MAX ? data.title : `${page.h1} in Dubai`;
 const whatsapp = whatsappUrl(`${site.whatsapp.greeting} ${page.ask}`);
 
-const jsonLd = [
-  itemListSchema(
-    products.map((p) => ({
-      name: p.data.name,
-      url: new URL(routes.product(p.data.category.id, p.id), origin).toString(),
-    })),
-    page.h1,
-  ),
-];
+/** No ItemList when nothing is tagged: a list of zero items tells a search engine nothing. */
+const jsonLd =
+  products.length > 0
+    ? [
+        itemListSchema(
+          products.map((p) => ({
+            name: p.data.name,
+            url: new URL(routes.product(p.data.category.id, p.id), origin).toString(),
+          })),
+          page.h1,
+        ),
+      ]
+    : [];
 ---
 
 <BaseLayout title={title} description={data.description} jsonLd={jsonLd}>
@@ -118,6 +137,7 @@ const jsonLd = [
     title={page.h1}
     lead={page.lead}
     media="image"
+    shape="portrait"
     image={data.image}
     imageAlt={data.imageAlt}
   >
@@ -146,7 +166,7 @@ const jsonLd = [
         <>
           <SectionHead
             eyebrow="In the trays"
-            title={`${countWord(products.length)} ${products.length === 1 ? 'piece' : 'pieces'} for ${data.name.toLowerCase()}.`}
+            title={`${countWord(products.length)} ${products.length === 1 ? 'piece' : 'pieces'} ${page.forPhrase}.`}
           >
             <Fragment slot="aside">
               <a class="link-quiet section__link" href={routes.jewellery}>
@@ -181,7 +201,7 @@ const jsonLd = [
   <section class="section section--ruled">
     <div class="container">
       <div class="prose">
-        <h2>Buying for {data.name.toLowerCase()}</h2>
+        <h2>Buying {page.forPhrase}</h2>
         <Content />
         {page.note && <p>{page.note}</p>}
       </div>

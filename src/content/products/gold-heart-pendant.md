@@ -15,4 +15,4 @@ isNew: true
 order: 12
 ---
 
-A plain polished heart in 22K on a fine chain. Light enough for a child, classic enough for an adult, and the most-given gift in the shop.
+A plain polished heart in 22K on a fine chain. Light enough for a child and classic enough for an adult.

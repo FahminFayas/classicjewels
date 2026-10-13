@@ -3,6 +3,11 @@
  * One branch: address and contact, hours as listed, directions and map, what the counter does,
  * the other branches, the visiting FAQ and a branch-specific enquiry. Built for every open branch
  * in src/data/site.ts; an opening-soon branch has no page until its status changes.
+ *
+ * Copy that only fits one branch is gated on its data: mall wording on venueType 'mall', the
+ * "Hours & Directions" title on branch.hours, "Get directions" on a known map pin, and the
+ * flagship's Deira questions are kept off the other branches' FAQ. The flagship's Google Maps
+ * iframe is a recorded deviation from the spec (docs/implementation-notes.md).
  */
 import type { InferGetStaticPropsType } from 'astro';
 
@@ -14,9 +19,11 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
-import { openBranches, site, type DayName } from '@/data/site';
+import { flagship, openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getFaqGroup } from '@/lib/content';
+import { listWords } from '@/lib/format';
+import { hhmm, weeklyRows } from '@/lib/hours';
 import { routes } from '@/lib/routes';
 import { jewelryStoreSchema } from '@/lib/schema';
 import { TITLE_MAX } from '@/lib/seo';
@@ -33,28 +40,12 @@ const faq = await getFaqGroup('stores');
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const storeImage = new URL('/og/default.png', origin).toString();
 
-const DAYS: DayName[] = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
-
-/** "Dubai, Sharjah and Abu Dhabi" */
-const listWords = (items: string[]) =>
-  items.length > 1
-    ? `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
-    : (items[0] ?? '');
-
-/** "10:00:00" -> "10:00" */
-const hhmm = (t: string) => t.slice(0, 5);
-
 const phone = branch.phone ?? site.phone.landline;
 const others = openBranches.filter((b) => b.id !== branch.id);
-const inMall = /mall/i.test(branch.venue);
+const inMall = branch.venueType === 'mall';
+/** A Google Maps link without coordinates is a search, not a pin: the button says so. */
+const hasPin = Boolean(branch.map?.geo);
+const guide = inMall ? 'from the mall entrance' : 'to the counter';
 
 /** Address lines with the locality/region duplicate that mall branches carry removed. */
 const addressLines = [branch.address.street, branch.address.locality, branch.address.region].filter(
@@ -68,9 +59,17 @@ const lead = hasUnit
   : `${inMall ? 'Inside' : 'In'} ${branch.venue}, ${branch.city}. Call or WhatsApp for the shop number and we will direct you.`;
 
 const hours = branch.hours;
-const hourRows = hours
-  ? DAYS.map((day) => ({ day, slot: hours.weekly.find((w) => w.days.includes(day)) }))
-  : [];
+/** One row per day with any break applied, so Friday reads "10:00–12:00, 14:30–22:30". */
+const hourRows = weeklyRows(branch);
+
+/*
+ * The stores FAQ is written around the flagship. Other branches get only the questions that are
+ * true everywhere; the flagship page drops "Where is the flagship?" about itself.
+ */
+const BRANCH_SPECIFIC = /deira|gold souq|metro|flagship/i;
+const faqItems = branch.isFlagship
+  ? faq.data.items.filter((item) => !/flagship/i.test(item.question))
+  : faq.data.items.filter((item) => !BRANCH_SPECIFIC.test(`${item.question} ${item.answer}`));
 
 const instagramHandle = branch.instagram
   ? new URL(branch.instagram).pathname.split('/').filter(Boolean)[0]
@@ -79,12 +78,14 @@ const instagramHandle = branch.instagram
 const services = [
   {
     title: 'See the trays',
-    detail: 'Every piece is weighed in front of you and quoted at the day’s rate plus making charge.',
+    detail:
+      'Every piece is weighed in front of you and quoted at the day’s rate plus making charge.',
     href: routes.jewellery,
   },
   {
     title: 'Exchange old gold',
-    detail: 'Tested and weighed at the counter, credited at full weight against a new piece.',
+    detail:
+      'Tested and weighed at the counter, credited by weight at the day’s rate against a new piece.',
     href: routes.goldExchange,
   },
   {
@@ -114,9 +115,14 @@ const enquiryWhatsapp = whatsappUrl(
   `${site.whatsapp.greeting} I’m planning to visit the ${branch.name} branch and would like to ask about a piece.`,
 );
 
-const longTitle = `Jewellers in ${branch.name}: Hours & Directions`;
-const title = longTitle.length <= TITLE_MAX ? longTitle : `${branch.name}: Hours & Directions`;
-const description = `${site.name} at ${branch.venue}, ${branch.city}: address, hours and directions. WhatsApp us to confirm today’s hours before you visit.`;
+/* "Hours & Directions" only where the page has hours to show. */
+const [longTitle, shortTitle] = hours
+  ? [`Jewellers in ${branch.name}: Hours & Directions`, `${branch.name}: Hours & Directions`]
+  : [`Gold and Diamond Jewellers in ${branch.name}`, `Jewellers in ${branch.name}`];
+const title = longTitle.length <= TITLE_MAX ? longTitle : shortTitle;
+const description = hours
+  ? `${site.name} at ${branch.venue}, ${branch.city}: address, hours and directions. WhatsApp us to confirm today’s hours before you visit.`
+  : `${site.name} at ${branch.venue}, ${branch.city}: address, directions and what the counter offers. WhatsApp us for the shop number before you visit.`;
 
 /** The flagship's JewelryStore is already in every page head (BaseLayout). */
 const jsonLd = branch.isFlagship ? [] : [jewelryStoreSchema(branch, storeImage)];
@@ -140,7 +146,7 @@ const jsonLd = branch.isFlagship ? [] : [jewelryStoreSchema(branch, storeImage)]
   >
     {branch.map?.url && (
       <Button href={branch.map.url} icon="map-pin" external>
-        Get directions
+        {hasPin ? 'Get directions' : 'Find on Google Maps'}
       </Button>
     )}
     <Button href={visitWhatsapp} variant="secondary" icon="whatsapp" external>
@@ -164,7 +170,9 @@ const jsonLd = branch.isFlagship ? [] : [jewelryStoreSchema(branch, storeImage)]
               <a href={`tel:${phone.e164}`}>
                 <Icon name="phone" /> {phone.display}
               </a>
-              {!branch.phone && <span class="small">Calls go to the Deira counter.</span>}
+              {!branch.phone && (
+                <span class="small">Calls go to the {flagship.shortName} counter.</span>
+              )}
             </li>
             <li>
               <a href={visitWhatsapp} target="_blank" rel="noopener">
@@ -192,12 +200,10 @@ const jsonLd = branch.isFlagship ? [] : [jewelryStoreSchema(branch, storeImage)]
                   </tr>
                 </thead>
                 <tbody>
-                  {hourRows.map(({ day, slot }) => (
+                  {hourRows.map(({ day, text }) => (
                     <tr data-hours-days={day}>
                       <th scope="row">{day}</th>
-                      <td class="tabular">
-                        {slot ? `${hhmm(slot.opens)}–${hhmm(slot.closes)}` : 'Call to confirm'}
-                      </td>
+                      <td class="tabular">{text}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -230,7 +236,7 @@ const jsonLd = branch.isFlagship ? [] : [jewelryStoreSchema(branch, storeImage)]
           <h2>Getting here</h2>
           <p>
             {branch.directions ??
-              `The shop is ${inMall ? 'inside' : 'in'} ${branch.venue}, ${branch.city}. Open the map link for a route, or call if you cannot find us.`}
+              `The shop is ${inMall ? 'inside' : 'in'} ${branch.venue}, ${branch.city}. Open the map for a route, then call or WhatsApp us and we will guide you ${guide}.`}
           </p>
           {branch.facilities && branch.facilities.length > 0 && (
             <>
@@ -253,24 +259,31 @@ const jsonLd = branch.isFlagship ? [] : [jewelryStoreSchema(branch, storeImage)]
         </div>
 
         {branch.isFlagship && branch.map?.embedUrl ? (
-          <div class="map">
-            <iframe
-              src={branch.map.embedUrl}
-              title={`Map of ${site.name}, ${branch.name}`}
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              height="360"
-            ></iframe>
-          </div>
+          <figure class="map">
+            {/* The tint and the line behind the frame show until the map paints, or if it never does. */}
+            <div class="map__frame">
+              <p class="map__fallback small" aria-hidden="true">
+                Map of {branch.name}
+              </p>
+              <iframe
+                src={branch.map.embedUrl}
+                title={`Map of ${site.name}, ${branch.name}`}
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                height="360"
+              ></iframe>
+            </div>
+            <figcaption class="map__caption small">
+              <a href={branch.map.url} target="_blank" rel="noopener">
+                Open in Google Maps <Icon name="external" />
+              </a>
+            </figcaption>
+          </figure>
         ) : (
           <div class="map map--panel">
-            <div class="map__text">
-              <p class="map__lead">The exact pin for this branch is not listed here yet.</p>
-              <p class="small">
-                Search Google Maps for the branch, or call and we will direct you from the mall
-                entrance.
-              </p>
-            </div>
+            <p class="map__text">
+              {site.name}, {branch.venue}, {branch.city}, on Google Maps.
+            </p>
             {branch.map?.url && (
               <Button href={branch.map.url} variant="secondary" icon="map-pin" external>
                 Open in Google Maps
@@ -328,20 +341,19 @@ const jsonLd = branch.isFlagship ? [] : [jewelryStoreSchema(branch, storeImage)]
     </section>
   )}
 
-  <section class="section section--ruled">
-    <div class="container">
-      <Faq
-        heading={branch.isFlagship ? faq.data.heading : 'Visiting the Deira flagship'}
-        items={faq.data.items}
-      />
-    </div>
-  </section>
+  {faqItems.length > 0 && (
+    <section class="section section--ruled">
+      <div class="container">
+        <Faq heading={faq.data.heading} items={faqItems} />
+      </div>
+    </section>
+  )}
 
-  <section class="section">
+  <section class="section section--ruled">
     <div class="container">
       <EnquiryBlock
         heading={`Ask before you visit ${branch.shortName}`}
-        text="WhatsApp is fastest during shop hours. Tell us which branch you are coming to and what you want to see, and we will have it ready at the counter."
+        text={`WhatsApp is fastest during shop hours. Tell us what you would like to see at ${branch.shortName} and we will check it is at the counter before you set out.`}
         whatsappUrl={enquiryWhatsapp}
         whatsappLabel="WhatsApp about this branch"
       />
@@ -358,10 +370,9 @@ const jsonLd = branch.isFlagship ? [] : [jewelryStoreSchema(branch, storeImage)]
     color: var(--plum-700);
   }
 
-  /* ---------- Address and hours: two ruled cells ---------- */
+  /* ---------- Address and hours: two cells; the section rules above and below frame them ---------- */
   .facts {
     display: grid;
-    border-block: 1px solid var(--rule-1);
   }
 
   .facts__cell {
@@ -461,38 +472,65 @@ const jsonLd = branch.isFlagship ? [] : [jewelryStoreSchema(branch, storeImage)]
   /* ---------- Map ---------- */
   .map {
     min-inline-size: 0;
+  }
+
+  /* Tinted behind the frame, so a slow or blocked embed never shows an empty white box. */
+  .map__frame {
+    position: relative;
     aspect-ratio: 4 / 3;
+    background: var(--plum-050);
     border: 1px solid var(--rule-1);
   }
 
-  .map iframe {
+  .map__fallback {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: var(--space-5);
+    text-align: center;
+  }
+
+  .map__frame iframe {
+    position: relative;
+    z-index: 1;
     display: block;
     inline-size: 100%;
     block-size: 100%;
     border: 0;
   }
 
+  .map__caption {
+    margin-block-start: var(--space-2);
+  }
+
+  .map__caption a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: var(--tap);
+    font-weight: 500;
+    color: var(--plum-700);
+    text-decoration: none;
+  }
+
+  .map__caption a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+  }
+
+  /* No pin yet: a short panel sized to its content, in body type. */
   .map--panel {
     display: grid;
-    gap: var(--space-5);
-    align-content: start;
+    gap: var(--space-4);
+    justify-items: start;
     padding: var(--space-6);
     background: var(--plum-050);
-    border: 0;
   }
 
   .map__text {
-    display: grid;
-    gap: var(--space-2);
     max-inline-size: 28rem;
-  }
-
-  .map__lead {
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 500;
-    line-height: 1.25;
-    color: var(--plum-700);
+    color: var(--ink-700);
   }
 
   /* ---------- Numbered ledger ---------- */

@@ -1,7 +1,7 @@
 ---
 name: 'Bespoke Bridal Necklace'
 sku: 'CJ-NK-007'
-description: 'A made-to-order 22K bridal necklace from our Customised Jewellery service, designed with the family and cast to an agreed weight. Start your own on WhatsApp.'
+description: 'A 22K bridal necklace shown as an example of our Customised Jewellery service, where the design and weight are agreed first. Start your own on WhatsApp.'
 category: 'necklaces'
 collection: 'customised'
 occasions: ['wedding']
@@ -10,9 +10,9 @@ karat: 22
 images:
   - src: '../../assets/products/p07.jpg'
     alt: 'Custom-made 22K gold bridal necklace on a white bust'
-featured: false
+featured: true
 isNew: false
 order: 7
 ---
 
-This piece was designed with the bride’s family from a photograph, rendered in CAD, approved, and cast in 22K. It is shown here as an example of what the custom service produces; your own design starts with a conversation.
+A 22K bridal necklace, shown here as an example of the kind of piece the custom service makes. Your own design starts with a conversation: a photograph, a sketch or an old piece to remake, with the weight, karat and making charge agreed in writing before work begins.

@@ -2,26 +2,42 @@
 /**
  * One cell of a tray grid. The name link is stretched over the whole cell; the Enquire link is a
  * separate, pre-filled WhatsApp link so no JavaScript is needed to convert.
- * Pass `rate` to show the baked gold-value line (only rendered when the weight is known).
+ *
+ * Filter contract (read by src/scripts/filter.ts): data-karat, data-collection, data-name and
+ * data-new on the <article>. Cards can be direct children of <TrayGrid filterable>.
+ *
+ * Pass `rate` to show the gold value at today's rate (only when a weight is known; see
+ * src/lib/pricing.ts). The figure is marked for src/scripts/rate.ts, which recomputes it in place.
  */
+import Icon from '@/components/ui/Icon.astro';
 import Plate from '@/components/ui/Plate.astro';
 import type { Product } from '@/lib/content';
 import { productPath } from '@/lib/content';
 import { formatAed, formatGrams, formatKarat } from '@/lib/format';
-import type { GoldRate, Karat } from '@/lib/gold-rate';
+import type { GoldRate } from '@/lib/gold-rate';
+import { goldValue } from '@/lib/pricing';
 import { whatsappForProduct } from '@/lib/whatsapp';
 
 export interface Props {
   product: Product;
-  /** Collection name for the fact line ("Kolkata"), already resolved by the page. */
+  /** Collection name for the fact line ("Kolkata"), resolved by the page for THIS product. */
   collectionName?: string;
   rate?: GoldRate | null;
   /** First few cards in a grid are above the fold: load them eagerly. */
   priority?: boolean;
+  /** Force edge-to-edge bleed or padded plate. */
+  bleed?: boolean;
   class?: string;
 }
 
-const { product, collectionName, rate = null, priority = false, class: className } = Astro.props;
+const {
+  product,
+  collectionName,
+  rate = null,
+  priority = false,
+  bleed,
+  class: className,
+} = Astro.props;
 const { data } = product;
 const href = productPath(product);
 const url = new URL(href, Astro.site ?? Astro.url.origin).toString();
@@ -34,24 +50,27 @@ const facts = [
   collectionName?.replace(/ (Collection|Jewellery)$/i, ''),
 ].filter(Boolean);
 
-const karatKey = `${data.karat}k` as Karat;
-const goldValue =
-  rate && data.weightGrams && data.availability !== 'sold'
-    ? formatAed(Math.round(rate.perGram[karatKey] * data.weightGrams))
-    : null;
+const value = goldValue(data, rate);
+const sold = data.availability === 'sold';
 
-const chip =
-  data.availability === 'sold'
-    ? 'Sold · ask for similar'
-    : data.availability === 'made-to-order'
-      ? 'Made to order'
-      : data.isNew
-        ? 'New'
-        : null;
+const chip = sold
+  ? 'Sold · ask for similar'
+  : data.availability === 'made-to-order'
+    ? 'Made to order'
+    : data.isNew
+      ? 'New'
+      : null;
 ---
 
-<article class:list={['card', className]} data-karat={data.karat} data-category={data.category.id}>
-  <Plate image={cover.src} alt={cover.alt} priority={priority} />
+<article
+  class:list={['card', className]}
+  data-karat={data.karat}
+  data-category={data.category.id}
+  data-collection={data.collection?.id ?? ''}
+  data-name={data.name}
+  data-new={data.isNew ? '1' : '0'}
+>
+  <Plate image={cover.src} alt={cover.alt} priority={priority} bleed={bleed} />
   <div class="card__body">
     <h3 class="card__name">
       <a class="card__link link-quiet" href={href}>
@@ -59,7 +78,14 @@ const chip =
       </a>
     </h3>
     <p class="card__facts tabular">{facts.join(' · ')}</p>
-    {goldValue && <p class="card__value small">Gold value today ≈ {goldValue}</p>}
+    {value && (
+      <p class="card__value small">
+        Gold value today ≈{' '}
+        <span data-rate-calc={value.karat} data-grams={value.grams}>
+          {formatAed(value.value)}
+        </span>
+      </p>
+    )}
     {chip && <p class="card__chip small">{chip}</p>}
     <a
       class="card__enquire"
@@ -67,7 +93,9 @@ const chip =
       target="_blank"
       rel="noopener"
     >
-      {data.availability === 'sold' ? 'Ask for a similar piece' : 'Enquire'}
+      <Icon name="whatsapp" class="card__enquire-icon" />
+      <span>{sold ? 'Ask for a similar piece' : 'Enquire on WhatsApp'}</span>
+      <span class="sr-only"> about the {data.name} on WhatsApp (opens in a new tab)</span>
     </a>
   </div>
 </article>
@@ -79,8 +107,11 @@ const chip =
     flex-direction: column;
   }
 
+  /* The body fills the rest of the cell so the Enquire links line up across a row. */
   .card__body {
-    display: grid;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     gap: var(--space-1);
     padding: var(--space-4) var(--space-4) var(--space-5);
     border-block-start: 1px solid var(--rule-1);
@@ -119,10 +150,7 @@ const chip =
     color: var(--ink-700);
   }
 
-  .card__value {
-    color: var(--ink-500);
-  }
-
+  .card__value,
   .card__chip {
     color: var(--ink-500);
   }
@@ -130,18 +158,28 @@ const chip =
   .card__enquire {
     position: relative;
     z-index: 1;
-    justify-self: start;
-    margin-block-start: var(--space-2);
+    align-self: flex-start;
+    margin-block-start: auto;
+    padding-block: var(--space-1);
     min-block-size: var(--tap);
     display: inline-flex;
     align-items: center;
+    gap: var(--space-2);
     font-size: var(--t-small);
     font-weight: 500;
     text-decoration: none;
     color: var(--plum-700);
+    transition: color var(--dur-fast) var(--ease);
+  }
+
+  .card__enquire-icon {
+    inline-size: 1.15em;
+    block-size: 1.15em;
+    flex-shrink: 0;
   }
 
   .card__enquire:hover {
+    color: var(--gold-700);
     text-decoration: underline;
     text-decoration-color: var(--gold-600);
   }

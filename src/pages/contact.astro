@@ -1,27 +1,24 @@
 ---
 /**
- * Contact: the three ways that actually reach the counter (WhatsApp, the Deira landline, the
+ * Contact: the three ways that actually reach the counter (WhatsApp, the flagship landline, the
  * store list), then the one contact form in a 7/5 split with a short note on what helps us reply.
+ * Numbers are data, so they are set in Plex with tabular figures (spec §3), not in Bodoni.
  */
 import ContactForm from '@/components/sections/ContactForm.astro';
 import Hero from '@/components/sections/Hero.astro';
 import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
 import Button from '@/components/ui/Button.astro';
 import Eyebrow from '@/components/ui/Eyebrow.astro';
-import { emirates, openBranches, site } from '@/data/site';
+import { emirates, flagship, openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { countWord } from '@/lib/format';
+import { countWord, listWords } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { whatsappGeneral } from '@/lib/whatsapp';
 
-/** "Dubai, Sharjah and Abu Dhabi" */
-const listWords = (items: string[]) =>
-  items.length > 1
-    ? `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
-    : (items[0] ?? '');
-
 const count = countWord(openBranches.length);
-const description = `WhatsApp ${site.whatsapp.display}, call ${site.phone.landline.display} (Deira counter) or send a message; we reply by email or phone. ${count} branches in ${listWords(emirates)}.`;
+const emirateList = listWords(emirates);
+const counter = `the ${flagship.shortName} counter`;
+const description = `WhatsApp ${site.whatsapp.display}, call ${site.phone.landline.display} (${flagship.shortName} counter) or send a message; we reply by email or phone. ${count} branches in ${emirateList}.`;
 
 const tips = [
   'The piece reference from the listing, e.g. CJ-NK-001, so we quote the right piece.',
@@ -30,7 +27,7 @@ const tips = [
 ];
 ---
 
-<BaseLayout title="Contact Us in Dubai, Sharjah and Abu Dhabi" description={description}>
+<BaseLayout title={`Contact Us in ${emirateList}`} description={description}>
   <div class="container">
     <Breadcrumbs items={[{ name: 'Contact', href: routes.contact }]} />
   </div>
@@ -38,7 +35,7 @@ const tips = [
   <Hero
     eyebrow="Contact"
     title="Contact Classic Jewels & Diamonds"
-    lead="WhatsApp is fastest during shop hours. Calls go to the Deira counter. Messages sent here are answered by email or phone."
+    lead={`WhatsApp is fastest during shop hours. Calls go to ${counter}. Messages sent here are answered by email or phone.`}
   />
 
   <section class="section section--ruled">
@@ -57,7 +54,7 @@ const tips = [
         <li class="ways__cell">
           <Eyebrow>Call</Eyebrow>
           <p class="ways__value tabular">{site.phone.landline.display}</p>
-          <p class="ways__detail small">The Deira counter, during shop hours.</p>
+          <p class="ways__detail small">The {flagship.shortName} counter, during shop hours.</p>
           <Button href={`tel:${site.phone.landline.e164}`} variant="secondary" icon="phone">
             Call the counter
           </Button>
@@ -66,7 +63,7 @@ const tips = [
           <Eyebrow>Stores</Eyebrow>
           <p class="ways__value">{count} branches</p>
           <p class="ways__detail small">
-            {listWords(emirates)}. Addresses, hours as listed, and directions.
+            {emirateList}. Addresses and directions for each, with the hours we have.
           </p>
           <Button href={routes.stores} variant="secondary" icon="map-pin">
             Find a branch
@@ -110,18 +107,22 @@ const tips = [
 </BaseLayout>
 
 <style>
-  /* ---------- Three ruled cells ---------- */
+  /* ---------- Three cells; the section rules above and below frame them ---------- */
   .ways {
     display: grid;
-    border-block: 1px solid var(--rule-1);
   }
 
+  /* Label, value, detail, then a flexible row so every button sits on the same baseline. */
   .ways__cell {
     display: grid;
+    grid-template-rows: auto auto 1fr auto;
     gap: var(--space-3);
-    align-content: start;
     justify-items: start;
     padding-block: var(--space-6);
+  }
+
+  .ways__cell > :global(:last-child) {
+    align-self: end;
   }
 
   .ways__cell + .ways__cell {
@@ -129,10 +130,12 @@ const tips = [
   }
 
   .ways__value {
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
+    font-family: var(--ff-text);
+    font-size: var(--t-numeral);
     font-weight: 500;
     line-height: 1.2;
+    font-variant-numeric: tabular-nums lining-nums;
+    color: var(--ink-900);
   }
 
   .ways__detail {

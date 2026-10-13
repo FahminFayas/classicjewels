@@ -15,4 +15,4 @@ isNew: false
 order: 1
 ---
 
-A broad filigree band sits flat against the collarbone, with a fringe of leaf drops that moves as you do. Made in Kolkata in 22K, so it looks far heavier than it weighs. Matching jhumkas are available.
+A broad filigree band sits flat against the collarbone, with a fringe of leaf drops that moves as you do. The filigree is in the Kolkata style, in 22K, so it looks far heavier than it weighs. Matching jhumkas are available.

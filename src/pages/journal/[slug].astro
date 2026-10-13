@@ -17,7 +17,7 @@ import SectionHead from '@/components/ui/SectionHead.astro';
 import { site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getArticles, type Article } from '@/lib/content';
-import { formatAed, formatDate } from '@/lib/format';
+import { formatDate } from '@/lib/format';
 import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
 import { articleSchema } from '@/lib/schema';
@@ -59,30 +59,33 @@ const canonical = new URL(routes.article(article.id), origin).toString();
 const coverWidths = [480, 800, 1200, 1600].filter((w) => w < data.cover.width);
 if (data.cover.width <= 1600) coverWidths.push(data.cover.width);
 
-/** One JPEG for the share card and the Article image, never wider than the source. */
+/**
+ * One JPEG for the share card and the Article image, never wider than the source. Its real size
+ * goes to the Open Graph tags, so a 600 px square is not announced as a 1200 x 630 card.
+ */
+const shareWidth = Math.min(1200, data.cover.width);
+const shareHeight = Math.round((shareWidth * data.cover.height) / data.cover.width);
 const share = await getImage({
   src: data.cover,
-  width: Math.min(1200, data.cover.width),
+  width: shareWidth,
   format: 'jpeg',
   layout: 'none',
 });
 const coverUrl = new URL(share.src, origin).toString();
 
+/* The rate line in the related list carries rate.ts hooks, so it moves with the board. */
 const rate = rates.latest;
-const rateDetail = rate
-  ? rates.stale
-    ? `22K was ${formatAed(rate.perGram['22k'])} per gram on ${formatDate(rate.date)}; the board has the latest.`
-    : `22K is ${formatAed(rate.perGram['22k'])} per gram today; 24K, 21K and 18K are on the board.`
-  : 'AED per gram for 24K, 22K, 21K and 18K, as posted on our board.';
-
-const related = [
+const related: { name: string; detail?: string; href: string; rate?: boolean }[] = [
   ...relatedCollections.map((c) => ({
     name: c.data.name,
     detail: c.data.summary,
     href: routes.collection(c.id),
   })),
-  { name: 'Today’s gold rate in Dubai', detail: rateDetail, href: routes.goldRate },
+  { name: 'Today’s gold rate in Dubai', href: routes.goldRate, rate: true },
 ];
+
+/* The breadcrumb repeats the sentence-case heading, not the SEO title. */
+const crumb = headline.replace(/[.!]$/, '');
 
 const enquiry = whatsappUrl(
   `${site.whatsapp.greeting} I read your article "${data.title}" and have a question.`,
@@ -107,6 +110,8 @@ const jsonLd = [
   type="article"
   image={coverUrl}
   imageAlt={data.coverAlt}
+  imageWidth={shareWidth}
+  imageHeight={shareHeight}
   publishedTime={data.pubDate}
   modifiedTime={data.updatedDate}
   jsonLd={jsonLd}
@@ -116,7 +121,7 @@ const jsonLd = [
       <Breadcrumbs
         items={[
           { name: 'Journal', href: routes.journal },
-          { name: data.title, href: routes.article(article.id) },
+          { name: crumb, href: routes.article(article.id) },
         ]}
       />
 
@@ -168,7 +173,8 @@ const jsonLd = [
           <Content />
           {data.updatedDate && (
             <p class="article__updated small">
-              Updated <time datetime={isoDate(data.updatedDate)}>{formatDate(data.updatedDate)}</time>.
+              Updated{' '}
+              <time datetime={isoDate(data.updatedDate)}>{formatDate(data.updatedDate)}</time>.
             </p>
           )}
         </div>
@@ -193,7 +199,29 @@ const jsonLd = [
               <a class="related__link" href={r.href}>
                 <span class="related__text">
                   <span class="related__name">{r.name}</span>
-                  <span class="related__detail small">{r.detail}</span>
+                  {r.rate ? (
+                    <span class="related__detail small">
+                      {rate ? (
+                        <>
+                          22K:{' '}
+                          <span class="nowrap">
+                            AED <span data-rate="22k">{rate.perGram['22k'].toFixed(2)}</span>
+                          </span>{' '}
+                          per gram, posted{' '}
+                          <time datetime={rate.date} data-rate-date={rate.date}>
+                            <span data-rate-date-text data-format="full">
+                              {formatDate(rate.date)}
+                            </span>
+                          </time>
+                          . 24K, 21K and 18K are on the board.
+                        </>
+                      ) : (
+                        'AED per gram for 24K, 22K, 21K and 18K, as posted on our board.'
+                      )}
+                    </span>
+                  ) : (
+                    <span class="related__detail small">{r.detail}</span>
+                  )}
                 </span>
                 <Icon name="arrow-right" class="related__arrow" />
               </a>
@@ -223,7 +251,7 @@ const jsonLd = [
     </section>
   )}
 
-  <section class="section">
+  <section class="section section--ruled">
     <div class="container">
       <EnquiryBlock
         heading="Ask the counter about anything in this article."

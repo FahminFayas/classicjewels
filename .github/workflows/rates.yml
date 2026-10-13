@@ -1,7 +1,9 @@
 name: Gold rate snapshot
 
 # Fetches the day's rate from the store feed and commits it to src/content/rates/.
-# The host's deploy hook (or the CI build on push) then rebuilds the site with fresh numbers.
+# Rebuilding is the host's job: connect the repository to the host's git integration (or a
+# deploy hook) so a push to main triggers a build. Pushes made with GITHUB_TOKEN do not start
+# other workflows, so ci.yml will not run for these commits.
 # Times are UTC: 05:20, 09:50 and 14:20 = 09:20, 13:50 and 18:20 in Dubai.
 on:
   schedule:

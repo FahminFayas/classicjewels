@@ -54,6 +54,8 @@ Update `src/data/site.ts` (and the content files named) once each answer is in.
 - [ ] Create a Google Tag Manager container; add GA4, Meta Pixel and TikTok Pixel inside it; set `PUBLIC_GTM_ID` and rebuild. Record WhatsApp, call and directions clicks as events. The site loads nothing until the id is set.
 - [ ] Point the Instagram link-in-bio and story links at `/offers/` and collection pages with UTM tags.
 - [ ] Validate structured data with the Rich Results Test on the home, a product, a collection and a store page.
+- [ ] Expect Search Console's "Product snippets" report to list all 16 product pages as invalid ("Either offers, review or aggregateRating should be specified"). The pages deliberately publish no prices (spec §5.4 Option A), so the Product markup has no `offers`; the error clears once indicative prices ship (item 19) and `offers` is added. Do not add placeholder prices or ratings to silence it.
+- [ ] The Safari Mall, Rolla Mall and Madinat Zayed store pages are thin and almost identical until their branch facts exist. Add each branch's shop number, phone and hours (items 1 and 4), plus its floor or entrance and parking, to `branches[]` so each page says something only it can say; the "Hours & Directions" title and hours table appear automatically once `hours` is set.
 - [ ] Run `npm run lighthouse` against the deployed site and keep the reports.
 
 ## 5. Copy and legal

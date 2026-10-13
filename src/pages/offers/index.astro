@@ -12,20 +12,20 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
 import Button from '@/components/ui/Button.astro';
 import Eyebrow from '@/components/ui/Eyebrow.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
-import { branches, site } from '@/data/site';
+import { branches, emirates, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getActiveOffers, getFaqGroup } from '@/lib/content';
-import { formatDate } from '@/lib/format';
+import { formatDate, listWords } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { clampDescription } from '@/lib/seo';
 import { whatsappUrl } from '@/lib/whatsapp';
 
 const [offers, faq] = await Promise.all([getActiveOffers(), getFaqGroup('offers')]);
 
-const branchName = new Map(branches.map((b) => [b.id, b.name]));
-/** Branch names an offer is limited to, or "every branch" when the list is empty. */
+const branchName = new Map(branches.map((b) => [b.id, b.shortName]));
+/** Branches an offer is limited to ("Deira and Safari Mall"), or "every branch" when none are named. */
 const whereFor = (ids: string[]) =>
-  ids.length > 0 ? ids.map((id) => branchName.get(id) ?? id).join(' · ') : 'every branch';
+  ids.length > 0 ? listWords(ids.map((id) => branchName.get(id) ?? id)) : 'every branch';
 
 const first = offers[0];
 const description = clampDescription(
@@ -34,11 +34,12 @@ const description = clampDescription(
     : 'Campaign offers at Classic Jewels & Diamonds run for a stated period and apply in store at every branch. See what is on now, or WhatsApp us to ask.',
 );
 const enquiry = whatsappUrl(
-  first?.data.whatsappMessage ?? `${site.whatsapp.greeting} is there an offer running at the moment?`,
+  first?.data.whatsappMessage ??
+    `${site.whatsapp.greeting} is there an offer running at the moment?`,
 );
 ---
 
-<BaseLayout title="Gold Jewellery Offers in Dubai, Sharjah & Abu Dhabi" description={description}>
+<BaseLayout title={`Gold Jewellery Offers in ${listWords(emirates)}`} description={description}>
   <div class="container">
     <Breadcrumbs items={[{ name: 'Offers', href: routes.offers }]} />
   </div>
@@ -105,8 +106,9 @@ const enquiry = whatsappUrl(
 
   <section class="section section--ruled">
     <div class="container">
-      <SectionHead eyebrow="Standing terms" title="Offers come and go. These six do not.">
-        Whatever is on, the same six commitments apply to every purchase at every counter.
+      <SectionHead eyebrow="Standing terms" title="Offers come and go. Our terms stay.">
+        Six written commitments, each with its conditions on the promise page. Ask how they apply to
+        the piece you have in mind.
       </SectionHead>
       <AssuranceLedger />
     </div>
@@ -118,7 +120,7 @@ const enquiry = whatsappUrl(
     </div>
   </section>
 
-  <section class="section">
+  <section class="section section--ruled">
     <div class="container">
       <EnquiryBlock
         heading="Ask about an offer"

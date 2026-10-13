@@ -2,7 +2,7 @@
 name: 'Kuwait Collection'
 title: 'Kuwaiti Gold Jewellery Dubai – Gulf Bridal Sets'
 description: 'Kuwaiti and Gulf-style gold jewellery in Dubai: full bridal sets, wide bangles and tiered necklaces in 21K and 22K with bright finish and generous weight.'
-origin: 'Kuwait & the Gulf'
+origin: 'Kuwaiti and Gulf styles'
 summary: 'Generous, bright Gulf bridal sets and wide bangles in 21K and 22K.'
 hallmarks: ['Wide bangles', 'Tiered necklaces', 'Bright high polish', 'Full bridal sets']
 karats: [22, 21]

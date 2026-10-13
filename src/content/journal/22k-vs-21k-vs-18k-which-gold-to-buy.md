@@ -4,8 +4,8 @@ description: '22K is 91.6% gold, 21K 87.5% and 18K 75%. A Deira jeweller on whic
 headline: '22K, 21K or 18K: choosing gold for wear, gifts, bridal sets and diamonds'
 pubDate: 2026-10-13
 author: 'Classic Jewels & Diamonds'
-cover: '../../assets/journal/22k-vs-18k.jpg'
-coverAlt: 'A 22K yellow gold bangle beside an 18K white gold diamond ring on a velvet tray'
+cover: '../../assets/journal/two-tone-oval-pendant-set.jpg'
+coverAlt: 'Two-tone oval pendant and matching drop earrings lined with small white stones, on a mint-green box'
 tags: ['22k', '21k', '18k', 'buying guide']
 relatedCollections: ['diamonds', 'turkish', 'italian', 'kuwait']
 ---
@@ -49,7 +49,7 @@ Gulf jewellery is bought by weight and worn in full, so the extra alloy buys dur
 
 18K is 75% gold, stamped 750, and the hardness standard for diamond-set jewellery. The prongs holding a diamond, the channel walls around small stones and the hinge on a tennis bracelet all need metal that will not bend; 22K is too soft for a prong or a channel wall. That is why our [Diamonds](/collections/diamonds/) collection is set in 18K. [Gemstone](/collections/gemstone/) pieces go either way: 22K for traditional sets, 18K where the setting needs strength. White and rose gold are made in 18K; the larger alloy share is what gives the colour.
 
-It is also the Italian standard: the flat chains, curb bracelets and collars in our [Italian](/collections/italian/) collection are mostly 18K, machine-made in Italy to a precision handwork cannot match.
+It is also the usual karat for Italian-style work: the flat chains, curb bracelets and collars in our [Italian](/collections/italian/) collection are mostly 18K, with even, machine-finished links.
 
 ## Colour and wear in plain terms
 
@@ -59,7 +59,7 @@ More gold means a deeper yellow and a softer piece: 24K is almost orange, 22K a 
 
 Gold is bought back for its gold content, not its design; the making charge is not part of what comes back. The terms, and how an old piece is weighed and tested, are on our [gold exchange](/gold-exchange/) page.
 
-So a 10 gram 22K bangle holds more gold than a 10 gram 18K bracelet. On 13 October 2026 the Dubai Jewellery Group suggested retail rate was AED 468.25 per gram for 22K and AED 384.75 for 18K, before making charge and VAT: a difference of AED 835 on ten grams. The [gold rate page](/gold-rate/) has today's figure for each karat.
+So a 10 gram 22K bangle holds more gold than a 10 gram 18K bracelet. At an example rate of AED 460 per gram for 22K and AED 380 for 18K, before making charge and VAT, the gold in the two differs by AED 800. Those are round numbers for the arithmetic, not live prices; the [gold rate page](/gold-rate/) has today's figure for each karat.
 
 ## Choosing by purpose
 
@@ -69,10 +69,10 @@ So a 10 gram 22K bangle holds more gold than a 10 gram 18K bracelet. On 13 Octob
 
 **Bridal sets.** 22K for Indian weddings, 21K for Gulf weddings: what the family expects and the local market trades in.
 
-**Diamond settings.** 18K for prong, claw and channel settings. Polki and kundan work in our [Antique](/collections/antique/) collection is the traditional exception, set in 22K. What we test and certify is on our [certified diamonds](/our-promise/) page.
+**Diamond settings.** 18K for prong, claw and channel settings. Polki and kundan work in our [Antique](/collections/antique/) collection is the traditional exception, set in 22K. How we test diamonds, and when a grading report comes with one, is on [our promise page](/our-promise/).
 
 **Investment.** 24K bars and coins. To wear something that also holds value, choose plain 22K or 21K with a low making charge, the part you do not get back.
 
 **Custom work.** We also make [custom pieces](/custom-jewellery/); weight, karat and making charge are agreed in writing before work begins.
 
-Send a photo of what you have in mind to WhatsApp +971 50 566 1416 and we will suggest the karat and quote on the day's rate. Or [visit us](/stores/) at Shop No. 6, Gold Souq Extension, Deira, and compare the karats side by side under the counter light.
+Send a photo of what you have in mind on WhatsApp and we will suggest the karat and quote on the day's rate. Or [visit a branch](/stores/) and compare the karats side by side under the counter light.

@@ -1,6 +1,7 @@
 ---
 /**
- * Occasions index (design-spec §7.15): the four occasions as portrait features, captions below.
+ * Occasions index (design-spec §7.15): the occasions as portrait features, captions below.
+ * Branch counts and emirates come from src/data/site.ts.
  */
 import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
 import Faq from '@/components/sections/Faq.astro';
@@ -8,9 +9,10 @@ import Hero from '@/components/sections/Hero.astro';
 import OccasionFeature from '@/components/sections/OccasionFeature.astro';
 import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
 import Button from '@/components/ui/Button.astro';
+import { emirates, openBranches } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getActiveOffers, getFaqGroup, getOccasions } from '@/lib/content';
-import { formatDate } from '@/lib/format';
+import { countWord, formatDate, listWords } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { itemListSchema } from '@/lib/schema';
 import { whatsappGeneral } from '@/lib/whatsapp';
@@ -22,6 +24,8 @@ const [occasions, faq, offers] = await Promise.all([
 ]);
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const offer = offers[0];
+const branchCount = countWord(openBranches.length).toLowerCase();
+const places = listWords(emirates);
 
 const jsonLd = [
   itemListSchema(
@@ -36,7 +40,7 @@ const jsonLd = [
 
 <BaseLayout
   title="Wedding, Anniversary & Festival Gold in the UAE"
-  description="Bridal gold sets, anniversary diamonds, birthday gold and festival coins from Classic Jewels in Dubai, Sharjah and Abu Dhabi, bought by weight at the day’s rate."
+  description={`Bridal gold sets, anniversary diamonds, birthday gold and festival coins from Classic Jewels in ${places}, bought by weight at the day’s rate.`}
   jsonLd={jsonLd}
 >
   <div class="container container--wide">
@@ -84,7 +88,7 @@ const jsonLd = [
         <Faq heading={faq.data.heading} items={faq.data.items} />
         <EnquiryBlock
           compact
-          text="Tell us the occasion, the date and a budget. We reply with a shortlist from the trays at all four branches."
+          text={`Tell us the occasion, the date and a budget. We reply with a shortlist from the trays at all ${branchCount} branches.`}
         />
       </div>
     </div>

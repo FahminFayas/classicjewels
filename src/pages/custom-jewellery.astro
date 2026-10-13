@@ -2,8 +2,9 @@
 /**
  * Custom jewellery. docs/design-spec.md §7.13 adapted to the four-branch brand: plate hero from
  * the Customised collection, the four-step ledger (built here as ruled rows), examples from the
- * trays (made-to-order pieces, or the Customised collection until three exist), remaking old
- * gold, the custom FAQ and the enquiry block. The timeline comes from the FAQ content.
+ * trays (made-to-order pieces, or the Customised collection) shown only once three exist, remaking
+ * old gold, the custom FAQ and the enquiry block. The timeline is not published: it is agreed in
+ * writing with each quote until the owner confirms typical lead times (design-spec §11).
  */
 import { Picture } from 'astro:assets';
 
@@ -18,7 +19,7 @@ import Button from '@/components/ui/Button.astro';
 import Eyebrow from '@/components/ui/Eyebrow.astro';
 import Icon from '@/components/ui/Icon.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
-import { openBranches, site } from '@/data/site';
+import { site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import {
   getDesignCollections,
@@ -43,63 +44,64 @@ const [faq, products, customised, collections, rates] = await Promise.all([
 const collection = collections.find((c) => c.id === 'customised');
 const karatLine = (collection?.data.karats ?? []).map((k) => `${k}K`).join(' or ');
 const collectionName = new Map(collections.map((c) => [c.id, c.data.name]));
-const branchCount = countWord(openBranches.length).toLowerCase();
 
 /* Hero plate: the first piece in the Customised collection, else a typographic hero. */
 const heroProduct = customised[0];
 const heroImage = heroProduct?.data.images[0];
 
-/* Examples: made-to-order pieces when there are at least three, else the Customised collection. */
+/*
+ * Examples: made-to-order pieces when there are at least three, else the Customised collection.
+ * The tray is shown only with three or more pieces (spec §7.13); fewer would repeat the hero photo
+ * in a near-empty tray.
+ */
+const EXAMPLES_MIN = 3;
 const madeToOrder = products.filter((p) => p.data.availability === 'made-to-order');
-const examples = madeToOrder.length >= 3 ? madeToOrder : customised;
+const examples = madeToOrder.length >= EXAMPLES_MIN ? madeToOrder : customised;
 const examplesAreMadeToOrder = examples === madeToOrder;
-
-/* The timeline lives in the FAQ so the two never disagree. */
-const timeline = faq.data.items
-  .find((item) => /how long/i.test(item.question))
-  ?.answer.split(/\.\s/)[0]
-  ?.replace(/\.$/, '');
+const showExamples = examples.length >= EXAMPLES_MIN;
 
 const steps = [
   {
     title: 'Brief',
-    detail: `A sketch, a reference photo or a piece to remake. Bring it to any of our ${branchCount} branches or send it on WhatsApp.`,
+    detail:
+      'A sketch, a reference photo or a piece to remake. Bring it to a branch or send it on WhatsApp.',
   },
   {
     title: 'Quote',
-    detail: 'Karat, estimated weight, making charge and timeline, in writing, before any work begins.',
+    detail:
+      'Karat, estimated weight, making charge and timeline, in writing, before any work begins.',
   },
   {
     title: 'Make',
-    detail: `${timeline ? `${timeline}. ` : ''}You approve the design before anything is cast, and we send a photo before the final polish.`,
+    detail:
+      'You approve the design before anything is cast. We agree the timeline in writing with the quote, so you know when to expect the piece.',
   },
   {
     title: 'Collect',
-    detail:
-      'From the branch of your choice. Hallmarked, weighed in front of you and invoiced with the weight, karat and rate.',
+    detail: 'Hallmarked, weighed in front of you and invoiced with the weight, karat and rate.',
   },
 ];
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
-const jsonLd =
-  examples.length > 0
-    ? [
-        itemListSchema(
-          examples.map((p) => ({
-            name: p.data.name,
-            url: new URL(routes.product(p.data.category.id, p.id), origin).toString(),
-          })),
-          examplesAreMadeToOrder ? 'Made-to-order pieces' : 'Custom jewellery examples',
-        ),
-      ]
-    : [];
+const jsonLd = showExamples
+  ? [
+      itemListSchema(
+        examples.map((p) => ({
+          name: p.data.name,
+          url: new URL(routes.product(p.data.category.id, p.id), origin).toString(),
+        })),
+        examplesAreMadeToOrder ? 'Made-to-order pieces' : 'Custom jewellery examples',
+      ),
+    ]
+  : [];
 
+const description = `Bring a sketch, a photo or an heirloom. Made${karatLine ? ` in ${karatLine}` : ''} with the karat, weight, making charge and timeline agreed in writing first. Send a photo on WhatsApp.`;
 const lead = `Bring a sketch, a photo or an heirloom. We agree the karat, the weight and the making charge before any work begins${karatLine ? `, and make it in ${karatLine}` : ''}.`;
 ---
 
 <BaseLayout
   title="Custom Gold Jewellery in Dubai, Made to Order"
-  description="Bring a sketch, a photo or an heirloom to any branch. Made in 22K or 18K with the karat, weight and making charge agreed in writing first. Send a photo on WhatsApp."
+  description={description}
   jsonLd={jsonLd}
 >
   <div class="container">
@@ -155,7 +157,7 @@ const lead = `Bring a sketch, a photo or an heirloom. We agree the karat, the we
     </div>
   </section>
 
-  {examples.length > 0 && (
+  {showExamples && (
     <section class="section section--ruled">
       <div class="container container--wide">
         <SectionHead
@@ -169,19 +171,17 @@ const lead = `Bring a sketch, a photo or an heirloom. We agree the karat, the we
           Designed with the customer, cast to an agreed weight and hallmarked like everything else
           on the trays. Your own design starts with a conversation.
         </SectionHead>
-        <div class:list={['examples', examples.length < 3 && `examples--${examples.length}`]}>
-          <TrayGrid>
-            {examples.map((p) => (
-              <ProductCard
-                product={p}
-                collectionName={
-                  p.data.collection ? collectionName.get(p.data.collection.id) : undefined
-                }
-                rate={rates.latest}
-              />
-            ))}
-          </TrayGrid>
-        </div>
+        <TrayGrid>
+          {examples.map((p) => (
+            <ProductCard
+              product={p}
+              collectionName={
+                p.data.collection ? collectionName.get(p.data.collection.id) : undefined
+              }
+              rate={rates.latest}
+            />
+          ))}
+        </TrayGrid>
       </div>
     </section>
   )}
@@ -197,9 +197,10 @@ const lead = `Bring a sketch, a photo or an heirloom. We agree the karat, the we
             brief.
           </p>
           <p>
-            We test and weigh the old gold in front of you and credit its full gold weight at the
-            day’s rate against the new piece, with no deduction for wear or design. Only the making
-            charge and VAT for the new work are added. Stones can be reset if they are sound.
+            We test and weigh the old gold in front of you and credit it by weight at the day’s rate
+            against the new piece; ask whether a promotion or the type of gold changes the terms.
+            The making charge and VAT for the new work are added. Stones can be reset if they are
+            sound.
           </p>
           <a class="link-quiet remake__link" href={routes.goldExchange}>
             How exchange works <Icon name="arrow-right" />
@@ -273,17 +274,6 @@ const lead = `Bring a sketch, a photo or an heirloom. We agree the karat, the we
   .step__detail {
     max-inline-size: 40rem;
     color: var(--ink-700);
-  }
-
-  /* One or two examples: shrink the tray so no empty cells show. */
-  .examples--1 :global(.tray) {
-    grid-template-columns: minmax(0, 1fr);
-    max-inline-size: 20rem;
-  }
-
-  .examples--2 :global(.tray) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-inline-size: 40rem;
   }
 
   .remake__text > * + * {

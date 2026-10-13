@@ -15,7 +15,7 @@ import Button from '@/components/ui/Button.astro';
 import { branches, openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getActiveOffers, getFaqGroup } from '@/lib/content';
-import { formatDate } from '@/lib/format';
+import { formatDate, listWords } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { whatsappUrl } from '@/lib/whatsapp';
 
@@ -30,24 +30,26 @@ const { offer } = Astro.props;
 const { data } = offer;
 const [faq, { Content }] = await Promise.all([getFaqGroup('offers'), render(offer)]);
 
-/** "Dubai, Sharjah and Abu Dhabi" */
-const listWords = (items: string[]) =>
-  items.length > 1
-    ? `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
-    : (items[0] ?? '');
-
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 const sameYear = data.startsOn.getFullYear() === data.endsOn.getFullYear();
 const startLabel = sameYear
-  ? data.startsOn.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'Asia/Dubai' })
+  ? data.startsOn.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      timeZone: 'Asia/Dubai',
+    })
   : formatDate(data.startsOn);
 const period = `${startLabel} to ${formatDate(data.endsOn)}`;
 
-const branchName = new Map(branches.map((b) => [b.id, b.name]));
+/* Short names ("Deira, Safari Mall and Rolla Mall"): full names carry commas of their own. */
+const branchName = new Map(branches.map((b) => [b.id, b.shortName]));
 const where =
   data.branches.length > 0
     ? data.branches.map((id) => branchName.get(id) ?? id)
-    : openBranches.map((b) => b.name);
+    : openBranches.map((b) => b.shortName);
+
+/* The breadcrumb repeats the sentence-case heading, not the SEO title. */
+const crumb = data.headline.replace(/[.!]$/, '');
 
 const whatsapp = whatsappUrl(
   data.whatsappMessage ??
@@ -60,7 +62,7 @@ const whatsapp = whatsappUrl(
     <Breadcrumbs
       items={[
         { name: 'Offers', href: routes.offers },
-        { name: data.title, href: routes.offer(offer.id) },
+        { name: crumb, href: routes.offer(offer.id) },
       ]}
     />
   </div>
@@ -114,7 +116,7 @@ const whatsapp = whatsappUrl(
     </div>
   </section>
 
-  <section class="section">
+  <section class="section section--ruled">
     <div class="container">
       <EnquiryBlock
         heading="Ask about this offer"
