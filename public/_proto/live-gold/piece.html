@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en-AE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Turkish Filigree Necklace, 22K · Live gold prototype</title>
+<meta name="description" content="Prototype: the Live gold direction for classicjewels.ae, piece page.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b0918">
+<link rel="preload" href="fonts/cormorant-garamond-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* ==========================================================================
+   LIVE GOLD · shared layer (tokens, base, chrome). Prototype only.
+   Production: tokens.css + base.css + layout components.
+   ========================================================================== */
+@font-face { font-family: "Cormorant Garamond"; src: url(fonts/cormorant-garamond-latin-wght-normal.woff2) format("woff2"); font-weight: 300 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Cormorant Garamond"; src: url(fonts/cormorant-garamond-latin-wght-italic.woff2) format("woff2"); font-weight: 300 700; font-style: italic; font-display: swap; }
+@font-face { font-family: "IBM Plex Sans"; src: url(fonts/ibm-plex-sans-latin-wght-normal.woff2) format("woff2"); font-weight: 100 700; font-style: normal; font-display: swap; }
+
+@property --assay { syntax: "<color>"; inherits: true; initial-value: #d9a55a; }
+@property --assay-ink { syntax: "<color>"; inherits: true; initial-value: #80561f; }
+@property --sheen { syntax: "<percentage>"; inherits: false; initial-value: -30%; }
+
+:root {
+  /* ---- Grounds ---- */
+  --stage-0: #0b0918;          /* sampled from the velvet corners, OKLCH h 288 */
+  --stage-1: #141030;          /* raised panel on the stage */
+  --stage-2: #1b1740;          /* p06 / lighter velvet override */
+  --rule-stage: #2b2645;       /* hairline on stage (decorative) */
+  --rule-stage-strong: #4a4170;/* control borders on stage, 3:1 */
+  --ivory: #faf7f2;
+  --parchment: #f3eee6;
+  --white: #ffffff;
+  --plum-900: #2e1a2d;
+  --plum-700: #4b2849;
+  --plum-500: #6b3f68;
+  --plum-300: #b498b2;
+  --plum-100: #eadfe9;
+  --plum-050: #f6f0f5;
+  --rule-plum: #6e4b6b;
+  --rule-plum-strong: #a58aa2;
+
+  /* ---- Ink ---- */
+  --ink-900: #1c1418;
+  --ink-700: #4a3f46;
+  --ink-500: #6b5f66;
+  --ink-on-stage: #faf7f2;
+  --ink-on-stage-2: #c8bfd0;
+  --ink-on-stage-muted: #a99fb5;
+  --ink-on-plum: #faf7f2;
+  --ink-on-plum-muted: #d9ccd6;
+
+  /* ---- Gold ---- */
+  --bronze: #be8658;           /* brand guideline gold, verbatim */
+  --gold-700: #8a5c32;         /* gold text on ivory */
+  --champagne: #dcc29a;
+  --gold-100: #f1e6d3;
+  --rule-1: #e6e0d6;
+  --rule-2: #cfc6b8;
+  --rule-input: #8f858b;
+
+  /* ---- Assay: the colour each karat leaves on a touchstone ---- */
+  --assay-24: #e6b450;  --assay-ink-24: #7c5a12;
+  --assay-22: #d9a55a;  --assay-ink-22: #80561f;
+  --assay-21: #cf9f66;  --assay-ink-21: #7f5b33;
+  --assay-18: #c9ae85;  --assay-ink-18: #6e5a3a;
+  --assay: var(--assay-22);
+  --assay-ink: var(--assay-ink-22);
+
+  /* ---- Type ---- */
+  --ff-display: "Cormorant Garamond", "Cormorant Garamond Fallback", Georgia, serif;
+  --ff-text: "IBM Plex Sans", "IBM Plex Sans Fallback", Arial, sans-serif;
+  --t-numeral-hero: clamp(9rem, 1.6rem + 26vw, 18.5rem);  /* 144 → 296 */
+  --t-numeral-xl: clamp(4rem, 2.4rem + 7vw, 8.5rem);      /* 64 → 136 */
+  --t-display-xl: clamp(2.5rem, 1.35rem + 5vw, 6rem);     /* 40 → 96 */
+  --t-display: clamp(2.375rem, 1.6rem + 3.4vw, 4.75rem);  /* 38 → 76 */
+  --t-index: clamp(2.25rem, 1.5rem + 3.2vw, 4.25rem);     /* 36 → 68 */
+  --t-h1: clamp(2.25rem, 1.7rem + 2.4vw, 3.75rem);        /* 36 → 60 */
+  --t-h3: clamp(1.375rem, 1.2rem + 0.7vw, 1.875rem);      /* 22 → 30 */
+  --t-lead: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);      /* 17 → 20 */
+  --t-body: 1rem;
+  --t-small: 0.875rem;
+  --t-caption: 0.8125rem;
+  --t-eyebrow: 0.75rem;
+  --lh-tight: 0.92;
+  --lh-display: 1.04;
+  --lh-text: 1.6;
+  --track-eyebrow: 0.16em;
+  --track-display: -0.01em;
+
+  /* ---- Space ---- */
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem; --space-5: 1.5rem;
+  --space-6: 2rem; --space-7: 3rem; --space-8: 4rem; --space-9: 6rem; --space-10: 8rem; --space-11: 10rem;
+  --section-y: clamp(4.5rem, 2.5rem + 7vw, 10rem);
+  --band-y: clamp(6rem, 3rem + 12vw, 14rem);
+
+  /* ---- Layout ---- */
+  --container: 80rem;        /* 1280 */
+  --container-wide: 90rem;   /* 1440: rails, the route, the stage */
+  --container-narrow: 46rem; /* 736: centred story text */
+  --gutter: clamp(1rem, 0.4rem + 2.6vw, 2.5rem);
+  --grid-gap: clamp(1rem, 0.6rem + 1.6vw, 2rem);
+  --header-h: 3.5rem;
+  --bar-h: 3.5rem;
+  --control-h: 3rem;
+  --tap: 2.75rem;
+  --radius: 0;
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-quick: 160ms;
+  --dur-base: 320ms;
+  --dur-slow: 600ms;
+  --dur-roll: 640ms;
+  --dur-page: 220ms;
+  --dur-morph: 320ms;
+  --stagger: 45ms;
+
+  --z-sticky: 10; --z-bar: 20; --z-nav: 30; --z-dialog: 40; --z-skip: 50;
+}
+@media (min-width: 64em) { :root { --header-h: 4.5rem; } }
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-quick: 0ms; --dur-base: 0ms; --dur-slow: 0ms; --dur-roll: 0ms; --stagger: 0ms; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root { transition: --assay var(--dur-slow) var(--ease-out), --assay-ink var(--dur-slow) var(--ease-out); }
+  @view-transition { navigation: auto; }
+}
+
+/* Karat state: the hero's radio group is the single source; CSS reads it with :has(). */
+:root:has(#k24:checked) { --assay: var(--assay-24); --assay-ink: var(--assay-ink-24); }
+:root:has(#k21:checked) { --assay: var(--assay-21); --assay-ink: var(--assay-ink-21); }
+:root:has(#k18:checked) { --assay: var(--assay-18); --assay-ink: var(--assay-ink-18); }
+.k-only { display: none; }
+:root:not(:has(.karat-input)) .k-22,
+:root:has(#k24:checked) .k-24, :root:has(#k22:checked) .k-22,
+:root:has(#k21:checked) .k-21, :root:has(#k18:checked) .k-18 { display: inline; }
+
+/* ---- Base ---- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-top: calc(var(--header-h) + var(--space-4)); }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+body {
+  margin: 0; background: var(--ivory); color: var(--ink-900);
+  font: 400 var(--t-body)/var(--lh-text) var(--ff-text);
+  font-kerning: normal; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  padding-bottom: calc(var(--bar-h) + env(safe-area-inset-bottom));
+}
+@media (min-width: 64em) { body { padding-bottom: 0; } }
+img { display: block; max-inline-size: 100%; block-size: auto; }
+a { color: inherit; text-decoration: none; }
+button, input, select { font: inherit; color: inherit; }
+h1, h2, h3, p, ul, ol, figure, fieldset, dl, dd { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+fieldset { border: 0; min-inline-size: 0; }
+:focus-visible { outline: 2px solid var(--plum-700); outline-offset: 3px; }
+[data-tone="stage"] :focus-visible, [data-tone="plum"] :focus-visible { outline-color: var(--champagne); }
+.sr { position: absolute !important; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.skip { position: fixed; inset: var(--space-2) auto auto var(--space-2); z-index: var(--z-skip); padding: var(--space-3) var(--space-4); background: var(--ivory); color: var(--ink-900); translate: 0 -200%; }
+.skip:focus { translate: 0 0; }
+.tab { font-variant-numeric: tabular-nums lining-nums; }
+
+main > section { overflow-x: clip; }
+/* Tones */
+[data-tone="stage"] { background: var(--stage-0); color: var(--ink-on-stage); }
+[data-tone="plum"] { background: var(--plum-700); color: var(--ink-on-plum); }
+[data-tone="plum-deep"] { background: var(--plum-900); color: var(--ink-on-plum); }
+[data-tone="ivory"] { background: var(--ivory); color: var(--ink-900); }
+
+/* Layout */
+.wrap { inline-size: min(100% - 2 * var(--gutter), var(--container)); margin-inline: auto; }
+.wrap--wide { inline-size: min(100% - 2 * var(--gutter), var(--container-wide)); }
+.wrap--narrow { inline-size: min(100% - 2 * var(--gutter), var(--container-narrow)); margin-inline: auto; }
+
+/* Type primitives */
+.eyebrow {
+  display: inline-flex; align-items: center; gap: var(--space-3);
+  font: 500 var(--t-eyebrow)/1.2 var(--ff-text); letter-spacing: var(--track-eyebrow); text-transform: uppercase;
+  color: var(--gold-700);
+}
+[data-tone="stage"] .eyebrow, [data-tone="plum"] .eyebrow, [data-tone="plum-deep"] .eyebrow { color: var(--champagne); }
+.eyebrow::before { content: ""; inline-size: 1.75rem; block-size: 1px; background: currentColor; }
+.eyebrow--bare::before { display: none; }
+.display {
+  font: 300 var(--t-display)/var(--lh-display) var(--ff-display); letter-spacing: var(--track-display);
+  text-wrap: balance;
+}
+.display em, .display-xl em, .h1 em { font-style: italic; font-weight: 300; }
+[data-tone="stage"] .display em, [data-tone="plum"] .display em { color: var(--assay); }
+[data-tone="ivory"] .display em { color: var(--assay-ink); }
+.display-xl { font: 300 var(--t-display-xl)/1.02 var(--ff-display); letter-spacing: -0.015em; text-wrap: balance; }
+.lead { font-size: var(--t-lead); line-height: 1.55; text-wrap: pretty; }
+.small { font-size: var(--t-small); }
+.caption { font-size: var(--t-caption); line-height: 1.45; }
+.muted { color: var(--ink-500); }
+[data-tone="stage"] .muted { color: var(--ink-on-stage-muted); }
+[data-tone="plum"] .muted, [data-tone="plum-deep"] .muted { color: var(--ink-on-plum-muted); }
+
+/* Underline wipe (Tiffany 0.6 s): 1 px rule grows from the left */
+.ul {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  padding-block-end: 2px;
+}
+@media (prefers-reduced-motion: no-preference) { .ul { transition: background-size var(--dur-slow) var(--ease-out), color var(--dur-quick); } }
+.ul:hover, .ul:focus-visible, a:hover > .ul, a:focus-visible > .ul { background-size: 100% 1px; }
+.ul--on { background-size: 100% 1px; }
+.ul--on:hover { background-size: 0 1px; }
+
+/* Buttons: square, 48 px, sentence case. Plum on light; bronze with stage ink on dark. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-3);
+  min-block-size: var(--control-h); padding: 0 var(--space-5);
+  font: 500 0.9375rem/1 var(--ff-text); letter-spacing: 0.01em; border: 1px solid transparent; border-radius: var(--radius);
+  cursor: pointer; white-space: nowrap;
+}
+@media (prefers-reduced-motion: no-preference) { .btn { transition: background-color var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out); } }
+.btn svg { inline-size: 1.125rem; block-size: 1.125rem; flex: none; }
+.btn--primary { background: var(--plum-700); color: var(--ink-on-plum); }
+.btn--primary:hover { background: var(--plum-900); }
+.btn--secondary { border-color: var(--plum-700); color: var(--plum-700); }
+.btn--secondary:hover { background: var(--plum-700); color: var(--ink-on-plum); }
+[data-tone="stage"] .btn--primary, [data-tone="plum"] .btn--primary, [data-tone="plum-deep"] .btn--primary { background: var(--bronze); color: var(--stage-0); }
+[data-tone="stage"] .btn--primary:hover, [data-tone="plum"] .btn--primary:hover, [data-tone="plum-deep"] .btn--primary:hover { background: var(--champagne); }
+[data-tone="stage"] .btn--secondary, [data-tone="plum"] .btn--secondary, [data-tone="plum-deep"] .btn--secondary { border-color: var(--ink-on-stage-2); color: var(--ink-on-stage); }
+[data-tone="stage"] .btn--secondary:hover, [data-tone="plum"] .btn--secondary:hover, [data-tone="plum-deep"] .btn--secondary:hover { background: var(--ink-on-stage); color: var(--stage-0); border-color: var(--ink-on-stage); }
+.link-arrow { display: inline-flex; align-items: center; gap: var(--space-2); font: 500 var(--t-small)/1.3 var(--ff-text); }
+.link-arrow svg { inline-size: 1rem; block-size: 1rem; }
+@media (prefers-reduced-motion: no-preference) { .link-arrow svg { transition: translate var(--dur-base) var(--ease-out); } }
+.link-arrow:hover svg { translate: 0.25rem 0; }
+.ico { inline-size: 1.25rem; block-size: 1.25rem; fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* The digit roller. The real value is in a .sr sibling; this is presentation only. */
+.roll { display: inline-flex; align-items: baseline; font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
+.dg { position: relative; display: inline-block; block-size: 1em; line-height: 1; overflow: clip; }
+.dg > i { font-style: normal; visibility: hidden; }
+.dg::before {
+  content: "0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9";
+  position: absolute; inset-inline: 0; inset-block-start: 0; white-space: pre; text-align: center; line-height: 1;
+  translate: 0 calc(var(--d, 0) * -1em);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dg::before { transition: translate var(--dur-roll) var(--ease-out) calc(var(--i, 0) * var(--stagger)); }
+}
+.karat-roll .dg { --d: var(--d22); }
+:root:has(#k24:checked) .karat-roll .dg { --d: var(--d24); }
+:root:has(#k21:checked) .karat-roll .dg { --d: var(--d21); }
+:root:has(#k18:checked) .karat-roll .dg { --d: var(--d18); }
+
+/* Feathered velvet photo on the stage (StageImage). Never wider than its source. */
+.stage-img { position: relative; inline-size: min(100%, var(--cap, 600px)); aspect-ratio: 1; margin-inline: auto; background: var(--stage, transparent); overflow: clip; }
+.stage-img img {
+  inline-size: 100%; block-size: 100%; object-fit: cover;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent), linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+  mask-composite: intersect;
+}
+.stage-img--spot img { -webkit-mask-image: radial-gradient(closest-side, #000 70%, transparent); mask-image: radial-gradient(closest-side, #000 70%, transparent); }
+/* The C-ring halo: the brand ring drawn once around a lit piece, in the karat colour */
+.halo { position: absolute; inset: -5%; inline-size: 110%; block-size: 110%; z-index: -1; pointer-events: none; overflow: visible; }
+.halo circle { fill: none; stroke: var(--assay); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 88 112; }
+@media (prefers-reduced-motion: no-preference) { .halo circle { animation: halo-draw 2.4s var(--ease-out) 200ms both; } }
+@keyframes halo-draw { from { stroke-dashoffset: 88; } }
+.pale-plate { background: #eae5e9; inline-size: min(100%, var(--cap)); aspect-ratio: 1; margin-inline: auto; }
+.pale-plate img { inline-size: 100%; }
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+.hdr {
+  position: sticky; inset-block-start: 0; z-index: var(--z-nav);
+  block-size: var(--header-h); border-block-end: 1px solid var(--rule-stage);
+  view-transition-name: hdr;
+}
+.hdr__in { block-size: 100%; display: flex; align-items: center; gap: var(--space-5); }
+.hdr__logo { flex: none; display: block; }
+.hdr__logo img { inline-size: 7.5rem; block-size: auto; }
+@media (min-width: 64em) { .hdr__logo img { inline-size: 8.25rem; } }
+.hdr__nav { display: none; }
+@media (min-width: 64em) {
+  .hdr__nav { display: flex; align-items: center; gap: clamp(1rem, 0.2rem + 1.4vw, 2rem); margin-inline-start: var(--space-6); }
+}
+.hdr__nav a, .hdr__nav button { font: 450 0.9375rem/1 var(--ff-text); background: none; border: 0; padding: var(--space-2) 0; cursor: pointer; color: var(--ink-on-stage-2); }
+.hdr__nav a:hover, .hdr__nav button:hover, .hdr__nav [aria-current="page"] { color: var(--ink-on-stage); }
+.hdr__nav button svg { inline-size: 0.75rem; block-size: 0.75rem; margin-inline-start: 0.35rem; vertical-align: 0.05em; }
+.hdr__end { margin-inline-start: auto; display: flex; align-items: center; gap: var(--space-3); }
+.chip {
+  display: inline-flex; align-items: center; gap: var(--space-2); min-block-size: 2.25rem; padding: 0 var(--space-3);
+  border: 1px solid var(--rule-stage-strong); font: 500 0.8125rem/1 var(--ff-text); color: var(--ink-on-stage);
+}
+.chip:hover { border-color: var(--assay); }
+.chip__dot { inline-size: 0.4375rem; block-size: 0.4375rem; background: var(--assay); }
+.chip b { font-weight: 500; color: var(--assay); }
+.hdr .btn { min-block-size: 2.5rem; padding-inline: var(--space-4); font-size: 0.875rem; display: none; }
+@media (min-width: 64em) { .hdr .btn { display: inline-flex; } }
+.hdr__menu { display: inline-grid; place-items: center; inline-size: var(--tap); block-size: var(--tap); background: none; border: 0; color: var(--ink-on-stage); cursor: pointer; margin-inline-end: calc(-1 * var(--space-2)); }
+.hdr__menu svg { inline-size: 1.5rem; block-size: 1.5rem; }
+@media (min-width: 64em) { .hdr__menu { display: none; } }
+
+/* Mega panel (popover in the top layer; no JS) */
+.mega {
+  position: fixed; inset: var(--header-h) 0 auto 0; margin: 0; inline-size: 100%; max-inline-size: none;
+  border: 0; border-block-end: 1px solid var(--rule-stage); padding: var(--space-7) 0 var(--space-8);
+  background: var(--stage-0); color: var(--ink-on-stage);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mega { transition: opacity var(--dur-base) var(--ease-out), translate var(--dur-base) var(--ease-out), overlay var(--dur-base) allow-discrete, display var(--dur-base) allow-discrete; opacity: 0; translate: 0 -0.5rem; }
+  .mega:popover-open { opacity: 1; translate: 0 0; }
+  @starting-style { .mega:popover-open { opacity: 0; translate: 0 -0.5rem; } }
+  .mega:popover-open .mega__col { animation: mega-in var(--dur-slow) var(--ease-out) both; animation-delay: calc(120ms + var(--i) * 60ms); }
+}
+@keyframes mega-in { from { opacity: 0; translate: 0 0.5rem; } }
+.mega::backdrop { background: transparent; }
+.mega__grid { display: grid; grid-template-columns: 1fr 1.2fr 1fr 1.1fr 15rem; gap: var(--space-7); }
+.mega__h { font: 500 var(--t-eyebrow)/1 var(--ff-text); letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--champagne); margin-block-end: var(--space-5); }
+.mega__list a { display: flex; justify-content: space-between; gap: var(--space-4); padding-block: 0.4rem; color: var(--ink-on-stage-2); font-size: 0.9375rem; }
+.mega__list a:hover, .mega__list a:focus-visible { color: var(--ink-on-stage); }
+.mega__styles a { font: 300 1.625rem/1.15 var(--ff-display); color: var(--ink-on-stage-muted); padding-block: 0.15rem; }
+.mega__styles a:hover, .mega__styles a:focus-visible { color: var(--ink-on-stage); }
+.mega__karat a { align-items: baseline; border-block-end: 1px solid var(--rule-stage); padding-block: var(--space-3); }
+.mega__karat b { font: 300 1.5rem/1 var(--ff-display); color: var(--ink-on-stage); }
+.mega__karat span { color: var(--ink-on-stage-2); }
+.mega__visit li { padding-block: var(--space-2); border-block-end: 1px solid var(--rule-stage); }
+.mega__visit a { display: block; padding: 0; }
+.mega__visit small { display: block; color: var(--ink-on-stage-muted); font-size: var(--t-caption); }
+.mega__pv { position: relative; aspect-ratio: 1; inline-size: 15rem; background: var(--stage-0); }
+.mega__pv .stage-img { position: absolute; inset: 0; --cap: 240px; opacity: 0; }
+.mega__pv .stage-img:first-child { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) { .mega__pv .stage-img { transition: opacity var(--dur-base) var(--ease-out); } }
+.mega:has([data-pv="rajkot"]:is(:hover, :focus-visible)) .mega__pv .stage-img:first-child,
+.mega:has([data-pv="temple"]:is(:hover, :focus-visible)) .mega__pv .stage-img:first-child,
+.mega:has([data-pv="turkish"]:is(:hover, :focus-visible)) .mega__pv .stage-img:first-child,
+.mega:has([data-pv="italian"]:is(:hover, :focus-visible)) .mega__pv .stage-img:first-child { opacity: 0; }
+.mega:has([data-pv="rajkot"]:is(:hover, :focus-visible)) .pv-rajkot,
+.mega:has([data-pv="temple"]:is(:hover, :focus-visible)) .pv-temple,
+.mega:has([data-pv="turkish"]:is(:hover, :focus-visible)) .pv-turkish,
+.mega:has([data-pv="italian"]:is(:hover, :focus-visible)) .pv-italian { opacity: 1; }
+.mega__cap { margin-block-start: var(--space-3); color: var(--ink-on-stage-muted); font-size: var(--t-caption); }
+
+/* Mobile drawer (popover, full screen) */
+.drawer {
+  position: fixed; inset: 0; margin: 0; inline-size: 100%; block-size: 100dvh; max-inline-size: none; max-block-size: none;
+  border: 0; padding: 0; background: var(--stage-0); color: var(--ink-on-stage); overflow-y: auto;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .drawer { transition: opacity var(--dur-base) var(--ease-out), overlay var(--dur-base) allow-discrete, display var(--dur-base) allow-discrete; opacity: 0; }
+  .drawer:popover-open { opacity: 1; }
+  @starting-style { .drawer:popover-open { opacity: 0; } }
+  .drawer:popover-open .drawer__nav li { animation: mega-in var(--dur-slow) var(--ease-out) both; animation-delay: calc(80ms + var(--i) * 40ms); }
+}
+.drawer__top { display: flex; align-items: center; justify-content: space-between; block-size: var(--header-h); border-block-end: 1px solid var(--rule-stage); }
+.drawer__nav { padding-block: var(--space-6); }
+.drawer__nav a { display: flex; justify-content: space-between; align-items: baseline; padding-block: var(--space-3); font: 300 2.25rem/1.1 var(--ff-display); border-block-end: 1px solid var(--rule-stage); }
+.drawer__nav small { font: 400 var(--t-caption)/1 var(--ff-text); color: var(--ink-on-stage-muted); }
+.drawer__visit { padding-block: var(--space-5) var(--space-8); }
+.drawer__visit li { display: flex; justify-content: space-between; gap: var(--space-4); padding-block: var(--space-3); border-block-end: 1px solid var(--rule-stage); font-size: var(--t-small); }
+.drawer__visit a { color: var(--champagne); }
+
+/* ==========================================================================
+   Mobile action bar
+   ========================================================================== */
+.abar {
+  position: fixed; inset: auto 0 0 0; z-index: var(--z-bar); display: grid; grid-template-columns: 1.25fr 1fr 1fr 1.25fr;
+  block-size: calc(var(--bar-h) + env(safe-area-inset-bottom)); padding-block-end: env(safe-area-inset-bottom);
+  background: var(--stage-0); color: var(--ink-on-stage); border-block-start: 1px solid var(--rule-stage-strong);
+  view-transition-name: abar;
+}
+@media (min-width: 64em) { .abar { display: none; } }
+.abar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; font: 500 0.6875rem/1 var(--ff-text); letter-spacing: 0.04em; color: var(--ink-on-stage-2); }
+.abar a + a { border-inline-start: 1px solid var(--rule-stage); }
+.abar a:first-child { background: var(--bronze); color: var(--stage-0); }
+.abar svg { inline-size: 1.25rem; block-size: 1.25rem; }
+.abar__rate b { font: 400 1.125rem/1 var(--ff-display); color: var(--assay); font-variant-numeric: lining-nums tabular-nums; }
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.ftr { padding-block: var(--space-9) var(--space-6); border-block-start: 1px solid var(--bronze); }
+.ftr__top { display: grid; gap: var(--space-7); padding-block-end: var(--space-7); border-block-end: 1px solid var(--rule-plum); }
+@media (min-width: 64em) { .ftr__top { grid-template-columns: 1fr auto; align-items: end; } }
+.ftr__brand img { inline-size: 8.25rem; }
+.lockup { display: inline-flex; align-items: center; gap: var(--space-3); margin-block-start: var(--space-4); font: 500 var(--t-eyebrow)/1.2 var(--ff-text); letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--champagne); }
+.lockup svg { inline-size: 1.5rem; block-size: 1.5rem; stroke: var(--bronze); stroke-width: 1.25; fill: none; }
+.ftr__rates { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--rule-plum); }
+.ftr__rates div { padding: var(--space-3) var(--space-4); }
+.ftr__rates div + div { border-inline-start: 1px solid var(--rule-plum); }
+@media (max-width: 47.99em) { .ftr__rates { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ftr__rates div:nth-child(3) { border-inline-start: 0; } .ftr__rates div:nth-child(n+3) { border-block-start: 1px solid var(--rule-plum); } }
+.ftr__rates dt { font: 500 var(--t-eyebrow)/1 var(--ff-text); letter-spacing: 0.1em; color: var(--ink-on-plum-muted); }
+.ftr__rates dd { font: 300 1.75rem/1.1 var(--ff-display); font-variant-numeric: lining-nums tabular-nums; margin-block-start: var(--space-1); }
+.ftr__ratenote { grid-column: 1 / -1; padding: var(--space-2) var(--space-4) !important; border-block-start: 1px solid var(--rule-plum); border-inline-start: 0 !important; font-size: var(--t-caption); color: var(--ink-on-plum-muted); }
+.ftr__cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-7) var(--space-5); padding-block: var(--space-7); }
+@media (min-width: 48em) { .ftr__cols { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.ftr__cols h2 { font: 500 var(--t-eyebrow)/1 var(--ff-text); letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--champagne); margin-block-end: var(--space-4); }
+.ftr__cols li { padding-block: 0.3rem; font-size: var(--t-small); color: var(--ink-on-plum-muted); }
+.ftr__cols a:hover { color: var(--ink-on-plum); }
+.ftr__cols small { display: block; font-size: var(--t-caption); color: var(--plum-300); }
+.ftr__base { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); justify-content: space-between; padding-block-start: var(--space-5); border-block-start: 1px solid var(--rule-plum); font-size: var(--t-caption); color: var(--ink-on-plum-muted); }
+.ftr__base ul { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); }
+
+/* ==========================================================================
+   Scroll-driven reveal (decoration on a finished page)
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .rv { animation: rv-rise linear both; animation-timeline: view(); animation-range: entry 5% entry 65%; }
+  }
+}
+@keyframes rv-rise { from { opacity: 0; translate: 0 1.5rem; } }
+/* ==========================================================================
+   PIECE PAGE
+   ========================================================================== */
+.crumbs { display: flex; flex-wrap: wrap; gap: 0.25rem 0.6rem; padding-block: var(--space-5) 0; font-size: var(--t-caption); color: var(--ink-on-stage-muted); }
+.crumbs li + li::before { content: "/"; margin-inline-end: 0.6rem; color: var(--rule-stage-strong); }
+.crumbs a:hover { color: var(--ink-on-stage); }
+.crumbs [aria-current] { color: var(--ink-on-stage-2); }
+
+.pc { padding-block: var(--space-6) var(--space-9); }
+.pc__grid { display: grid; gap: var(--space-7); }
+@media (min-width: 64em) { .pc__grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-9); align-items: start; } }
+.pc__media { position: relative; isolation: isolate; inline-size: min(100% - 2rem, 37.5rem); margin: var(--space-7) auto 0; }
+@media (min-width: 64em) { .pc__media { position: sticky; inset-block-start: calc(var(--header-h) + var(--space-7)); margin-block-start: var(--space-6); } }
+.pc__media .stage-img { --cap: 600px; inline-size: 100%; view-transition-name: piece-cj-nk-005; }
+.pc__media .halo { inset: -4%; inline-size: 108%; block-size: 108%; }
+.pc__note { margin-block-start: var(--space-6); text-align: center; font-size: var(--t-caption); color: var(--ink-on-stage-muted); }
+
+.pc__info { display: grid; gap: var(--space-5); }
+.pc__eyebrow { display: flex; gap: var(--space-3); align-items: center; }
+.tag { padding: 0.2rem 0.45rem; border: 1px solid var(--assay); color: var(--assay); font: 600 0.625rem/1 var(--ff-text); letter-spacing: 0.14em; text-transform: uppercase; }
+.pc__h1 { font: 300 var(--t-h1)/1.02 var(--ff-display); letter-spacing: -0.01em; text-wrap: balance; }
+.pc__lead { color: var(--ink-on-stage-2); max-inline-size: 44ch; }
+
+/* The ticket: the piece's facts, with today's rate for its karat */
+.ticket { border: 1px solid var(--rule-stage-strong); }
+.ticket__rate { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--space-2) var(--space-4); padding: var(--space-5); border-block-end: 1px solid var(--rule-stage-strong); }
+.ticket__rate .lbl { font: 500 var(--t-eyebrow)/1.3 var(--ff-text); letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--ink-on-stage-muted); }
+.ticket__num { grid-row: span 2; font: 300 clamp(3rem, 2.4rem + 2vw, 4rem)/0.9 var(--ff-display); color: var(--assay-22); font-variant-numeric: lining-nums tabular-nums; letter-spacing: -0.02em; }
+.ticket__num small { font-size: 0.45em; vertical-align: 0.9em; margin-inline-start: 0.05em; }
+.ticket__rate p { font-size: var(--t-caption); color: var(--ink-on-stage-2); }
+.ticket dl { display: grid; grid-template-columns: auto 1fr; }
+.ticket dl > div { display: contents; }
+.ticket dt, .ticket dd { padding: 0.7rem var(--space-5); border-block-end: 1px solid var(--rule-stage); font-size: var(--t-small); }
+.ticket dt { color: var(--ink-on-stage-muted); padding-inline-end: var(--space-3); }
+.ticket dd { color: var(--ink-on-stage); text-align: end; }
+.ticket dl > div:last-child > * { border-block-end: 0; }
+.ticket dd .tab { letter-spacing: 0.04em; }
+.copy { margin-inline-start: var(--space-2); background: none; border: 0; padding: 0; color: var(--champagne); cursor: pointer; vertical-align: -0.2em; }
+.copy svg { inline-size: 1rem; block-size: 1rem; }
+.ticket__how { padding: var(--space-4) var(--space-5); border-block-start: 1px solid var(--rule-stage-strong); font-size: var(--t-caption); color: var(--ink-on-stage-muted); background: var(--stage-1); }
+.ticket__how b { color: var(--ink-on-stage); font-weight: 500; }
+
+.pc__acts { display: grid; gap: var(--space-3); }
+.pc__acts .btn { inline-size: 100%; min-block-size: 3.25rem; }
+.quiet { border-block-start: 1px solid var(--rule-stage); }
+.quiet a { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); min-block-size: 3.25rem; border-block-end: 1px solid var(--rule-stage); font-size: var(--t-small); color: var(--ink-on-stage-2); }
+.quiet a:hover { color: var(--ink-on-stage); }
+.quiet svg { inline-size: 1.1rem; block-size: 1.1rem; color: var(--champagne); }
+@media (prefers-reduced-motion: no-preference) { .quiet a svg:last-child { transition: translate var(--dur-base) var(--ease-out); } }
+.quiet a:hover svg:last-child { translate: 0.25rem 0; }
+.quiet span { display: inline-flex; gap: var(--space-3); align-items: center; }
+.promises { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); font-size: var(--t-caption); color: var(--ink-on-stage-muted); }
+.promises li::before { content: ""; display: inline-block; inline-size: 0.4rem; block-size: 0.4rem; background: var(--bronze); rotate: 45deg; margin-inline-end: 0.5rem; vertical-align: 0.1em; }
+
+/* slim estimator band */
+.slim { padding-block: var(--space-6); }
+.slim__in { display: flex; flex-wrap: wrap; gap: var(--space-4) var(--space-7); align-items: center; justify-content: space-between; }
+.slim p { font: 300 clamp(1.375rem, 1.1rem + 1vw, 2rem)/1.2 var(--ff-display); }
+.slim b { font-weight: 300; color: var(--assay); font-variant-numeric: lining-nums tabular-nums; }
+.slim a { color: var(--champagne); }
+
+/* the style chapter */
+.chap { padding-block: var(--section-y); }
+.chap__grid { display: grid; gap: var(--space-7); }
+@media (min-width: 64em) { .chap__grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-9); } }
+.chap__name { font: italic 300 clamp(4rem, 2rem + 8vw, 9rem)/0.9 var(--ff-display); color: var(--assay-ink); letter-spacing: -0.02em; margin-block-start: var(--space-4); }
+.chap__origin { margin-block-start: var(--space-4); color: var(--ink-500); }
+.chap__body { display: grid; gap: var(--space-6); align-content: start; }
+.chap__body > p { font-size: var(--t-lead); line-height: 1.6; color: var(--ink-700); max-inline-size: 52ch; }
+.marks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-block-start: 1px solid var(--rule-1); }
+.marks li { padding: var(--space-4) var(--space-4) var(--space-4) 0; border-block-end: 1px solid var(--rule-1); font: 300 1.375rem/1.2 var(--ff-display); }
+.marks li span { display: block; font: 500 var(--t-eyebrow)/1 var(--ff-text); letter-spacing: 0.12em; color: var(--gold-700); margin-block-end: 0.4rem; font-variant-numeric: lining-nums; }
+.ladder { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1px solid var(--rule-1); background: var(--white); }
+.ladder > div { padding: var(--space-5); }
+.ladder > div + div { border-inline-start: 1px solid var(--rule-1); }
+.ladder dt { font: 500 var(--t-eyebrow)/1 var(--ff-text); letter-spacing: 0.12em; color: var(--ink-500); text-transform: uppercase; }
+.ladder dd { font: 300 2.5rem/1 var(--ff-display); font-variant-numeric: lining-nums tabular-nums; margin-block-start: var(--space-2); color: var(--ink-900); }
+.ladder dd small { font: 400 var(--t-caption)/1 var(--ff-text); color: var(--ink-500); margin-inline-start: 0.35rem; }
+.ladder__cap { grid-column: 1 / -1; padding: var(--space-3) var(--space-5) !important; border-inline-start: 0 !important; border-block-start: 1px solid var(--rule-1); font-size: var(--t-caption); color: var(--ink-500); }
+
+/* also on the counter */
+.also { padding-block: var(--section-y); }
+.also__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--space-4); margin-block-end: var(--space-7); }
+.tray { display: grid; grid-auto-flow: column; grid-auto-columns: min(78%, 20rem); gap: var(--space-5); overflow-x: auto; scroll-snap-type: inline mandatory; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scroll-padding-inline: var(--gutter); }
+.tray::-webkit-scrollbar { display: none; }
+@media (min-width: 64em) { .tray { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: visible; margin: 0; padding: 0; } }
+.tray li { scroll-snap-align: start; }
+.tray a { display: grid; gap: var(--space-2); }
+.tray .stage-img { --cap: 600px; view-transition-name: var(--vt, none); }
+.tray h3 { font: 300 1.5rem/1.15 var(--ff-display); margin-block-start: var(--space-3); }
+.tray p { display: flex; justify-content: space-between; font-size: var(--t-caption); color: var(--ink-on-stage-muted); }
+.tray p b { font-weight: 500; color: var(--assay-22); font-variant-numeric: tabular-nums; }
+.tray a:hover h3 { color: var(--champagne); }
+@media (prefers-reduced-motion: no-preference) { @supports (animation-timeline: view()) { .tray li { animation: rv-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; } } }
+
+/* mobile: the action bar becomes the piece's enquiry bar */
+.abar--piece { grid-template-columns: 2.4fr 1fr 1.1fr; }
+.abar--piece a:first-child { flex-direction: row; gap: var(--space-2); font-size: 0.8125rem; letter-spacing: 0.01em; }
+
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 0-7.3 12.9L3.5 20.5l4.2-1.1A8.5 8.5 0 1 0 12 3.5z"/><path d="M9.4 8.3c.3-.6.9-.6 1.2 0l.7 1.5c.2.4 0 .8-.3 1l-.5.4a7 7 0 0 0 2.9 2.9l.4-.5c.3-.3.7-.4 1-.3l1.5.7c.6.3.6.9 0 1.2-.7.5-1.6.6-2.5.3a9.4 9.4 0 0 1-4.9-4.9c-.3-.9-.2-1.8.5-2.3z"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h3.5l1.5 4-2 1.2a11 11 0 0 0 6.8 6.8l1.2-2 4 1.5V19a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6-5.6-6-11a6 6 0 1 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16M13 5l7 7-7 7"/></symbol>
+<symbol id="i-ext" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 8h18M3 16h18"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-rate" viewBox="0 0 24 24"><path d="M3 17l5-5 4 3 7-8"/><path d="M15 7h4v4"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11"/><path d="M5 15V5h10"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15"/><path d="M4 10h16M9 3v4M15 3v4"/></symbol>
+<symbol id="i-cring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" pathLength="100" stroke-dasharray="88 12" transform="rotate(50 12 12)"/></symbol>
+</svg>
+<header class="hdr" data-tone="stage">
+  <div class="wrap wrap--wide hdr__in">
+    <a class="hdr__logo" href="index.html"><img src="img/logo-white.png" width="265" height="66" alt="Classic Jewels &amp; Diamonds, home"></a>
+    <nav class="hdr__nav" aria-label="Main">
+      <button type="button" popovertarget="mega">Jewellery<svg class="ico" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button>
+      <a href="index.html#styles">Styles</a><a href="index.html#board">Gold rate</a><a href="index.html#exchange">Old gold</a><a href="index.html#branches">Branches</a><a href="index.html#lineage">About</a>
+    </nav>
+    <div class="hdr__end">
+      <a class="chip" href="index.html#board"><span class="chip__dot" aria-hidden="true"></span><span class="sr">Today’s gold rate per gram, </span><span class="k-only k-24">24K <b class="tab">505.75</b></span><span class="k-only k-22">22K <b class="tab">468.25</b></span><span class="k-only k-21">21K <b class="tab">449.00</b></span><span class="k-only k-18">18K <b class="tab">384.75</b></span></a>
+      <a class="btn btn--primary" href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C"><svg class="ico" aria-hidden="true"><use href="#i-wa"/></svg>WhatsApp us</a>
+      <button class="hdr__menu" type="button" popovertarget="drawer" aria-label="Open the menu"><svg class="ico" aria-hidden="true"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+<div id="mega" popover class="mega" data-tone="stage">
+  <div class="wrap wrap--wide mega__grid">
+    <div class="mega__col" style="--i:0"><p class="mega__h">By piece</p><ul class="mega__list"><li><a href="/jewellery/necklaces/">Necklaces</a></li><li><a href="/jewellery/earrings/">Earrings</a></li><li><a href="/jewellery/rings/">Rings</a></li><li><a href="/jewellery/pendants/">Pendants</a></li><li><a href="/jewellery/bangles/">Bangles</a></li><li><a href="/jewellery/bracelets/">Bracelets</a></li><li><a href="/jewellery/chains/">Chains</a></li><li><a href="/jewellery/anklets/">Anklets</a></li><li><a href="/jewellery/gold-coins-bars/">Coins &amp; bars</a></li></ul></div>
+    <div class="mega__col" style="--i:1"><p class="mega__h">By style</p><ul class="mega__list mega__styles"><li><a data-pv="kolkata" href="/collections/kolkata/">Kolkata</a></li><li><a data-pv="rajkot" href="/collections/rajkot/">Rajkot</a></li><li><a data-pv="temple" href="/collections/temple/">Temple</a></li><li><a data-pv="antique" href="/collections/antique/">Antique</a></li><li><a data-pv="turkish" href="/collections/turkish/">Turkish</a></li><li><a data-pv="kuwaiti" href="/collections/kuwait/">Kuwaiti</a></li><li><a data-pv="italian" href="/collections/italian/">Italian</a></li><li><a data-pv="singapore" href="/collections/singapore/">Singapore</a></li></ul></div>
+    <div class="mega__col" style="--i:2"><p class="mega__h">By karat · today, AED/g</p><ul class="mega__list mega__karat"><li><a href="/gold-rate/#k24"><b>24K</b><span class="tab">505.75</span></a></li><li><a href="/gold-rate/#k22"><b>22K</b><span class="tab">468.25</span></a></li><li><a href="/gold-rate/#k21"><b>21K</b><span class="tab">449.00</span></a></li><li><a href="/gold-rate/#k18"><b>18K</b><span class="tab">384.75</span></a></li></ul><p class="mega__cap">As of 12:02, Tue 13 Oct · <a class="ul ul--on" href="/gold-rate/">Rate history</a></p></div>
+    <div class="mega__col" style="--i:3"><p class="mega__h">Visit us</p><ul class="mega__list mega__visit"><li><a href="/stores/deira-gold-souq-extension/">Gold Souq Extension<small>Dubai · Deira</small></a></li><li><a href="/stores/safari-mall-sharjah/">Safari Mall<small>Sharjah</small></a></li><li><a href="/stores/rolla-mall-sharjah/">Rolla Mall<small>Sharjah</small></a></li><li><a href="/stores/madinat-zayed-abu-dhabi/">Madinat Zayed<small>Abu Dhabi</small></a></li></ul></div>
+    <div class="mega__col" style="--i:4"><div class="mega__pv"><div class="stage-img pv-kolkata"><img src="img/p01.jpg" width="600" height="600" alt="" loading="lazy" decoding="async"></div><div class="stage-img pv-rajkot"><img src="img/p02.jpg" width="600" height="600" alt="" loading="lazy" decoding="async"></div><div class="stage-img pv-temple"><img src="img/p08.jpg" width="600" height="600" alt="" loading="lazy" decoding="async"></div><div class="stage-img pv-turkish"><img src="img/p05.jpg" width="600" height="600" alt="" loading="lazy" decoding="async"></div><div class="stage-img pv-italian"><img src="img/p04.jpg" width="600" height="600" alt="" loading="lazy" decoding="async"></div></div><p class="mega__cap">Pieces from the trays, photographed on the velvet they sit on.</p></div>
+  </div>
+</div>
+<div id="drawer" popover class="drawer" data-tone="stage">
+  <div class="wrap drawer__top"><img src="img/logo-white.png" width="265" height="66" alt="Classic Jewels &amp; Diamonds" style="inline-size:7.5rem"><button class="hdr__menu" type="button" popovertarget="drawer" popovertargetaction="hide" aria-label="Close the menu"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+  <nav class="wrap drawer__nav" aria-label="Main"><ul><li style="--i:0"><a href="/jewellery/">Jewellery<small>Necklaces to coins</small></a></li><li style="--i:1"><a href="index.html#styles">Styles<small>Eight traditions</small></a></li><li style="--i:2"><a href="index.html#board">Gold rate<small>22K <span class="tab">468.25</span></small></a></li><li style="--i:3"><a href="index.html#exchange">Old gold<small>Estimate it today</small></a></li><li style="--i:4"><a href="index.html#branches">Branches<small>Four counters</small></a></li><li style="--i:5"><a href="index.html#lineage">About<small>A Classic Group house</small></a></li><li style="--i:6"><a href="/contact/">Contact<small></small></a></li></ul></nav>
+  <div class="wrap drawer__visit"><p class="eyebrow">Visit us</p><ul><li><span>Gold Souq Extension, Dubai</span><a href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20a%20question%20for%20the%20Gold%20Souq%20Extension%20branch%3A">WhatsApp</a></li><li><span>Safari Mall, Sharjah</span><a href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20a%20question%20for%20the%20Safari%20Mall%20branch%3A">WhatsApp</a></li><li><span>Rolla Mall, Sharjah</span><a href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20a%20question%20for%20the%20Rolla%20Mall%20branch%3A">WhatsApp</a></li><li><span>Madinat Zayed, Abu Dhabi</span><a href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20a%20question%20for%20the%20Madinat%20Zayed%20branch%3A">WhatsApp</a></li></ul></div>
+</div>
+<main id="main">
+<section class="pc" data-tone="stage" aria-labelledby="h1">
+  <div class="wrap wrap--wide">
+    <nav aria-label="Breadcrumb"><ol class="crumbs"><li><a href="index.html">Home</a></li><li><a href="/jewellery/">Jewellery</a></li><li><a href="/jewellery/necklaces/">Necklaces</a></li><li aria-current="page">Turkish Filigree Necklace</li></ol></nav>
+    <div class="pc__grid">
+      <div>
+        <figure class="pc__media">
+          <svg class="halo" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="49.5" pathLength="100" transform="rotate(50 50 50)"/></svg>
+          <div class="stage-img"><img src="img/p05.jpg" width="600" height="600" alt="Turkish-style gold necklace with openwork filigree medallions on a white bust" fetchpriority="high" decoding="async"></div>
+        </figure>
+        <p class="pc__note">Photographed on the velvet bust it sits on in the shop. Ask for a video from the counter.</p>
+      </div>
+      <div class="pc__info">
+        <p class="pc__eyebrow"><span class="eyebrow">Turkish collection</span><span class="tag">New</span></p>
+        <h1 class="pc__h1" id="h1">Turkish Filigree Necklace</h1>
+        <p class="pc__lead">Openwork medallions linked in a line, with sand-blasted backgrounds behind polished motifs. The contrast is what makes Turkish gold look the way it does. Sits just below the collarbone.</p>
+
+        <div class="ticket">
+          <div class="ticket__rate">
+            <span class="lbl">22K today, per gram</span>
+            <span class="ticket__num" aria-hidden="true">468<small>.25</small></span>
+            <p><span class="sr">22 karat gold today: AED 468.25 per gram. </span>AED, as of 12:02, Tue 13 Oct</p>
+          </div>
+          <dl>
+            <div><dt>Reference</dt><dd><span class="tab">CJ-NK-005</span><button class="copy" type="button" data-copy="CJ-NK-005" aria-label="Copy the reference CJ-NK-005"><svg class="ico" aria-hidden="true"><use href="#i-copy"/></svg></button></dd></div>
+            <div><dt>Karat</dt><dd>22K, stamped 916</dd></div>
+            <div><dt>Weight</dt><dd>Weighed in front of you on request</dd></div>
+            <div><dt>Finish</dt><dd>Matte and bright, yellow gold</dd></div>
+            <div><dt>Availability</dt><dd>In store</dd></div>
+          </dl>
+          <p class="ticket__how"><b>How the price is built:</b> today’s 22K rate × net gold weight, plus the making charge, plus 5% VAT. We quote all three lines on WhatsApp.</p>
+        </div>
+
+        <div class="pc__acts">
+          <a class="btn btn--primary" href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20I%20would%20like%20to%20ask%20about%20the%20Turkish%20Filigree%20Necklace%20%28CJ-NK-005%29%3A%20http%3A//localhost%3A4397/_proto/live-gold/piece.html"><svg class="ico" aria-hidden="true"><use href="#i-wa"/></svg>Ask about this piece on WhatsApp</a>
+          <a class="btn btn--secondary" href="tel:+97142551288"><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>Call Deira, +971 4 255 1288</a>
+        </div>
+        <nav class="quiet" aria-label="Other ways to ask">
+          <a href="/contact/?piece=CJ-NK-005"><span><svg class="ico" aria-hidden="true"><use href="#i-cal"/></svg>Book a visit to see it</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20Please%20call%20me%20about%20the%20Turkish%20Filigree%20Necklace%20%28CJ-NK-005%29."><span><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>Ask us to call you</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20Which%20branch%20has%20the%20Turkish%20Filigree%20Necklace%20%28CJ-NK-005%29%20today%3F"><span><svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg>Which branch has it today?</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </nav>
+        <ul class="promises"><li>UAE hallmark, 916</li><li>Cleaning and polishing for life</li><li>14 days to change your mind, unworn</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slim" data-tone="plum" aria-label="Old gold">
+  <div class="wrap wrap--wide slim__in">
+    <p>Trading in old gold? At today’s rate, 10 g of 22K is about <b>AED 4,683</b>.</p>
+    <a class="link-arrow" href="index.html#exchange"><span class="ul ul--on">Estimate yours</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+  </div>
+</section>
+
+<section class="chap" data-tone="ivory" aria-labelledby="chap-h">
+  <div class="wrap wrap--wide chap__grid">
+    <div>
+      <p class="eyebrow">The style</p>
+      <h2 class="chap__name" id="chap-h">Turkish</h2>
+      <p class="chap__origin">Turkish-style designs, in 21K and 22K</p>
+    </div>
+    <div class="chap__body">
+      <p>Turkish-style gold is heavier in form and lighter in colour than Indian work, usually 21K, with wide bangles, coin motifs and a contrast between sand-blasted and polished surfaces. The collection suits anyone who wants a single statement piece rather than a matched set.</p>
+      <ul class="marks"><li><span>01</span>Bold sculptural forms</li><li><span>02</span>Matte-bright contrast</li><li><span>03</span>21K and 22K</li><li><span>04</span>Statement bangles</li></ul>
+      <dl class="ladder"><div><dt>21K · 875 today</dt><dd>449.00<small>AED/g</small></dd></div><div><dt>22K · 916 today</dt><dd>468.25<small>AED/g</small></dd></div><p class="ladder__cap">The two karats this style is made in. Dubai Jewellery Group suggested retail rate, as of 12:02.</p></dl>
+      <a class="link-arrow" href="/collections/turkish/" style="color:var(--plum-700)"><span class="ul ul--on">The Turkish collection</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<section class="also" data-tone="stage" aria-labelledby="also-h">
+  <div class="wrap wrap--wide">
+    <div class="also__head"><div><p class="eyebrow">On the counter</p><h2 class="display" id="also-h" style="margin-block-start:var(--space-4)">More in <em>22K</em></h2></div><a class="link-arrow" href="/jewellery/necklaces/" style="color:var(--champagne)"><span class="ul ul--on">All necklaces</span><svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+    <ul class="tray"><li><a href="/jewellery/necklaces/kolkata-fringe-choker/"><div class="stage-img"><img src="img/p01.jpg" width="600" height="600" alt="22K gold Kolkata choker with a fringe of leaf-shaped drops on a white bust" loading="lazy" decoding="async"></div><h3>Kolkata Fringe Choker</h3><p><span>22K · Kolkata</span><span>today <b>468.25</b>/g</span></p></a></li><li><a href="/jewellery/necklaces/antique-pearl-drop-bib/"><div class="stage-img"><img src="img/p03.jpg" width="600" height="600" alt="Antique-finish 22K gold bib necklace edged with pearl drops on a white bust" loading="lazy" decoding="async"></div><h3>Antique Pearl-Drop Bib Necklace</h3><p><span>22K · Antique</span><span>today <b>468.25</b>/g</span></p></a></li><li><a href="/jewellery/necklaces/temple-long-haar-bell-pendant/"><div class="stage-img"><img src="img/p08.jpg" width="600" height="600" alt="22K gold temple-style long necklace with a large bell pendant on a white bust" loading="lazy" decoding="async"></div><h3>Temple Long Haar with Bell Pendant</h3><p><span>22K · Temple</span><span>today <b>468.25</b>/g</span></p></a></li><li><a href="/jewellery/necklaces/three-line-rani-haar/"><div class="stage-img"><img src="img/p09.jpg" width="600" height="600" alt="Three-strand 22K gold rani haar with a peacock pendant on a white bust" loading="lazy" decoding="async"></div><h3>Three-Line Rani Haar</h3><p><span>22K · Antique</span><span>today <b>468.25</b>/g</span></p></a></li></ul>
+  </div>
+</section>
+</main>
+<footer class="ftr" data-tone="plum-deep">
+  <div class="wrap wrap--wide">
+    <div class="ftr__top">
+      <div class="ftr__brand"><img src="img/logo-white.png" width="265" height="66" alt="Classic Jewels &amp; Diamonds"><br><a class="lockup" href="https://classicgrp.ae/" rel="noopener"><svg class="" aria-hidden="true"><use href="#i-cring"/></svg>A Classic Group house</a></div>
+      <dl class="ftr__rates" aria-label="Today’s gold rate, AED per gram"><div><dt>24K · 999</dt><dd>505.75</dd></div><div><dt>22K · 916</dt><dd>468.25</dd></div><div><dt>21K · 875</dt><dd>449.00</dd></div><div><dt>18K · 750</dt><dd>384.75</dd></div><div class="ftr__ratenote">AED per gram · Dubai Jewellery Group suggested retail rate · as of 12:02, 13 Oct 2026</div></dl>
+    </div>
+    <div class="ftr__cols">
+      <div><h2>Jewellery</h2><ul><li><a href="/jewellery/necklaces/">Necklaces</a></li><li><a href="/jewellery/earrings/">Earrings</a></li><li><a href="/jewellery/rings/">Rings</a></li><li><a href="/jewellery/bangles/">Bangles</a></li><li><a href="/collections/diamonds/">Diamonds</a></li><li><a href="/jewellery/gold-coins-bars/">Coins &amp; bars</a></li></ul></div>
+      <div><h2>Gold</h2><ul><li><a href="/gold-rate/">Today’s rate</a></li><li><a href="/gold-exchange/">Old gold exchange</a></li><li><a href="/custom-jewellery/">Custom jewellery</a></li><li><a href="/our-promise/">Our promise</a></li></ul></div>
+      <div><h2>House</h2><ul><li><a href="/about/">About</a></li><li><a href="/occasions/">Occasions</a></li><li><a href="/journal/">Journal</a></li><li><a href="/contact/">Contact</a></li></ul></div>
+      <div><h2>Branches</h2><ul><li><a href="/stores/deira-gold-souq-extension/">Gold Souq Extension<small>Dubai · Deira</small></a></li><li><a href="/stores/safari-mall-sharjah/">Safari Mall<small>Sharjah</small></a></li><li><a href="/stores/rolla-mall-sharjah/">Rolla Mall<small>Sharjah</small></a></li><li><a href="/stores/madinat-zayed-abu-dhabi/">Madinat Zayed<small>Abu Dhabi</small></a></li></ul></div>
+      <div><h2>Talk to us</h2><ul><li><a href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C">WhatsApp +971 50 566 1416</a></li><li><a href="tel:+97142551288">+971 4 255 1288</a></li><li><a href="https://www.google.com/maps?cid=14419653802905195883" rel="noopener">4.9 on Google<small>680 reviews, as of 13 Oct 2026</small></a></li></ul></div>
+    </div>
+    <div class="ftr__base"><span>© 2026 Classic Jewels &amp; Diamonds</span><ul><li><a href="https://www.instagram.com/classicjewelsanddiamonds/" rel="noopener">Instagram</a></li><li><a href="https://www.tiktok.com/@classic_jewelz" rel="noopener">TikTok</a></li><li><a href="https://www.facebook.com/profile.php?id=61567567975024" rel="noopener">Facebook</a></li><li><a href="/privacy-policy/">Privacy</a></li><li><a href="/terms/">Terms</a></li><li><a href="/disclaimer/">Disclaimer</a></li></ul></div>
+  </div>
+</footer>
+<nav class="abar abar--piece" aria-label="Ask about this piece">
+  <a href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20I%20would%20like%20to%20ask%20about%20the%20Turkish%20Filigree%20Necklace%20%28CJ-NK-005%29%3A%20http%3A//localhost%3A4397/_proto/live-gold/piece.html"><svg class="ico" aria-hidden="true"><use href="#i-wa"/></svg>Ask about this piece</a>
+  <a href="tel:+97142551288"><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>Call</a>
+  <a class="abar__rate" href="index.html#board"><b>468.25</b><span>22K today</span></a>
+</nav>
+<script>
+/* Live gold prototype. In production this is src/scripts/karat.ts (sync), estimator.ts and
+   styles-index.ts, bundled as same-origin modules (no inline script under the CSP). */
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const RATES = { 24: 505.75, 22: 468.25, 21: 449.0, 18: 384.75 };
+  const WA = 'https://wa.me/971505661416?text=';
+
+  /* Digit roller: rebuild only when the shape of the number changes, else roll each column. */
+  function setRoll(el, str) {
+    if (!el) return;
+    const shape = str.replace(/\d/g, '0');
+    if (el.dataset.shape !== shape) {
+      el.dataset.shape = shape;
+      el.textContent = '';
+      let i = 0;
+      for (const c of str) {
+        const s = document.createElement('span');
+        if (/\d/.test(c)) { s.className = 'dg'; s.style.setProperty('--i', i++); s.style.setProperty('--d', c); s.innerHTML = '<i>0</i>'; }
+        else s.textContent = c;
+        el.append(s);
+      }
+      return;
+    }
+    const ds = [...str].filter((c) => /\d/.test(c));
+    $$('.dg', el).forEach((d, i) => d.style.setProperty('--d', ds[i]));
+  }
+
+  /* One karat for the whole page: the hero radios are the source of truth (CSS reads them via :has). */
+  const hero = $$('input[name="karat"]');
+  const est = $$('input[name="ekarat"]');
+  const karat = () => (hero.find((i) => i.checked) || est.find((i) => i.checked) || { value: '22' }).value;
+  function sync(k) {
+    hero.forEach((i) => (i.checked = i.value === k));
+    est.forEach((i) => (i.checked = i.value === k));
+    calc();
+  }
+  hero.forEach((i) => i.addEventListener('change', () => sync(i.value)));
+  est.forEach((i) => i.addEventListener('change', () => sync(i.value)));
+
+  /* Old-gold estimator */
+  const range = $('#g-range'), num = $('#g-num'), out = $('#g-out'), roll = $('#r-roll'), sum = $('#r-sum'), link = $('#wa-est'), branch = $('#branch');
+  const fmt0 = new Intl.NumberFormat('en-AE', { maximumFractionDigits: 0 });
+  const fmt2 = new Intl.NumberFormat('en-AE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtG = new Intl.NumberFormat('en-AE', { maximumFractionDigits: 1 });
+  let grams = 10;
+  function calc() {
+    if (!range) return;
+    const k = karat();
+    const value = grams * RATES[k];
+    if (out) out.firstChild.nodeValue = fmtG.format(grams);
+    setRoll(roll, fmt0.format(Math.round(value)));
+    if (sum) sum.textContent = `${fmtG.format(grams)} g × AED ${fmt2.format(RATES[k])} per gram (${k}K) = AED ${fmt2.format(value)}`;
+    if (link) {
+      const msg = `Hello Classic Jewels, I have about ${fmtG.format(grams)} g of ${k}K old gold and would like to bring it to the ${branch.value} branch to be weighed.`;
+      link.href = WA + encodeURIComponent(msg);
+    }
+  }
+  function setGrams(g, from) {
+    grams = Math.min(500, Math.max(0.5, Math.round(g * 2) / 2 || 0.5));
+    if (from !== range) range.value = String(Math.min(200, grams));
+    if (from !== num) num.value = String(grams);
+    calc();
+  }
+  if (range) {
+    range.addEventListener('input', () => setGrams(parseFloat(range.value), range));
+    num.addEventListener('change', () => setGrams(parseFloat(num.value), num));
+    $$('[data-step]').forEach((b) => b.addEventListener('click', () => setGrams(grams + Number(b.dataset.step))));
+    branch.addEventListener('change', calc);
+    $('#estimator').addEventListener('submit', (e) => e.preventDefault());
+  }
+
+  /* Styles index: the last name pointed at, focused or tapped stays lit. */
+  const styles = $('#styles');
+  if (styles) {
+    $$('.sx [data-s]', styles).forEach((a) => {
+      const on = () => (styles.dataset.active = a.dataset.s);
+      a.addEventListener('pointerenter', on);
+      a.addEventListener('focus', on);
+    });
+  }
+})();
+
+document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(b.dataset.copy); b.setAttribute('aria-label', 'Reference copied'); } catch {}
+}));
+
+</script>
+</body>
+</html>

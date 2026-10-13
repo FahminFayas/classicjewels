@@ -1,0 +1,1339 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gold Jewellers in Dubai, UAE | Classic Jewels &amp; Diamonds (Ivory maison prototype)</title>
+<meta name="description" content="22K and 18K hallmarked gold, tested diamonds and 24K coins from four branches in Dubai, Sharjah and Abu Dhabi, priced at today's Dubai gold rate.">
+<meta name="robots" content="noindex">
+<link rel="preload" href="fonts/cormorant-garamond-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js');</script>
+<style>
+/* ==========================================================================
+   SHARED START: tokens, base, chrome. Kept identical in piece.html.
+   ========================================================================== */
+@font-face { font-family: 'Cormorant Garamond'; src: url('fonts/cormorant-garamond-latin-wght-normal.woff2') format('woff2'); font-weight: 300 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Cormorant Garamond'; src: url('fonts/cormorant-garamond-latin-wght-italic.woff2') format('woff2'); font-weight: 300 700; font-style: italic; font-display: swap; }
+@font-face { font-family: 'IBM Plex Sans'; src: url('fonts/ibm-plex-sans-latin-wght-normal.woff2') format('woff2'); font-weight: 100 700; font-style: normal; font-display: swap; }
+
+:root {
+  /* Surfaces: the salon is ivory; white is a plate; stone and blush are the only alternate tints */
+  --ivory: #faf7f2;
+  --porcelain: #ffffff;
+  --stone: #f3eee6;
+  --blush: #f6f0f5;
+  --plum-900: #2e1a2d;
+  --plum-700: #4b2849;
+  --plum-500: #6b3f68;
+  /* The stage: sampled from the velvet; per-photo override through --stage */
+  --stage-0: #100d24;
+  --stage-1: #171331;
+
+  /* Ink */
+  --ink-900: #1c1418;
+  --ink-700: #4a3f46;
+  --ink-500: #6b5f66;
+  --ink-on-dark: #faf7f2;
+  --ink-on-plum-muted: #d9ccd6;
+  --ink-on-stage-muted: #a99fb5;
+
+  /* Gold */
+  --bronze: #be8658;   /* brand; rules, marks, text on dark only */
+  --gold-700: #8a5c32; /* bronze for text on light grounds (AA) */
+  --gold-300: #dcc29a; /* champagne on plum and stage */
+  --gold-100: #f1e6d3;
+
+  /* Rules */
+  --rule-1: #e6e0d6;
+  --rule-2: #cfc6b8;
+  --rule-input: #8f858b;
+  --rule-on-dark: color-mix(in oklab, #faf7f2 22%, transparent);
+  --rule-on-stage: color-mix(in oklab, #be8658 40%, transparent);
+  --focus: #4b2849;
+  --focus-on-dark: #dcc29a;
+
+  /* Type */
+  --ff-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --ff-text: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --t-numeral-hero: clamp(5.75rem, 3.2rem + 10.6vw, 13rem);   /* 92 -> 208 */
+  --t-display-xl: clamp(2.75rem, 1.9rem + 3.9vw, 5.75rem);    /* 44 -> 92 */
+  --t-display: clamp(2.25rem, 1.6rem + 2.9vw, 4.5rem);        /* 36 -> 72 */
+  --t-h2: clamp(2rem, 1.55rem + 2vw, 3.25rem);                /* 32 -> 52 */
+  --t-h3: clamp(1.375rem, 1.25rem + 0.55vw, 1.75rem);         /* 22 -> 28 */
+  --t-numeral: clamp(1.375rem, 1.2rem + 0.6vw, 1.75rem);      /* 22 -> 28 */
+  --t-lead: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);          /* 17 -> 20 */
+  --t-body: clamp(1rem, 0.97rem + 0.12vw, 1.0625rem);         /* 16 -> 17 */
+  --t-small: 0.875rem;
+  --t-caption: 0.8125rem;
+  --t-label: 0.75rem;
+  --lh-display: 1.02;
+  --lh-tight: 1.12;
+  --lh-body: 1.6;
+  --track-display: -0.015em;
+  --track-numeral: -0.035em;
+  --track-label: 0.16em;
+  --track-nav: 0.12em;
+
+  /* Space (4 px base) */
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+  --space-5: 1.5rem; --space-6: 2rem; --space-7: 3rem; --space-8: 4rem;
+  --space-9: 6rem; --space-10: 8rem;
+  --section-y: clamp(4.5rem, 2.8rem + 7.5vw, 9.5rem);
+  --band-y: clamp(6.5rem, 3.5rem + 13vw, 15rem);
+
+  /* Layout */
+  --container: 80rem;         /* 1280: reading sections */
+  --container-wide: 92rem;    /* 1472: hero, rails, the salon wall */
+  --measure: 34rem;
+  --gutter: clamp(1rem, 0.4rem + 2.6vw, 2.5rem);
+  --header-h: 3.5rem;
+  --bar-h: 3.5rem;
+  --control-h: 3rem;
+  --tap: 2.75rem;
+  --radius: 0;
+
+  /* Motion */
+  --dur-quick: 160ms;
+  --dur-ui: 320ms;
+  --dur-slow: 600ms;
+  --dur-page: 220ms;
+  --dur-morph: 320ms;
+  --dur-sheen: 1800ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-wipe: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* The feather that melts a 600 px velvet frame into its stage */
+  --feather-x: 14%;
+  --feather-y: 12%;
+  --mask-feather-edge:
+    linear-gradient(to right, transparent, #000 var(--feather-x), #000 calc(100% - var(--feather-x)), transparent),
+    linear-gradient(to bottom, transparent, #000 var(--feather-y), #000 calc(100% - var(--feather-y)), transparent);
+  --mask-feather-spot: radial-gradient(closest-side, #000 74%, transparent);
+
+  --z-sticky: 10; --z-bar: 20; --z-nav: 30; --z-dialog: 40;
+}
+@media (min-width: 64em) { :root { --header-h: 4.75rem; } }
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-quick: 0ms; --dur-ui: 0ms; --dur-slow: 0ms; --dur-page: 0ms; --dur-morph: 0ms; --dur-sheen: 0ms; }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-top: calc(var(--header-h) + var(--space-4)); }
+body {
+  margin: 0; background: var(--ivory); color: var(--ink-900);
+  font: 400 var(--t-body)/var(--lh-body) var(--ff-text);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+img { display: block; max-inline-size: 100%; block-size: auto; }
+a { color: inherit; }
+h1, h2, h3, p, ul, ol, dl, dd, figure, fieldset { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+fieldset { border: 0; padding: 0; min-inline-size: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+input { font: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.on-dark :focus-visible, .on-dark:focus-visible { outline-color: var(--focus-on-dark); }
+.sr-only { position: absolute !important; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.skip { position: absolute; inset-inline-start: var(--space-4); inset-block-start: -10rem; z-index: 99; background: var(--porcelain); color: var(--plum-700); padding: var(--space-3) var(--space-4); }
+.skip:focus { inset-block-start: var(--space-3); }
+
+.wrap { inline-size: min(100% - 2 * var(--gutter), var(--container)); margin-inline: auto; }
+.wrap--wide { inline-size: min(100% - 2 * var(--gutter), var(--container-wide)); margin-inline: auto; }
+
+.display { font-family: var(--ff-display); font-weight: 300; line-height: var(--lh-display); letter-spacing: var(--track-display); text-wrap: balance; }
+.display em, .h2 em, .h3 em { font-style: italic; font-weight: 300; }
+.h2 { font-family: var(--ff-display); font-weight: 300; font-size: var(--t-display); line-height: var(--lh-display); letter-spacing: var(--track-display); text-wrap: balance; }
+.h3 { font-family: var(--ff-display); font-weight: 400; font-size: var(--t-h3); line-height: var(--lh-tight); }
+.label { font: 500 var(--t-label)/1.4 var(--ff-text); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--gold-700); }
+.on-dark .label { color: var(--gold-300); }
+.lead { font-size: var(--t-lead); line-height: 1.55; color: var(--ink-700); text-wrap: pretty; }
+.small { font-size: var(--t-small); }
+.num { font-variant-numeric: lining-nums tabular-nums; }
+
+/* Icons */
+.ic { inline-size: 1.25rem; block-size: 1.25rem; fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.ic--sm { inline-size: 1rem; block-size: 1rem; }
+
+/* Buttons: plum on light, bronze on dark; square; 48 px; sentence case */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-3);
+  min-block-size: var(--control-h); padding-inline: var(--space-5);
+  font: 500 var(--t-small)/1 var(--ff-text); letter-spacing: 0.02em; text-decoration: none;
+  border: 1px solid transparent; border-radius: var(--radius); cursor: pointer; white-space: nowrap;
+  transition: background-color var(--dur-ui) var(--ease-out), color var(--dur-ui) var(--ease-out), border-color var(--dur-ui) var(--ease-out);
+}
+.btn--plum { background: var(--plum-700); color: var(--ivory); }
+.btn--plum:hover { background: var(--plum-900); }
+.btn--line { border-color: var(--plum-700); color: var(--plum-700); }
+.btn--line:hover { background: var(--plum-700); color: var(--ivory); }
+.btn--bronze { background: var(--bronze); color: var(--ink-900); }
+.btn--bronze:hover { background: var(--gold-300); }
+.btn--ghost-dark { border-color: var(--rule-on-dark); color: var(--ivory); }
+.btn--ghost-dark:hover { border-color: var(--gold-300); color: var(--gold-300); }
+.btn--sm { min-block-size: 2.5rem; padding-inline: var(--space-4); }
+
+/* Link with a resting hairline and a plum underline that wipes across */
+.lnk {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  min-block-size: var(--tap);
+  font: 500 var(--t-small)/1.2 var(--ff-text); letter-spacing: 0.02em; color: var(--plum-700); text-decoration: none;
+}
+.lnk > span {
+  padding-block-end: 3px;
+  background:
+    linear-gradient(currentColor, currentColor) 0 100% / 0% 1px no-repeat,
+    linear-gradient(var(--rule-2), var(--rule-2)) 0 100% / 100% 1px no-repeat;
+  transition: background-size var(--dur-slow) var(--ease-wipe);
+}
+.lnk:hover > span, .lnk:focus-visible > span { background-size: 100% 1px, 100% 1px; }
+.lnk .ic { transition: translate var(--dur-ui) var(--ease-out); }
+.on-dark .lnk { color: var(--gold-300); }
+.on-dark .lnk > span { background-image: linear-gradient(currentColor, currentColor), linear-gradient(var(--rule-on-dark), var(--rule-on-dark)); }
+
+/* The vitrine: a dark window set into the ivory wall, only ever around velvet photographs */
+.vitrine { position: relative; background: var(--stage, var(--stage-0)); color: var(--ink-on-dark); overflow: clip; }
+.vitrine::before { content: ''; position: absolute; inset: var(--space-3); border: 1px solid var(--rule-on-stage); pointer-events: none; z-index: 1; }
+.feather { mask-image: var(--mask-feather-edge); -webkit-mask-image: var(--mask-feather-edge); mask-composite: intersect; -webkit-mask-composite: source-in; }
+.feather--spot { mask-image: var(--mask-feather-spot); -webkit-mask-image: var(--mask-feather-spot); }
+
+/* ---------- Header ---------- */
+.hdr {
+  position: sticky; inset-block-start: 0; z-index: var(--z-nav);
+  background: var(--ivory); border-block-end: 1px solid var(--rule-1);
+  view-transition-name: hdr;
+}
+.hdr__in { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; block-size: var(--header-h); }
+.hdr__logo { justify-self: center; display: block; }
+.hdr__logo img { block-size: 1.75rem; inline-size: auto; }
+.hdr__nav { display: none; }
+.hdr__end { justify-self: end; display: flex; align-items: center; gap: var(--space-4); }
+.hdr__wa { display: none; }
+.hdr__menu { justify-self: start; display: inline-flex; align-items: center; gap: var(--space-2); min-block-size: var(--tap); padding-inline-end: var(--space-2); font: 500 var(--t-label)/1 var(--ff-text); letter-spacing: var(--track-nav); text-transform: uppercase; color: var(--ink-900); }
+
+.ratechip {
+  display: inline-flex; align-items: baseline; gap: var(--space-2);
+  min-block-size: var(--tap); padding-inline: var(--space-3);
+  border: 1px solid var(--rule-1); color: var(--ink-900);
+  transition: border-color var(--dur-ui) var(--ease-out);
+}
+.ratechip:hover { border-color: var(--bronze); }
+.ratechip__k { font: 500 0.6875rem/1 var(--ff-text); letter-spacing: 0.1em; color: var(--gold-700); }
+.ratechip__v { font: 500 1.0625rem/2.6 var(--ff-display); font-variant-numeric: lining-nums tabular-nums; color: var(--plum-700); }
+.ratechip__u { display: none; font: 400 0.6875rem/1 var(--ff-text); color: var(--ink-500); }
+
+@media (min-width: 64em) {
+  .hdr__in { grid-template-columns: auto 1fr auto; column-gap: var(--space-7); }
+  .hdr__logo { justify-self: start; order: -1; }
+  .hdr__logo img { block-size: 2.0625rem; }
+  .hdr__menu { display: none; }
+  .hdr__nav { display: flex; justify-content: center; gap: clamp(1rem, 0.2rem + 1.4vw, 2.25rem); }
+  .hdr__wa { display: inline-flex; }
+  .ratechip__u { display: inline; }
+}
+.nav__link {
+  position: relative; display: inline-flex; align-items: center; min-block-size: var(--tap);
+  font: 500 var(--t-label)/1 var(--ff-text); letter-spacing: var(--track-nav); text-transform: uppercase; color: var(--ink-900); text-decoration: none;
+}
+.nav__link::after {
+  content: ''; position: absolute; inset-inline: 0; inset-block-end: 0.55rem; block-size: 1px; background: var(--bronze);
+  scale: 0 1; transform-origin: 0 50%; transition: scale var(--dur-slow) var(--ease-wipe);
+}
+.nav__link:hover::after, .nav__link:focus-visible::after, .nav__link[aria-current='page']::after, .nav__link[aria-expanded='true']::after { scale: 1 1; }
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hdr { border-block-end-color: transparent; animation: hdr-settle linear both; animation-timeline: scroll(root block); animation-range: 0 8rem; }
+  }
+}
+@keyframes hdr-settle { to { border-block-end-color: var(--rule-1); } }
+
+/* ---------- Popovers: mega panel and the rate board ---------- */
+[popover] { margin: 0; padding: 0; border: 0; color: var(--ink-900); }
+.mega {
+  position: fixed; inset: var(--header-h) 0 auto 0; inline-size: 100%;
+  background: var(--porcelain); border-block: 1px solid var(--rule-1);
+  opacity: 1; translate: 0 0;
+  transition: opacity var(--dur-ui) var(--ease-out), translate var(--dur-ui) var(--ease-out), display var(--dur-ui) allow-discrete, overlay var(--dur-ui) allow-discrete;
+}
+.mega:not(:popover-open) { opacity: 0; translate: 0 -0.5rem; }
+@starting-style { .mega:popover-open { opacity: 0; translate: 0 -0.5rem; } }
+.mega::backdrop { background: transparent; }
+.mega__grid { display: grid; grid-template-columns: 1fr 1.6fr 1.2fr minmax(15rem, 18rem); gap: var(--space-7); padding-block: var(--space-7) var(--space-8); }
+.mega__grid > * { transition: opacity var(--dur-ui) var(--ease-out) 120ms; }
+@starting-style { .mega:popover-open .mega__grid > * { opacity: 0; } }
+.mega h2 { margin-block-end: var(--space-4); }
+.mega__list a { display: block; padding-block: 0.3rem; font: 300 1.375rem/1.25 var(--ff-display); color: var(--ink-900); text-decoration: none; transition: color var(--dur-quick); }
+.mega__list a:hover, .mega__list a:focus-visible { color: var(--plum-700); font-style: italic; }
+.mega__cols { columns: 2; column-gap: var(--space-6); }
+.mega__visit li { padding-block: var(--space-3); border-block-start: 1px solid var(--rule-1); }
+.mega__visit a { display: block; text-decoration: none; color: var(--ink-900); }
+.mega__visit a:hover b { color: var(--plum-700); font-style: italic; }
+.mega__visit b { display: block; font: 400 1.125rem/1.3 var(--ff-display); }
+.mega__visit span { font-size: var(--t-caption); color: var(--ink-500); }
+.mega__peek { display: grid; grid-template-rows: auto auto; gap: var(--space-3); }
+.mega__peek .vitrine { aspect-ratio: 4 / 5; display: grid; }
+.mega__peek .vitrine img { grid-area: 1 / 1; place-self: center; inline-size: 82%; opacity: 0; transition: opacity var(--dur-ui) var(--ease-out); }
+.mega__peek .vitrine img:first-of-type { opacity: 1; }
+.mega:has(.mega__list a:is(:hover, :focus-visible)) .mega__peek img:first-of-type { opacity: 0; }
+.mega:has([data-peek='p01']:is(:hover, :focus-visible)) .mega__peek [data-for='p01'],
+.mega:has([data-peek='p02']:is(:hover, :focus-visible)) .mega__peek [data-for='p02'],
+.mega:has([data-peek='p09']:is(:hover, :focus-visible)) .mega__peek [data-for='p09'],
+.mega:has([data-peek='p08']:is(:hover, :focus-visible)) .mega__peek [data-for='p08'],
+.mega:has([data-peek='p05']:is(:hover, :focus-visible)) .mega__peek [data-for='p05'],
+.mega:has([data-peek='p04']:is(:hover, :focus-visible)) .mega__peek [data-for='p04'],
+.mega:has([data-peek='p06']:is(:hover, :focus-visible)) .mega__peek [data-for='p06'],
+.mega:has([data-peek='p07']:is(:hover, :focus-visible)) .mega__peek [data-for='p07'] { opacity: 1; }
+.mega__peek p { font-size: var(--t-caption); color: var(--ink-500); }
+
+.ratepop {
+  position: fixed; inset: calc(var(--header-h) + var(--space-2)) var(--gutter) auto auto; inline-size: min(22rem, 100% - 2 * var(--gutter));
+  background: var(--porcelain); border: 1px solid var(--rule-1); padding: var(--space-5);
+  opacity: 1; translate: 0 0;
+  transition: opacity var(--dur-ui) var(--ease-out), translate var(--dur-ui) var(--ease-out), display var(--dur-ui) allow-discrete, overlay var(--dur-ui) allow-discrete;
+}
+.ratepop:not(:popover-open) { opacity: 0; translate: 0 -0.5rem; }
+@starting-style { .ratepop:popover-open { opacity: 0; translate: 0 -0.5rem; } }
+.board { inline-size: 100%; border-collapse: collapse; margin-block: var(--space-3) var(--space-4); }
+.board th, .board td { padding-block: var(--space-2); border-block-end: 1px solid var(--rule-1); text-align: start; font-weight: 400; }
+.board th { font: 500 var(--t-label)/1 var(--ff-text); letter-spacing: 0.1em; color: var(--gold-700); }
+.board td { text-align: end; font: 400 1.5rem/1 var(--ff-display); font-variant-numeric: lining-nums tabular-nums; color: var(--plum-700); }
+.board td small { font: 400 var(--t-caption) var(--ff-text); color: var(--ink-500); margin-inline-start: var(--space-2); }
+.board-note { font-size: var(--t-caption); color: var(--ink-500); }
+
+/* ---------- Drawer (phones) ---------- */
+.drawer {
+  inline-size: 100%; max-inline-size: 100%; block-size: 100dvh; max-block-size: 100dvh; margin: 0; padding: 0; border: 0;
+  background: var(--ivory); color: var(--ink-900);
+  opacity: 1; translate: 0 0;
+  transition: opacity var(--dur-ui) var(--ease-out), translate var(--dur-ui) var(--ease-out), display var(--dur-ui) allow-discrete, overlay var(--dur-ui) allow-discrete;
+}
+.drawer:not([open]) { opacity: 0; translate: -1.5rem 0; }
+@starting-style { .drawer[open] { opacity: 0; translate: -1.5rem 0; } }
+.drawer::backdrop { background: var(--ivory); }
+.drawer__in { display: grid; grid-template-rows: auto 1fr auto; min-block-size: 100%; }
+.drawer__top { display: flex; justify-content: space-between; align-items: center; block-size: var(--header-h); padding-inline: var(--gutter); border-block-end: 1px solid var(--rule-1); }
+.drawer__nav { padding: var(--space-6) var(--gutter); }
+.drawer__nav a { display: flex; justify-content: space-between; align-items: baseline; padding-block: var(--space-2); font: 300 2.125rem/1.15 var(--ff-display); text-decoration: none; color: var(--ink-900); }
+.drawer__nav a small { font: 500 var(--t-label) var(--ff-text); letter-spacing: 0.1em; color: var(--gold-700); }
+.drawer__foot { background: var(--plum-700); color: var(--ivory); padding: var(--space-5) var(--gutter) calc(var(--space-5) + env(safe-area-inset-bottom)); display: grid; gap: var(--space-3); }
+.drawer__foot .btn { inline-size: 100%; }
+
+/* ---------- Mobile action bar ---------- */
+.bar {
+  position: fixed; inset-inline: 0; inset-block-end: 0; z-index: var(--z-bar);
+  display: grid; grid-template-columns: 1.35fr 1fr 1fr 1fr;
+  min-block-size: calc(var(--bar-h) + env(safe-area-inset-bottom)); padding-block-end: env(safe-area-inset-bottom);
+  background: var(--ivory); border-block-start: 1px solid var(--rule-1);
+  view-transition-name: bar;
+}
+.bar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-block-size: var(--bar-h); font: 500 0.6875rem/1 var(--ff-text); letter-spacing: 0.06em; text-decoration: none; color: var(--ink-900); }
+.bar a + a { border-inline-start: 1px solid var(--rule-1); }
+.bar a.bar__wa { background: var(--plum-700); color: var(--ivory); flex-direction: row; gap: var(--space-2); font-size: var(--t-caption); letter-spacing: 0.02em; }
+.bar b { font: 500 0.9375rem/1 var(--ff-display); font-variant-numeric: lining-nums tabular-nums; color: var(--plum-700); }
+@media (min-width: 64em) { .bar { display: none; } }
+body { padding-block-end: calc(var(--bar-h) + env(safe-area-inset-bottom)); }
+@media (min-width: 64em) { body { padding-block-end: 0; } }
+
+/* ---------- Footer ---------- */
+.ftr { background: var(--plum-900); color: var(--ink-on-dark); }
+.ftr__mark { padding-block: var(--space-9) var(--space-8); border-block-end: 1px solid var(--rule-on-dark); display: grid; gap: var(--space-6); }
+.ftr__slogan { font-size: var(--t-display-xl); color: var(--ivory); }
+.ftr__slogan em { color: var(--gold-300); }
+.ftr__lock { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4) var(--space-6); }
+.ftr__lock img { block-size: 2.0625rem; inline-size: auto; }
+.ftr__lock p { font-size: var(--t-small); color: var(--ink-on-plum-muted); }
+.ftr__cols { display: grid; grid-template-columns: 1fr; gap: var(--space-7); padding-block: var(--space-8); }
+.ftr h2 { margin-block-end: var(--space-4); }
+.ftr li { padding-block: 0.3rem; }
+.ftr a { text-decoration: none; color: var(--ivory); }
+.ftr a:hover { color: var(--gold-300); }
+.ftr__muted { color: var(--ink-on-plum-muted); font-size: var(--t-small); }
+.ftr__rate td, .ftr__rate th { padding-block: 0.35rem; border-block-end: 1px solid var(--rule-on-dark); }
+.ftr__rate th { font: 500 var(--t-label)/1 var(--ff-text); letter-spacing: 0.1em; color: var(--gold-300); text-align: start; }
+.ftr__rate td { text-align: end; font: 400 1.375rem/1 var(--ff-display); font-variant-numeric: lining-nums tabular-nums; }
+.ftr__legal { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); justify-content: space-between; padding-block: var(--space-5) var(--space-7); border-block-start: 1px solid var(--rule-on-dark); font-size: var(--t-caption); color: var(--ink-on-plum-muted); }
+.ftr__legal ul { display: flex; flex-wrap: wrap; gap: var(--space-5); }
+@media (min-width: 48em) { .ftr__cols { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 64em) { .ftr__cols { grid-template-columns: 1.3fr 1fr 1fr 1fr; } }
+
+/* ---------- Motion layer (all optional, all gated) ---------- */
+.js img.fade { transition: opacity var(--dur-slow) var(--ease-expo); }
+.js img.fade:not(.is-in) { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--dur-page); animation-timing-function: var(--ease-out); }
+  ::view-transition-group(piece) { animation-duration: var(--dur-morph); animation-timing-function: var(--ease-out); }
+  @supports (animation-timeline: view()) {
+    .rv { animation: rv-rise linear both; animation-timeline: view(); animation-range: entry 5% entry 65%; }
+  }
+}
+@keyframes rv-rise { from { opacity: 0; translate: 0 1.5rem; } }
+/* SHARED END */
+
+/* ==========================================================================
+   HOME
+   ========================================================================== */
+
+/* ---------- 1. Hero: the day's gold ---------- */
+.hero { padding-block: var(--space-6) var(--space-7); }
+.hero__grid { display: grid; gap: var(--space-6); }
+.hero__title { display: grid; gap: var(--space-4); }
+.hero__kicker { font: 500 var(--t-label)/1.5 var(--ff-text); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--gold-700); max-inline-size: 26rem; }
+.hero__display { font-size: var(--t-display-xl); color: var(--ink-900); }
+.hero__display em { color: var(--plum-700); }
+
+.hero__vitrine { display: grid; grid-template-rows: 1fr auto; margin-inline: calc(var(--gutter) * -1); min-block-size: 22rem; --stage: #1a153b; }
+.hero__vitrine a.hero__piece { grid-area: 1 / 1; display: grid; place-items: center; padding-block: var(--space-5) 0; text-decoration: none; }
+.hero__vitrine img { inline-size: min(100% - 2rem, 20rem); aspect-ratio: 1; }
+.hero__cap { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: end; gap: var(--space-4); padding: 0 var(--space-6) var(--space-6); }
+.hero__cap b { display: block; font: italic 300 1.375rem/1.15 var(--ff-display); color: var(--gold-300); }
+.hero__cap span > .sku { display: inline; margin: 0; }
+.hero__cap div > span { display: block; margin-block-start: var(--space-1); font-size: var(--t-caption); color: var(--ink-on-stage-muted); letter-spacing: 0.04em; }
+
+.rate { display: grid; gap: var(--space-4); }
+.rate__rule { position: relative; block-size: 1px; background: var(--bronze); overflow: clip; }
+.rate__rule::after {
+  content: ''; position: absolute; inset-block: 0; inset-inline-start: 0; inline-size: 18%; background: var(--gold-100);
+  mask-image: linear-gradient(to right, transparent, #000 50%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, #000 50%, transparent);
+  translate: -100% 0; opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rate__rule::after { animation: sheen var(--dur-sheen) var(--ease-out) 700ms 1 both; }
+}
+@keyframes sheen { 0% { translate: -100% 0; opacity: 1; } 99% { opacity: 1; } 100% { translate: 560% 0; opacity: 0; } }
+.rate__label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2) var(--space-4); font: 500 var(--t-label)/1.4 var(--ff-text); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--ink-700); }
+.rate__label time { color: var(--gold-700); }
+.rate__label .dot { display: inline-block; inline-size: 6px; block-size: 6px; margin-inline-end: var(--space-2); background: var(--bronze); border-radius: 50%; vertical-align: 1px; }
+.rate__fig { position: relative; display: grid; align-items: end; padding-block-start: var(--space-5); }
+.rate__fig > span {
+  grid-area: 1 / 1; position: relative; display: block; margin-inline-start: -0.04em;
+  font-family: var(--ff-display); font-weight: 300; font-size: var(--t-numeral-hero); line-height: 0.8; letter-spacing: var(--track-numeral);
+  font-variant-numeric: lining-nums tabular-nums; color: var(--plum-700);
+  opacity: 0; translate: 0 0.12em; visibility: hidden;
+  transition: opacity var(--dur-slow) var(--ease-expo), translate var(--dur-slow) var(--ease-expo), visibility var(--dur-slow) allow-discrete;
+}
+.rate__fig small { position: absolute; inset-inline-start: 0.06em; inset-block-start: -0.35rem; font: 500 var(--t-label)/1 var(--ff-text); letter-spacing: 0.14em; color: var(--gold-700); }
+.rate__fig .d { display: inline-block; }
+.rate:has(#k24:checked) [data-fig='24k'],
+.rate:has(#k22:checked) [data-fig='22k'],
+.rate:has(#k21:checked) [data-fig='21k'],
+.rate:has(#k18:checked) [data-fig='18k'] { opacity: 1; translate: 0 0; visibility: visible; }
+
+.karats { display: grid; grid-template-columns: repeat(4, 1fr); border-block-start: 1px solid var(--rule-1); }
+.karat { position: relative; display: grid; gap: 2px; padding: var(--space-3) var(--space-2) var(--space-3) 0; cursor: pointer; }
+.karat input { position: absolute; opacity: 0; inline-size: 1px; block-size: 1px; }
+.karat__k { font: 500 0.6875rem/1.2 var(--ff-text); letter-spacing: 0.12em; color: var(--ink-500); }
+.karat__v { font: 400 var(--t-numeral)/1 var(--ff-display); font-variant-numeric: lining-nums tabular-nums; color: var(--ink-700); }
+.karat::before { content: ''; position: absolute; inset-inline: 0 var(--space-3); inset-block-start: -1px; block-size: 2px; background: var(--plum-700); scale: 0 1; transform-origin: 0 50%; transition: scale var(--dur-slow) var(--ease-wipe); }
+.karat:has(input:checked)::before { scale: 1 1; }
+.karat:has(input:checked) .karat__k { color: var(--gold-700); }
+.karat:has(input:checked) .karat__v { color: var(--plum-700); }
+.karat:hover .karat__v { color: var(--plum-700); }
+.karat:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.rate__src { font-size: var(--t-caption); color: var(--ink-500); max-inline-size: 34rem; }
+.hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); }
+
+@media (max-width: 47.99em) {
+  .karat__v { font-size: 1.25rem; }
+  .hero__actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .hero__actions .btn { padding-inline: var(--space-3); }
+  .hero__actions .lnk { grid-column: 1 / -1; }
+  .hero { padding-block-start: var(--space-5); }
+  .hero__grid { gap: var(--space-5); }
+  .hero__vitrine { min-block-size: 0; }
+  .hero__vitrine a.hero__piece { padding-block-start: var(--space-3); }
+  .hero__vitrine img { inline-size: min(100% - 5rem, 15.5rem); }
+  .hero__cap { padding: 0 var(--space-5) var(--space-5); }
+  .hero__cap b { font-size: 1.25rem; }
+  .rate { gap: var(--space-3); }
+  .rate__date { display: none; }
+  .rate__fig { padding-block-start: var(--space-2); }
+  .hero__cap .lnk, .hero__cap span > .sku { display: none; }
+}
+@media (min-width: 48em) {
+  .hero__vitrine { margin-inline: 0; min-block-size: 30rem; }
+  .hero__vitrine img { inline-size: min(100% - 4rem, 26rem); }
+}
+@media (min-width: 64em) {
+  .hero { padding-block: var(--space-5); }
+  .hero__grid {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: 'title vitrine' 'rate vitrine' 'actions vitrine';
+    column-gap: clamp(2rem, 1rem + 3vw, 5rem); row-gap: var(--space-6);
+    min-block-size: calc(100svh - var(--header-h) - 2 * var(--space-5));
+  }
+  .hero__title { grid-area: title; padding-block-start: var(--space-7); }
+  .hero__vitrine { grid-area: vitrine; min-block-size: 38rem; }
+  .hero__vitrine img { inline-size: min(100% - 6rem, 33rem); }
+  .rate { grid-area: rate; align-self: end; }
+  .hero__actions { grid-area: actions; padding-block-end: var(--space-2); }
+}
+@media (min-width: 64em) and (max-height: 56em) {
+  .hero__title { padding-block-start: var(--space-4); }
+  .hero__grid { row-gap: var(--space-5); }
+  .rate__fig > span { font-size: min(var(--t-numeral-hero), 22svh); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .hero__vitrine img { animation: recede linear both; animation-timeline: view(); animation-range: exit 0% exit 90%; }
+  }
+}
+@keyframes recede { to { scale: 0.94; opacity: 0.35; } }
+
+/* ---------- 2. Proof line ---------- */
+.proof { border-block: 1px solid var(--rule-1); }
+.proof ul { display: grid; grid-template-columns: repeat(2, 1fr); }
+.proof li { padding: var(--space-5) var(--space-4) var(--space-5) 0; display: grid; gap: var(--space-1); align-content: start; }
+.proof li:nth-child(n+3) { border-block-start: 1px solid var(--rule-1); }
+.proof b { font: 300 clamp(1.75rem, 1.4rem + 1.2vw, 2.5rem)/1 var(--ff-display); color: var(--plum-700); font-variant-numeric: lining-nums; }
+.proof b i { font-weight: 300; }
+.proof span { font-size: var(--t-caption); color: var(--ink-700); line-height: 1.45; }
+.proof a { display: grid; gap: var(--space-1); text-decoration: none; }
+.proof a:hover span { text-decoration: underline; text-decoration-color: var(--bronze); text-underline-offset: 0.2em; }
+@media (min-width: 64em) {
+  .proof ul { grid-template-columns: repeat(4, 1fr); }
+  .proof li { padding: var(--space-6) var(--space-5); }
+  .proof li:nth-child(n+3) { border-block-start: 0; }
+  .proof li + li { border-inline-start: 1px solid var(--rule-1); }
+  .proof li:first-child { padding-inline-start: 0; }
+}
+
+/* ---------- 2b. Campaign line (only while an offer in src/content/offers is live) ---------- */
+.offer { background: var(--blush); }
+.offer__in { display: grid; gap: var(--space-3) var(--space-7); padding-block: var(--space-6); align-items: center; }
+.offer__h { font: 300 clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem)/1.15 var(--ff-display); color: var(--ink-900); text-wrap: balance; }
+.offer__h em { font-style: italic; color: var(--plum-700); }
+.offer__acts { display: flex; flex-wrap: wrap; gap: 0 var(--space-5); }
+@media (min-width: 64em) { .offer__in { grid-template-columns: auto 1fr auto; } }
+
+/* ---------- 3. One-line band: the heritage line ---------- */
+.band { padding-block: var(--band-y) calc(var(--band-y) * 0.55); text-align: center; }
+.band__in { display: grid; justify-items: center; gap: var(--space-6); }
+.cring { inline-size: 2.75rem; block-size: 2.75rem; fill: none; stroke: var(--bronze); stroke-width: 1; }
+.band__line { font-size: var(--t-display-xl); max-inline-size: 15em; color: var(--ink-900); }
+.band__line em { color: var(--plum-700); }
+.band__sub { max-inline-size: 36rem; color: var(--ink-700); }
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .ink .w { animation: ink linear both; animation-timeline: view(); animation-range: cover calc(18% + var(--i) * 3.5%) cover calc(30% + var(--i) * 3.5%); }
+    .cring circle { animation: draw-ring linear both; animation-timeline: view(); animation-range: entry 40% cover 40%; }
+  }
+}
+@keyframes ink { from { opacity: 0.16; } }
+@keyframes draw-ring { from { stroke-dashoffset: 88; } }
+
+/* ---------- 4. Styles index: from Kolkata to Kuwait ---------- */
+.styles { padding-block: var(--space-6) var(--section-y); }
+.styles__head { display: grid; gap: var(--space-4); margin-block-end: var(--space-7); }
+.styles__head .lead { max-inline-size: 30rem; }
+.styles__grid { display: grid; }
+.styles__grid > * { min-inline-size: 0; }
+.style-list { counter-reset: s; }
+.style-row a {
+  position: relative; display: grid; grid-template-columns: 2.5rem 1fr auto; align-items: baseline; gap: var(--space-3);
+  padding-block: var(--space-3); border-block-start: 1px solid var(--rule-1); text-decoration: none; color: var(--ink-900);
+}
+.style-list li:last-child a { border-block-end: 1px solid var(--rule-1); }
+.style-row__no { font: 500 var(--t-label)/1 var(--ff-text); letter-spacing: 0.1em; color: var(--gold-700); font-variant-numeric: tabular-nums; }
+.style-row__name { font: 300 clamp(2.125rem, 1.5rem + 2.6vw, 4rem)/1.05 var(--ff-display); letter-spacing: var(--track-display); transition: color var(--dur-ui) var(--ease-out); }
+.style-row__meta { font-size: var(--t-caption); color: var(--ink-500); text-align: end; line-height: 1.4; }
+.style-row__meta b { display: block; font-weight: 500; color: var(--ink-700); letter-spacing: 0.08em; }
+.style-row__media { display: none; }
+.peek__empty-sm { font: italic 300 2.75rem/1 var(--ff-display); color: var(--gold-300); }
+.style-row a::after { content: ''; position: absolute; inset-inline: 2.5rem 0; inset-block-end: -1px; block-size: 1px; background: var(--plum-700); scale: 0 1; transform-origin: 0 50%; transition: scale var(--dur-slow) var(--ease-wipe); }
+.style-row a:is(:hover, :focus-visible)::after, .style-row[data-on] a::after { scale: 1 1; }
+.style-row a:is(:hover, :focus-visible) .style-row__name, .style-row[data-on] .style-row__name { font-style: italic; color: var(--plum-700); }
+.styles__also { margin-block-start: var(--space-5); font-size: var(--t-small); color: var(--ink-700); }
+.styles__also a { color: var(--plum-700); text-decoration-color: var(--bronze); text-underline-offset: 0.2em; }
+
+.peek { display: none; }
+
+/* Phones: the list becomes a rail of small vitrines */
+@media (max-width: 63.99em) {
+  .style-list { display: grid; grid-auto-flow: column; grid-auto-columns: 15.5rem; gap: var(--space-4); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: inline mandatory; scroll-padding-inline: var(--gutter); padding-inline: var(--gutter); margin-inline: calc(var(--gutter) * -1); padding-block-end: var(--space-4); scrollbar-width: none; }
+  .style-list::-webkit-scrollbar { display: none; }
+  .style-row { scroll-snap-align: start; }
+  .style-row a { grid-template-columns: 1fr auto; grid-template-rows: auto auto auto; border: 0; padding: 0; gap: var(--space-2) var(--space-3); }
+  .style-list li:last-child a { border: 0; }
+  .style-row__media { display: grid; grid-column: 1 / -1; aspect-ratio: 1; place-items: center; }
+  .style-row__media img { inline-size: 100%; }
+  .style-row__no { grid-column: 1; grid-row: 2; align-self: end; }
+  .style-row__name { grid-column: 1 / -1; grid-row: 3; font-size: 2.25rem; }
+  .style-row__meta { grid-column: 2; grid-row: 2; text-align: end; }
+  .style-row a::after { display: none; }
+  .rail-progress { display: block; block-size: 1px; background: var(--rule-1); margin-block-start: var(--space-2); position: relative; overflow: clip; }
+  .rail-progress span { position: absolute; inset: 0; background: var(--bronze); transform-origin: 0 50%; scale: 0.2 1; }
+}
+@media (max-width: 63.99em) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    .styles__grid { timeline-scope: --stylerail; }
+    .style-list { scroll-timeline: --stylerail inline; }
+    .rail-progress span { animation: grow linear both; animation-timeline: --stylerail; }
+  }
+}
+@keyframes grow { from { scale: 0.12 1; } to { scale: 1 1; } }
+@media (min-width: 64em) {
+  .rail-progress { display: none; }
+  .styles__head { grid-template-columns: 5fr 7fr; align-items: end; column-gap: var(--space-8); }
+  .styles__grid { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); column-gap: clamp(2rem, 1rem + 4vw, 6rem); align-items: start; }
+  .peek { display: block; position: sticky; inset-block-start: calc(var(--header-h) + var(--space-6)); }
+  .peek .vitrine { aspect-ratio: 5 / 6; display: grid; transition: background-color var(--dur-slow) var(--ease-out); }
+  .peek figure { grid-area: 1 / 1; display: grid; grid-template-rows: 1fr auto; opacity: 0; visibility: hidden; transition: opacity var(--dur-slow) var(--ease-expo), visibility var(--dur-slow) allow-discrete; }
+  .peek figure img { place-self: center; inline-size: min(100% - 4rem, 30rem); margin-block-start: var(--space-6); }
+  .peek figcaption { position: relative; z-index: 2; display: flex; justify-content: space-between; gap: var(--space-4); align-items: end; padding: 0 var(--space-6) var(--space-6); }
+  .peek figcaption b { font: italic 300 1.5rem/1.15 var(--ff-display); color: var(--gold-300); }
+  .peek figcaption span { font-size: var(--t-caption); color: var(--ink-on-stage-muted); text-align: end; }
+  .peek__empty { place-self: center; text-align: center; padding: var(--space-7); display: grid; gap: var(--space-4); }
+  .peek__empty strong { font: italic 300 clamp(3rem, 2rem + 3vw, 5rem)/1 var(--ff-display); color: var(--gold-300); }
+  .peek__empty span { font-size: var(--t-small); color: var(--ink-on-stage-muted); max-inline-size: 18rem; margin-inline: auto; }
+  /* default: first; CSS-only fallback via :has(); the script pins the last one pointed at */
+  .peek figure[data-for='kolkata'] { opacity: 1; visibility: visible; }
+  .styles:has(.style-row a:is(:hover, :focus-visible)) .peek figure[data-for='kolkata'],
+  .styles[data-active] .peek figure[data-for='kolkata'] { opacity: 0; visibility: hidden; }
+  .styles[data-active='kolkata'] .peek figure[data-for='kolkata'],
+  .styles[data-active='rajkot'] .peek figure[data-for='rajkot'],
+  .styles[data-active='antique'] .peek figure[data-for='antique'],
+  .styles[data-active='temple'] .peek figure[data-for='temple'],
+  .styles[data-active='turkish'] .peek figure[data-for='turkish'],
+  .styles[data-active='kuwait'] .peek figure[data-for='kuwait'],
+  .styles[data-active='italian'] .peek figure[data-for='italian'],
+  .styles[data-active='gemstone'] .peek figure[data-for='gemstone'],
+  .styles[data-active='customised'] .peek figure[data-for='customised'] { opacity: 1; visibility: visible; }
+  .styles[data-active='kolkata'] .peek .vitrine { --stage: #191227; }
+  .styles[data-active='rajkot'] .peek .vitrine { --stage: #110d29; }
+  .styles[data-active='antique'] .peek .vitrine { --stage: #120e26; }
+  .styles[data-active='temple'] .peek .vitrine { --stage: #13102c; }
+  .styles[data-active='turkish'] .peek .vitrine { --stage: #0d0b1d; }
+  .styles[data-active='kuwait'] .peek .vitrine { --stage: #171331; }
+  .styles[data-active='italian'] .peek .vitrine { --stage: #120f2a; }
+  .styles[data-active='gemstone'] .peek .vitrine { --stage: #241e4e; }
+  .styles[data-active='customised'] .peek .vitrine { --stage: #0c091a; }
+  .peek .vitrine { --stage: #191227; }
+  .style-list { counter-reset: none; }
+  .styles[data-active] .style-row:not([data-on]) .style-row__name { color: var(--ink-500); }
+}
+
+/* ---------- 5. The four golds ---------- */
+.golds { background: var(--stone); padding-block: var(--section-y); }
+.golds__head { display: grid; gap: var(--space-4); margin-block-end: var(--space-8); }
+.golds__grid { display: grid; grid-template-columns: repeat(2, 1fr); border-block-start: 1px solid var(--rule-2); }
+.gold { padding: var(--space-5) var(--space-4) var(--space-6) 0; display: grid; gap: var(--space-3); align-content: start; }
+.gold:nth-child(n+3) { border-block-start: 1px solid var(--rule-2); }
+.gold:nth-child(even) { padding-inline-start: var(--space-4); border-inline-start: 1px solid var(--rule-2); }
+.gold__k { font: 500 var(--t-label)/1 var(--ff-text); letter-spacing: var(--track-label); color: var(--gold-700); }
+.gold__stamp { font: 300 clamp(4rem, 2.6rem + 6vw, 9rem)/0.85 var(--ff-display); letter-spacing: var(--track-numeral); color: var(--plum-700); font-variant-numeric: lining-nums tabular-nums; }
+.gold__bar { position: relative; block-size: 3px; background: var(--rule-1); }
+.gold__bar span { position: absolute; inset: 0; background: var(--bronze); transform-origin: 0 50%; scale: var(--f) 1; }
+.gold__pct { font-size: var(--t-small); color: var(--ink-700); }
+.gold__rate { font: 400 var(--t-numeral)/1.1 var(--ff-display); font-variant-numeric: lining-nums tabular-nums; color: var(--ink-900); }
+.gold__rate small { display: block; margin-block-start: 2px; font: 400 var(--t-caption) var(--ff-text); color: var(--ink-500); }
+.gold__use { font-size: var(--t-caption); color: var(--ink-500); line-height: 1.45; }
+.golds__foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-4); margin-block-start: var(--space-6); padding-block-start: var(--space-5); border-block-start: 1px solid var(--rule-2); }
+.golds__foot p { max-inline-size: 38rem; font-size: var(--t-small); color: var(--ink-700); }
+@media (min-width: 64em) {
+  .golds__head { grid-template-columns: 5fr 7fr; align-items: end; column-gap: var(--space-8); }
+  .golds__grid { grid-template-columns: repeat(4, 1fr); }
+  .gold { padding: var(--space-6) var(--space-5) var(--space-6); }
+  .gold:first-child { padding-inline-start: 0; }
+  .gold:nth-child(n+3) { border-block-start: 0; }
+  .gold:nth-child(even) { padding-inline-start: var(--space-5); }
+  .gold + .gold { border-inline-start: 1px solid var(--rule-2); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .gold__bar span { animation: fill linear both; animation-timeline: view(); animation-range: entry 60% cover 45%; }
+  }
+}
+@keyframes fill { from { scale: 0 1; } }
+
+/* ---------- 6. Old gold, today (plum) ---------- */
+.estim { background: var(--plum-700); color: var(--ivory); padding-block: var(--section-y); }
+.estim__grid { display: grid; gap: var(--space-8); }
+.estim__head { display: grid; gap: var(--space-5); align-content: start; }
+.estim__head .h2 em { color: var(--gold-300); }
+.estim__head p:not(.label) { color: var(--ink-on-plum-muted); max-inline-size: 30rem; }
+.estim__form { display: grid; gap: var(--space-6); }
+.estim__inputs { display: grid; gap: var(--space-6); }
+.field { display: grid; gap: var(--space-2); }
+legend.field__label { padding: 0; }
+.field__label { font: 500 var(--t-label)/1 var(--ff-text); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--gold-300); }
+.field__row { display: flex; align-items: baseline; gap: var(--space-3); border-block-end: 1px solid var(--ink-on-plum-muted); }
+.field input { inline-size: 100%; min-block-size: var(--control-h); background: transparent; border: 0; color: var(--ivory); font: 300 2.5rem/1 var(--ff-display); font-variant-numeric: lining-nums tabular-nums; padding: 0; }
+.field input:focus-visible { outline: none; }
+.field__row:has(input:focus-visible) { border-block-end-color: var(--gold-300); box-shadow: 0 1px 0 var(--gold-300); }
+.field__row span { font-size: var(--t-small); color: var(--ink-on-plum-muted); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; inline-size: 1px; block-size: 1px; }
+.chip span { display: inline-flex; align-items: center; min-block-size: var(--tap); padding-inline: var(--space-4); border: 1px solid var(--rule-on-dark); font: 500 var(--t-small)/1 var(--ff-text); letter-spacing: 0.06em; color: var(--ivory); transition: background-color var(--dur-quick), color var(--dur-quick), border-color var(--dur-quick); cursor: pointer; }
+.chip input:checked + span { background: var(--gold-300); border-color: var(--gold-300); color: var(--plum-900); }
+.chip input:focus-visible + span { outline: 2px solid var(--focus-on-dark); outline-offset: 2px; }
+.estim__out { display: grid; gap: var(--space-2); padding-block: var(--space-5) 0; border-block-start: 1px solid var(--rule-on-dark); }
+.estim__out output { font: 300 clamp(3.5rem, 2.4rem + 4.6vw, 7rem)/0.9 var(--ff-display); letter-spacing: var(--track-numeral); font-variant-numeric: lining-nums tabular-nums; color: var(--gold-300); }
+.estim__out output small { font: 500 var(--t-label) var(--ff-text); letter-spacing: 0.14em; color: var(--ink-on-plum-muted); margin-inline-end: var(--space-3); vertical-align: 1.6em; }
+.estim__fine { font-size: var(--t-caption); color: var(--ink-on-plum-muted); max-inline-size: 34rem; }
+.estim__acts { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); align-items: center; }
+@media (min-width: 64em) {
+  .estim__grid { grid-template-columns: 5fr 6fr; column-gap: clamp(3rem, 1rem + 5vw, 8rem); }
+  .estim__inputs { display: grid; grid-template-columns: 1fr 1.4fr; gap: var(--space-6); align-items: end; }
+}
+
+/* ---------- 7. Occasions: a salon hang ---------- */
+.occ { padding-block: var(--section-y); }
+.occ__layout { display: grid; gap: var(--space-7); }
+.occ__layout > * { min-inline-size: 0; }
+.occ__head { display: grid; gap: var(--space-4); justify-items: start; }
+.occ__grid { display: grid; grid-auto-flow: column; grid-auto-columns: 72%; gap: var(--space-4); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: inline mandatory; padding-inline: var(--gutter); margin-inline: calc(var(--gutter) * -1); scroll-padding-inline: var(--gutter); scrollbar-width: none; }
+.occ__grid::-webkit-scrollbar { display: none; }
+.occ-card { scroll-snap-align: start; display: grid; gap: var(--space-3); align-content: start; text-decoration: none; color: var(--ink-900); }
+.occ-card__img { aspect-ratio: 784 / 1280; overflow: clip; background: var(--stone); }
+.occ-card__img img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+.occ-card b { font: italic 300 clamp(1.75rem, 1.5rem + 0.8vw, 2.25rem)/1.05 var(--ff-display); color: var(--plum-700); }
+.occ-card p { font-size: var(--t-small); color: var(--ink-700); line-height: 1.5; }
+.occ-card:hover b, .occ-card:focus-visible b { text-decoration: underline; text-decoration-thickness: 1px; text-decoration-color: var(--bronze); text-underline-offset: 0.18em; }
+@media (min-width: 64em) {
+  .occ__layout { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--space-5); row-gap: var(--space-8); align-items: start; }
+  .occ__head { grid-column: 7 / 13; grid-row: 1; padding-block-start: var(--space-8); }
+  .occ__grid { display: contents; }
+  .occ-card--lead { grid-column: 1 / 6; grid-row: 1 / 3; }
+  .occ-card--lead .occ-card__img { aspect-ratio: 3 / 4; }
+  .occ-card--lead b { font-size: var(--t-display); }
+  .occ-card--lead p { font-size: var(--t-body); max-inline-size: 28rem; }
+  .occ-card:nth-child(2) { grid-column: 7 / 9; grid-row: 2; }
+  .occ-card:nth-child(3) { grid-column: 9 / 11; grid-row: 2; margin-block-start: var(--space-8); }
+  .occ-card:nth-child(4) { grid-column: 11 / 13; grid-row: 2; margin-block-start: calc(var(--space-8) * 2); }
+}
+
+/* ---------- 8. Four doors ---------- */
+.doors { padding-block: var(--section-y); border-block-start: 1px solid var(--rule-1); }
+.doors__head { display: grid; gap: var(--space-4); text-align: center; justify-items: center; margin-block-end: var(--space-7); }
+.doors__head .h2 { font-size: var(--t-display-xl); }
+.route { display: none; }
+.doors__list { display: grid; gap: 0; position: relative; }
+.door { position: relative; display: grid; gap: var(--space-3); padding: var(--space-6) 0 var(--space-6) var(--space-7); border-block-start: 1px solid var(--rule-1); }
+.door::before { content: ''; position: absolute; inset-block: 0; inset-inline-start: 0.6875rem; inline-size: 1px; background: var(--bronze); }
+.door:first-child::before { inset-block-start: 2.6rem; }
+.door:last-child::before { inset-block-end: auto; block-size: 2.6rem; }
+.door__pin { position: absolute; inset-inline-start: 0; inset-block-start: 1.85rem; inline-size: 1.375rem; block-size: 1.375rem; background: var(--ivory); }
+.door__pin svg { inline-size: 100%; block-size: 100%; fill: none; stroke: var(--bronze); stroke-width: 1.5; }
+.door--flag .door__pin svg { stroke: var(--plum-700); stroke-width: 2.5; }
+.door__em { font: 500 var(--t-label)/1 var(--ff-text); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--gold-700); }
+.door__em b { color: var(--plum-700); font-weight: 500; }
+.door__name { font: 300 clamp(1.875rem, 1.5rem + 1.4vw, 2.75rem)/1.05 var(--ff-display); letter-spacing: var(--track-display); }
+.door__addr { font-size: var(--t-small); color: var(--ink-700); line-height: 1.5; max-inline-size: 22rem; }
+.door__facts { font-size: var(--t-caption); color: var(--ink-500); line-height: 1.5; }
+.door__acts { display: flex; flex-wrap: wrap; gap: 0 var(--space-5); margin-block-start: var(--space-1); }
+.door__acts .lnk { min-block-size: var(--tap); }
+.doors__soon { margin-block-start: var(--space-6); text-align: center; font-size: var(--t-small); color: var(--ink-700); }
+.doors__soon b { font-weight: 500; color: var(--ink-900); }
+@media (min-width: 64em) {
+  .route { display: block; inline-size: 100%; block-size: auto; overflow: visible; margin-block-end: var(--space-4); }
+  .route path { fill: none; stroke: var(--bronze); stroke-width: 1.25; vector-effect: non-scaling-stroke; }
+  .route .pin { fill: var(--ivory); stroke: var(--bronze); stroke-width: 1.25; }
+  .route .pin--flag { fill: var(--plum-700); stroke: var(--plum-700); }
+  .route text { font: 500 10px var(--ff-text); letter-spacing: 0.16em; fill: var(--gold-700); text-transform: uppercase; }
+  .route .route__note { font-weight: 400; letter-spacing: 0.04em; text-transform: none; fill: var(--ink-500); }
+  .doors__list { grid-template-columns: repeat(4, 1fr); }
+  .door { padding: var(--space-5) var(--space-5) 0 0; border: 0; }
+  .door + .door { padding-inline-start: var(--space-5); border-inline-start: 1px solid var(--rule-1); }
+  .door::before, .door__pin { display: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .route path { stroke-dasharray: 1; animation: draw linear both; animation-timeline: view(); animation-range: entry 30% cover 45%; }
+    .route .pin { animation: pin-in linear both; animation-timeline: view(); animation-range: entry calc(55% + var(--i) * 10%) cover calc(40% + var(--i) * 3%); }
+  }
+}
+@keyframes draw { from { stroke-dashoffset: 1; } }
+@keyframes pin-in { from { opacity: 0; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- CHROME START -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 0-7.3 12.9L3.5 20.5l4.2-1.1A8.5 8.5 0 1 0 12 3.5z"/><path d="M9.4 8.3c.3-.6.9-.6 1.2 0l.7 1.5c.2.4 0 .8-.3 1l-.5.4a7 7 0 0 0 2.9 2.9l.4-.5c.3-.3.7-.4 1-.3l1.5.7c.6.3.6.9 0 1.2-.7.5-1.6.6-2.5.3a9.4 9.4 0 0 1-4.9-4.9c-.3-.9-.2-1.8.5-2.3z"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 4h3.5l1.5 4-2 1.2a11 11 0 0 0 6.8 6.8l1.2-2 4 1.5V19a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6-5.6-6-11a6 6 0 1 1 12 0c0 5.4-6 11-6 11z"/><circle cx="12" cy="10" r="2.2"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16M13 5l7 7-7 7"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 8h18M3 16h18"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-ring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" pathLength="100" stroke-dasharray="88 12" transform="rotate(50 12 12)"/></symbol>
+</svg>
+
+<header class="hdr">
+  <div class="hdr__in wrap--wide">
+    <button class="hdr__menu" type="button" id="menu-open" aria-haspopup="dialog" aria-controls="drawer">
+      <svg class="ic" aria-hidden="true"><use href="#i-menu"/></svg>Menu
+    </button>
+    <a class="hdr__logo" href="./" aria-label="Classic Jewels &amp; Diamonds, home"><img src="img/logo-dark.png" width="125" height="33" alt=""></a>
+    <nav class="hdr__nav" aria-label="Main">
+      <button class="nav__link" type="button" popovertarget="mega" aria-haspopup="true">Jewellery</button>
+      <a class="nav__link" href="/collections/">Collections</a>
+      <a class="nav__link" href="/occasions/">Occasions</a>
+      <a class="nav__link" href="/gold-rate/">Gold rate</a>
+      <a class="nav__link" href="/gold-exchange/">Old gold</a>
+      <a class="nav__link" href="/stores/">Branches</a>
+      <a class="nav__link" href="/about/">About</a>
+    </nav>
+    <div class="hdr__end">
+      <button class="ratechip" type="button" popovertarget="ratepop" aria-label="Today’s gold rate: 22K AED 468.25 per gram. Show all karats.">
+        <span class="ratechip__k">22K</span><span class="ratechip__v">468.25</span><span class="ratechip__u">AED/g</span>
+      </button>
+      <a class="btn btn--plum btn--sm hdr__wa" href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20I%E2%80%99d%20like%20to%20ask%20about%20your%20jewellery." target="_blank" rel="noopener"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-wa"/></svg>WhatsApp</a>
+    </div>
+  </div>
+</header>
+
+<!-- Mega panel (top layer, zero JS to open: popovertarget) -->
+<div class="mega" id="mega" popover>
+  <div class="mega__grid wrap--wide">
+    <div>
+      <h2 class="label">By piece</h2>
+      <ul class="mega__list">
+        <li><a href="/jewellery/necklaces/">Necklaces</a></li>
+        <li><a href="/jewellery/earrings/">Earrings</a></li>
+        <li><a href="/jewellery/rings/">Rings</a></li>
+        <li><a href="/jewellery/pendants/">Pendants</a></li>
+        <li><a href="/jewellery/bangles/">Bangles</a></li>
+        <li><a href="/jewellery/bracelets/">Bracelets</a></li>
+        <li><a href="/jewellery/chains/">Chains</a></li>
+        <li><a href="/jewellery/anklets/">Anklets</a></li>
+        <li><a href="/jewellery/gold-coins-bars/">Coins &amp; bars</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="label">By style</h2>
+      <ul class="mega__list mega__cols">
+        <li><a href="/collections/kolkata/" data-peek="p01">Kolkata</a></li>
+        <li><a href="/collections/rajkot/" data-peek="p02">Rajkot</a></li>
+        <li><a href="/collections/antique/" data-peek="p09">Antique</a></li>
+        <li><a href="/collections/temple/" data-peek="p08">Temple</a></li>
+        <li><a href="/collections/turkish/" data-peek="p05">Turkish</a></li>
+        <li><a href="/collections/kuwait/">Kuwaiti</a></li>
+        <li><a href="/collections/italian/" data-peek="p04">Italian</a></li>
+        <li><a href="/collections/gemstone/" data-peek="p06">Gemstone</a></li>
+        <li><a href="/collections/singapore/">Singapore</a></li>
+        <li><a href="/collections/kids/">Kids</a></li>
+        <li><a href="/collections/diamonds/">Diamonds</a></li>
+        <li><a href="/custom-jewellery/" data-peek="p07">Made to order</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="label">Visit us</h2>
+      <ul class="mega__visit">
+        <li><a href="/stores/deira-gold-souq-extension/"><b>Gold Souq Extension, Deira</b><span>Dubai · flagship</span></a></li>
+        <li><a href="/stores/safari-mall-sharjah/"><b>Safari Mall</b><span>Sharjah</span></a></li>
+        <li><a href="/stores/rolla-mall-sharjah/"><b>Rolla Mall</b><span>Sharjah</span></a></li>
+        <li><a href="/stores/madinat-zayed-abu-dhabi/"><b>Madinat Zayed</b><span>Abu Dhabi</span></a></li>
+      </ul>
+    </div>
+    <div class="mega__peek" aria-hidden="true">
+      <div class="vitrine">
+        <img src="img/p03.jpg" alt="" width="600" height="600" class="feather" loading="lazy">
+        <img src="img/p01.jpg" alt="" width="600" height="600" class="feather" loading="lazy" data-for="p01">
+        <img src="img/p02.jpg" alt="" width="600" height="600" class="feather" loading="lazy" data-for="p02">
+        <img src="img/p09.jpg" alt="" width="600" height="600" class="feather" loading="lazy" data-for="p09">
+        <img src="img/p08.jpg" alt="" width="600" height="600" class="feather" loading="lazy" data-for="p08">
+        <img src="img/p05.jpg" alt="" width="600" height="600" class="feather" loading="lazy" data-for="p05">
+        <img src="img/p04.jpg" alt="" width="600" height="600" class="feather" loading="lazy" data-for="p04">
+        <img src="img/p06.jpg" alt="" width="600" height="600" class="feather" loading="lazy" data-for="p06">
+        <img src="img/p07.jpg" alt="" width="600" height="600" class="feather" loading="lazy" data-for="p07">
+      </div>
+      <p>Every piece is shown on the velvet it was photographed on.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Today's board (header chip) -->
+<div class="ratepop" id="ratepop" popover>
+  <p class="label">Today’s board · AED per gram</p>
+  <table class="board">
+    <caption class="sr-only">Gold rate, AED per gram, 13 October 2026, 12:02</caption>
+    <tbody>
+      <tr><th scope="row">24K</th><td>505.75<small>999</small></td></tr>
+      <tr><th scope="row">22K</th><td>468.25<small>916</small></td></tr>
+      <tr><th scope="row">21K</th><td>449.00<small>875</small></td></tr>
+      <tr><th scope="row">18K</th><td>384.75<small>750</small></td></tr>
+    </tbody>
+  </table>
+  <p class="board-note">Dubai Jewellery Group suggested retail rate, <time datetime="2026-10-13T12:02+04:00">13 Oct, 12:02</time>. Making charge and 5% VAT are quoted separately.</p>
+  <a class="lnk" href="/gold-rate/"><span>Today’s board in full</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+</div>
+
+<!-- Drawer (phones) -->
+<dialog class="drawer" id="drawer" aria-label="Menu">
+  <div class="drawer__in">
+    <div class="drawer__top">
+      <img src="img/logo-dark.png" width="106" height="28" alt="Classic Jewels &amp; Diamonds">
+      <button class="hdr__menu" type="button" id="menu-close"><svg class="ic" aria-hidden="true"><use href="#i-close"/></svg>Close</button>
+    </div>
+    <nav class="drawer__nav" aria-label="Main">
+      <a href="/jewellery/">Jewellery</a>
+      <a href="/collections/">Collections <small>12 collections</small></a>
+      <a href="/occasions/">Occasions</a>
+      <a href="/gold-rate/">Gold rate <small class="num">22K 468.25</small></a>
+      <a href="/gold-exchange/">Old gold</a>
+      <a href="/custom-jewellery/">Made to order</a>
+      <a href="/stores/">Branches <small>4 open</small></a>
+      <a href="/about/">About</a>
+      <a href="/contact/">Contact</a>
+    </nav>
+    <div class="drawer__foot on-dark">
+      <a class="btn btn--bronze" href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20I%E2%80%99d%20like%20to%20ask%20about%20your%20jewellery." target="_blank" rel="noopener"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-wa"/></svg>WhatsApp us</a>
+      <a class="btn btn--ghost-dark" href="tel:+97142551288"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-phone"/></svg>Call +971 4 255 1288</a>
+    </div>
+  </div>
+</dialog>
+<!-- CHROME END -->
+
+<main id="main">
+
+  <!-- 1 · HERO: the day's gold -->
+  <section class="hero" aria-labelledby="h1">
+    <div class="hero__grid wrap--wide">
+      <h1 class="hero__title" id="h1">
+        <span class="hero__kicker">Gold and diamond jewellers in Dubai, Sharjah and Abu Dhabi</span>
+        <span class="hero__display display">Gold by the gram, <em>at today’s rate.</em></span>
+      </h1>
+
+      <div class="hero__vitrine vitrine">
+        <a class="hero__piece" href="piece.html?p=p03" data-morph aria-label="Antique Pearl-Drop Bib Necklace, 22K, Antique collection">
+          <img src="img/p03.jpg" width="600" height="600" alt="Antique-finish 22K gold bib necklace edged with pearl drops on a white bust" class="feather" fetchpriority="high" decoding="sync">
+        </a>
+        <div class="hero__cap on-dark">
+          <div><b>Antique Pearl-Drop Bib</b><span>22K · Antique collection<span class="sku"> · CJ-NK-003</span></span></div>
+          <a class="lnk" href="piece.html?p=p03" tabindex="-1" aria-hidden="true"><span>See the piece</span><svg class="ic ic--sm"><use href="#i-arrow"/></svg></a>
+        </div>
+      </div>
+
+      <div class="rate" role="group" aria-labelledby="rate-label">
+        <div class="rate__rule" aria-hidden="true"></div>
+        <p class="rate__label" id="rate-label"><span><span class="dot" aria-hidden="true"></span>Today’s rate · AED per gram</span><time datetime="2026-10-13T12:02+04:00"><span class="rate__date">13 Oct · </span>12:02</time></p>
+        <div class="rate__fig" aria-hidden="true">
+          <span data-fig="24k"><small>AED</small><span class="d" data-roll>505.75</span></span>
+          <span data-fig="22k"><small>AED</small><span class="d" data-roll id="roll22">468.25</span></span>
+          <span data-fig="21k"><small>AED</small><span class="d" data-roll>449.00</span></span>
+          <span data-fig="18k"><small>AED</small><span class="d" data-roll>384.75</span></span>
+        </div>
+        <fieldset class="karats">
+          <legend class="sr-only">Gold rate by karat, AED per gram</legend>
+          <label class="karat"><input type="radio" name="karat" id="k24" value="24k"><span class="karat__k">24K</span><span class="karat__v">505.75</span></label>
+          <label class="karat"><input type="radio" name="karat" id="k22" value="22k" checked><span class="karat__k">22K</span><span class="karat__v">468.25</span></label>
+          <label class="karat"><input type="radio" name="karat" id="k21" value="21k"><span class="karat__k">21K</span><span class="karat__v">449.00</span></label>
+          <label class="karat"><input type="radio" name="karat" id="k18" value="18k"><span class="karat__k">18K</span><span class="karat__v">384.75</span></label>
+        </fieldset>
+        <p class="rate__src">The Dubai Jewellery Group’s suggested retail rate. A piece is priced at this rate times its gold weight; the making charge and 5% VAT are quoted on their own lines.</p>
+      </div>
+
+      <div class="hero__actions">
+        <a class="btn btn--plum" href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20I%E2%80%99d%20like%20to%20ask%20about%20your%20jewellery." target="_blank" rel="noopener"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-wa"/></svg>WhatsApp us</a>
+        <a class="btn btn--line" href="#doors"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-pin"/></svg>Visit a branch</a>
+        <a class="lnk" href="/gold-rate/"><span>Today’s board</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · PROOF -->
+  <section class="proof" aria-label="At a glance">
+    <ul class="wrap--wide">
+      <li><a href="https://www.google.com/maps?cid=14419653802905195883" target="_blank" rel="noopener"><b class="num">4.9</b> <span>on Google, from 680 reviews of the Deira branch (13 Oct 2026)</span></a></li>
+      <li><b>Four doors</b><span>Deira, two Sharjah malls and Madinat Zayed, Abu Dhabi</span></li>
+      <li><b class="num">916 · 875 · 750</b><span>The UAE hallmark, stamped on every piece</span></li>
+      <li><b><i>Classic Group</i></b><span>Bullion trading, scrap gold buying and refining</span></li>
+    </ul>
+  </section>
+
+  <!-- 2b · CAMPAIGN LINE (from src/content/offers/diwali-2026.md; hidden after endsOn) -->
+  <section class="offer" aria-labelledby="offer-h">
+    <div class="offer__in wrap--wide">
+      <p class="label">Until 10 November</p>
+      <h2 class="offer__h" id="offer-h">Diwali 2026: <em>book the rate, no making charge on selected pieces.</em></h2>
+      <div class="offer__acts">
+        <a class="lnk" href="/offers/diwali-2026/"><span>See the offer</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="lnk" href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20I%E2%80%99d%20like%20to%20know%20more%20about%20the%20Diwali%20offers%20and%20how%20to%20book%20today%E2%80%99s%20rate." target="_blank" rel="noopener"><span>Ask on WhatsApp</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · ONE LINE: heritage -->
+  <section class="band" aria-labelledby="heritage">
+    <div class="band__in wrap">
+      <svg class="cring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" pathLength="100" stroke-dasharray="88 12" transform="rotate(50 12 12)"/></svg>
+      <p class="label">The Classic Group</p>
+      <h2 class="band__line display ink" id="heritage"><span class="w" style="--i:0">In the gold trade</span> <span class="w" style="--i:1">for over 35 years,</span> <em><span class="w" style="--i:2">more than 16</span> <span class="w" style="--i:3">of them in the UAE.</span></em></h2>
+      <p class="band__sub">The group began in bullion, and still trades, buys and refines gold. In 2024 it opened Classic Jewels &amp; Diamonds at Gold Souq Extension, Deira.</p>
+      <a class="lnk" href="/about/"><span>How the house began</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+    </div>
+  </section>
+
+  <!-- 4 · STYLES: from Kolkata to Kuwait -->
+  <section class="styles" aria-labelledby="styles-h" id="styles">
+    <div class="wrap--wide">
+      <div class="styles__head rv">
+        <div>
+          <p class="label">By style</p>
+          <h2 class="h2" id="styles-h">From Kolkata <em>to Kuwait</em></h2>
+        </div>
+        <p class="lead">Bengali filigree beside Gulf bridal sets, Ottoman forms beside Italian chains. Each style is made the way its own goldsmiths make it.</p>
+      </div>
+      <div class="styles__grid">
+        <div>
+          <ol class="style-list" role="list">
+            <li class="style-row" data-style="kolkata"><a href="/collections/kolkata/"><span class="style-row__media vitrine" style="--stage:#191227"><img src="img/p01.jpg" width="600" height="600" alt="" class="feather fade" loading="lazy"></span><span class="style-row__no">01</span><span class="style-row__name">Kolkata</span><span class="style-row__meta"><b>22K</b>Hand filigree, broad chokers</span></a></li>
+            <li class="style-row" data-style="rajkot"><a href="/collections/rajkot/"><span class="style-row__media vitrine" style="--stage:#110d29"><img src="img/p02.jpg" width="600" height="600" alt="" class="feather fade" loading="lazy"></span><span class="style-row__no">02</span><span class="style-row__name">Rajkot</span><span class="style-row__meta"><b>22K</b>Machine-cut, crisp detail</span></a></li>
+            <li class="style-row" data-style="antique"><a href="/collections/antique/"><span class="style-row__media vitrine" style="--stage:#120e26"><img src="img/p09.jpg" width="600" height="600" alt="" class="feather fade" loading="lazy"></span><span class="style-row__no">03</span><span class="style-row__name">Antique</span><span class="style-row__meta"><b>22K</b>Nakshi, kundan and polki</span></a></li>
+            <li class="style-row" data-style="temple"><a href="/collections/temple/"><span class="style-row__media vitrine" style="--stage:#13102c"><img src="img/p08.jpg" width="600" height="600" alt="" class="feather fade" loading="lazy"></span><span class="style-row__no">04</span><span class="style-row__name">Temple</span><span class="style-row__meta"><b>22K</b>South Indian, deep antique finish</span></a></li>
+            <li class="style-row" data-style="turkish"><a href="/collections/turkish/"><span class="style-row__media vitrine" style="--stage:#0d0b1d"><img src="img/p05.jpg" width="600" height="600" alt="" class="feather fade" loading="lazy"></span><span class="style-row__no">05</span><span class="style-row__name">Turkish</span><span class="style-row__meta"><b>22K · 21K</b>Ottoman forms, matte and bright</span></a></li>
+            <li class="style-row" data-style="kuwait"><a href="/collections/kuwait/"><span class="style-row__media vitrine" style="--stage:#171331"><span class="peek__empty-sm">Kuwaiti</span></span><span class="style-row__no">06</span><span class="style-row__name">Kuwaiti</span><span class="style-row__meta"><b>22K · 21K</b>Gulf bridal sets, wide bangles</span></a></li>
+            <li class="style-row" data-style="italian"><a href="/collections/italian/"><span class="style-row__media vitrine" style="--stage:#120f2a"><img src="img/p04.jpg" width="600" height="600" alt="" class="feather fade" loading="lazy"></span><span class="style-row__no">07</span><span class="style-row__name">Italian</span><span class="style-row__meta"><b>22K · 18K</b>Chains and collars for every day</span></a></li>
+            <li class="style-row" data-style="gemstone"><a href="/collections/gemstone/"><span class="style-row__media vitrine" style="--stage:#241e4e"><img src="img/p06.jpg" width="600" height="600" alt="" class="feather fade" loading="lazy"></span><span class="style-row__no">08</span><span class="style-row__name">Gemstone</span><span class="style-row__meta"><b>22K · 18K</b>Rubies, emeralds, sapphires</span></a></li>
+            <li class="style-row" data-style="customised"><a href="/custom-jewellery/"><span class="style-row__media vitrine" style="--stage:#0c091a"><img src="img/p07.jpg" width="600" height="600" alt="" class="feather fade" loading="lazy"></span><span class="style-row__no">09</span><span class="style-row__name">Made to order</span><span class="style-row__meta"><b>22K · 18K</b>From a sketch or an heirloom</span></a></li>
+          </ol>
+          <div class="rail-progress" aria-hidden="true"><span></span></div>
+          <p class="styles__also">Also in the cases: <a href="/collections/singapore/">Singapore chains</a>, <a href="/collections/kids/">Kids</a> and <a href="/collections/diamonds/">Diamonds</a>.</p>
+        </div>
+
+        <div class="peek" aria-hidden="true">
+          <div class="vitrine">
+            <figure data-for="kolkata"><img src="img/p01.jpg" width="600" height="600" alt="" class="feather" loading="lazy"><figcaption><b>Kolkata Fringe Choker</b><span>22K · CJ-NK-001</span></figcaption></figure>
+            <figure data-for="rajkot"><img src="img/p02.jpg" width="600" height="600" alt="" class="feather" loading="lazy"><figcaption><b>Rajkot Graduated Necklace</b><span>22K · CJ-NK-002</span></figcaption></figure>
+            <figure data-for="antique"><img src="img/p09.jpg" width="600" height="600" alt="" class="feather" loading="lazy"><figcaption><b>Three-Line Rani Haar</b><span>22K · CJ-NK-009</span></figcaption></figure>
+            <figure data-for="temple"><img src="img/p08.jpg" width="600" height="600" alt="" class="feather" loading="lazy"><figcaption><b>Temple Long Haar with Bell Pendant</b><span>22K · CJ-NK-008</span></figcaption></figure>
+            <figure data-for="turkish"><img src="img/p05.jpg" width="600" height="600" alt="" class="feather" loading="lazy"><figcaption><b>Turkish Filigree Necklace</b><span>22K · CJ-NK-005</span></figcaption></figure>
+            <figure data-for="kuwait"><div class="peek__empty"><strong>Kuwaiti</strong><span>Gulf bridal sets in 21K and 22K. Not photographed yet: ask us on WhatsApp and we will send pieces from the case.</span></div><figcaption><b></b><span></span></figcaption></figure>
+            <figure data-for="italian"><img src="img/p04.jpg" width="600" height="600" alt="" class="feather" loading="lazy"><figcaption><b>Italian Flat Collar Necklace</b><span>18K · CJ-NK-004</span></figcaption></figure>
+            <figure data-for="gemstone"><img src="img/p06.jpg" width="600" height="600" alt="" class="feather" loading="lazy"><figcaption><b>Ruby &amp; Emerald Gold Necklace</b><span>22K · CJ-NK-006</span></figcaption></figure>
+            <figure data-for="customised"><img src="img/p07.jpg" width="600" height="600" alt="" class="feather" loading="lazy"><figcaption><b>Bespoke Bridal Necklace</b><span>22K · made to order</span></figcaption></figure>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · THE FOUR GOLDS -->
+  <section class="golds" aria-labelledby="golds-h">
+    <div class="wrap--wide">
+      <div class="golds__head rv">
+        <div>
+          <p class="label">Know your gold</p>
+          <h2 class="h2" id="golds-h">The stamp says <em>what’s inside</em></h2>
+        </div>
+        <p class="lead">Every piece carries the UAE hallmark for its karat. The weight and fineness are printed on your invoice.</p>
+      </div>
+      <div class="golds__grid">
+        <div class="gold"><p class="gold__k">24K</p><p class="gold__stamp" aria-label="Hallmark 999">999</p><div class="gold__bar" aria-hidden="true"><span style="--f:.999"></span></div><p class="gold__pct">99.9% gold</p><p class="gold__rate">AED 505.75 <small>a gram today</small></p><p class="gold__use">Coins and bars</p></div>
+        <div class="gold"><p class="gold__k">22K</p><p class="gold__stamp" aria-label="Hallmark 916">916</p><div class="gold__bar" aria-hidden="true"><span style="--f:.916"></span></div><p class="gold__pct">91.6% gold</p><p class="gold__rate">AED 468.25 <small>a gram today</small></p><p class="gold__use">Most bridal and everyday jewellery</p></div>
+        <div class="gold"><p class="gold__k">21K</p><p class="gold__stamp" aria-label="Hallmark 875">875</p><div class="gold__bar" aria-hidden="true"><span style="--f:.875"></span></div><p class="gold__pct">87.5% gold</p><p class="gold__rate">AED 449.00 <small>a gram today</small></p><p class="gold__use">Gulf and Turkish sets</p></div>
+        <div class="gold"><p class="gold__k">18K</p><p class="gold__stamp" aria-label="Hallmark 750">750</p><div class="gold__bar" aria-hidden="true"><span style="--f:.75"></span></div><p class="gold__pct">75% gold</p><p class="gold__rate">AED 384.75 <small>a gram today</small></p><p class="gold__use">Diamond settings and Italian chains</p></div>
+      </div>
+      <div class="golds__foot">
+        <p>Rates are the Dubai Jewellery Group’s suggested retail figures for 13 October, 12:02. They move through the day; the board in the branch is the one we sell at.</p>
+        <a class="lnk" href="/gold-rate/"><span>Today’s board and how a price is built</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · OLD GOLD, TODAY (plum) -->
+  <section class="estim on-dark" aria-labelledby="estim-h">
+    <div class="estim__grid wrap--wide">
+      <div class="estim__head rv">
+        <p class="label">Old gold</p>
+        <h2 class="h2" id="estim-h">What your old gold <em>is worth today</em></h2>
+        <p>Bring it in and we test it and weigh it in front of you, then credit it by weight at the day’s rate against a new piece.</p>
+        <a class="lnk" href="/gold-exchange/"><span>How the exchange works</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+      <form class="estim__form" id="estim" aria-describedby="estim-fine">
+        <div class="estim__inputs">
+          <label class="field">
+            <span class="field__label">Weight</span>
+            <span class="field__row"><input id="grams" name="grams" type="number" inputmode="decimal" min="0" max="2000" step="0.01" value="10"><span>grams</span></span>
+          </label>
+          <fieldset class="field">
+            <legend class="field__label">Karat</legend>
+            <div class="chips" style="margin-block-start: var(--space-2)">
+              <label class="chip"><input type="radio" name="ek" value="505.75"><span>24K</span></label>
+              <label class="chip"><input type="radio" name="ek" value="468.25" checked><span>22K</span></label>
+              <label class="chip"><input type="radio" name="ek" value="449.00"><span>21K</span></label>
+              <label class="chip"><input type="radio" name="ek" value="384.75"><span>18K</span></label>
+            </div>
+          </fieldset>
+        </div>
+        <div class="estim__out">
+          <p class="field__label" id="estim-out-l">Indicative value at today’s rate</p>
+          <output for="grams" aria-labelledby="estim-out-l" id="estim-out"><small>AED</small>4,682.50</output>
+          <p class="estim__fine" id="estim-fine">An estimate at <span id="estim-rate">AED 468.25 a gram for 22K</span>, 13 October, 12:02. The figure we credit is set at the counter, after testing, against a new piece.</p>
+        </div>
+        <div class="estim__acts">
+          <a class="btn btn--bronze" id="estim-wa" href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20I%E2%80%99d%20like%20to%20exchange%20about%2010%20g%20of%2022K%20old%20gold.%20Which%20branch%20should%20I%20bring%20it%20to%3F" target="_blank" rel="noopener"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-wa"/></svg>Ask about exchanging it</a>
+          <a class="lnk" href="#doors"><span>Find a branch</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- 7 · OCCASIONS: a salon hang -->
+  <section class="occ" aria-labelledby="occ-h">
+    <div class="wrap--wide occ__layout">
+      <div class="occ__head">
+        <p class="label">Occasions</p>
+        <h2 class="h2" id="occ-h">For the wedding, <em>and every year after</em></h2>
+        <a class="lnk" href="/occasions/"><span>All occasions</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+      <div class="occ__grid">
+        <a class="occ-card occ-card--lead rv" href="/occasions/wedding/"><div class="occ-card__img"><img src="img/wedding.jpg" width="784" height="1280" alt="" class="fade" loading="lazy"></div><b>Wedding</b><p>Complete bridal sets in 22K, from the engagement ring to the seven-strand haar, planned around your date.</p></a>
+        <a class="occ-card rv" href="/occasions/anniversary/"><div class="occ-card__img"><img src="img/anniversary.jpg" width="784" height="1280" alt="" class="fade" loading="lazy"></div><b>Anniversary</b><p>Diamond eternity rings, pendants and bangles that mark the year without shouting about it.</p></a>
+        <a class="occ-card rv" href="/occasions/festivals/"><div class="occ-card__img"><img src="img/festivals.jpg" width="784" height="1280" alt="" class="fade" loading="lazy"></div><b>Festivals</b><p>Coins, chains and bangles for Diwali, Eid, Akshaya Tritiya and Onam, bought at the day’s rate.</p></a>
+        <a class="occ-card rv" href="/occasions/birthday/"><div class="occ-card__img"><img src="img/birthday.jpg" width="784" height="1280" alt="" class="fade" loading="lazy"></div><b>Birthday</b><p>Initial pendants, light earrings and kids’ gold that can be worn the same day.</p></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · FOUR DOORS -->
+  <section class="doors" aria-labelledby="doors-h" id="doors">
+    <div class="wrap--wide">
+      <div class="doors__head rv">
+        <p class="label">Visit us</p>
+        <h2 class="h2 display" id="doors-h">Four doors, <em>three emirates</em></h2>
+        <p class="small" style="color: var(--ink-700)">West to east along the coast. Bring a piece to compare, or old gold to weigh.</p>
+      </div>
+
+      <svg class="route" viewBox="0 0 1200 130" aria-hidden="true">
+        <path pathLength="1" d="M7 104 C 120 104, 220 86, 322 74 S 520 60, 622 56 S 820 44, 922 38 S 1120 30, 1196 26"/>
+        <text x="20" y="92">Abu Dhabi</text>
+        <text x="335" y="62">Dubai</text>
+        <text x="635" y="44">Sharjah</text>
+        <text x="935" y="26">Sharjah</text>
+        <circle class="pin" style="--i:0" cx="7" cy="104" r="6"/>
+        <circle class="pin pin--flag" style="--i:1" cx="322" cy="74" r="7"/>
+        <circle class="pin" style="--i:2" cx="622" cy="56" r="6"/>
+        <circle class="pin" style="--i:3" cx="922" cy="38" r="6"/>
+        <text class="route__note" x="1196" y="126" text-anchor="end">Schematic, not to scale</text>
+      </svg>
+
+      <ol class="doors__list" role="list">
+        <li class="door">
+          <span class="door__pin" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span>
+          <p class="door__em">Abu Dhabi</p>
+          <h3 class="door__name">Madinat Zayed</h3>
+          <p class="door__addr">Madinat Zayed, Abu Dhabi.</p>
+          <p class="door__facts">Ask us on WhatsApp for the shop number and today’s hours.</p>
+          <div class="door__acts">
+            <a class="lnk" href="https://www.google.com/maps/search/?api=1&amp;query=Classic+Jewels+and+Diamonds+Madinat+Zayed+Abu+Dhabi" target="_blank" rel="noopener"><span>Directions</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-out"/></svg></a>
+            <a class="lnk" href="/stores/madinat-zayed-abu-dhabi/"><span>Branch page</span></a>
+          </div>
+        </li>
+        <li class="door door--flag">
+          <span class="door__pin" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span>
+          <p class="door__em">Dubai · <b>Flagship</b></p>
+          <h3 class="door__name">Gold Souq Extension, Deira</h3>
+          <p class="door__addr">Shop No. 6, Mariyam Plaza (the multistorey car park building), behind RAK Bank.</p>
+          <p class="door__facts">Covered parking in the same building. Gold Souq or Al Ras metro, about ten minutes on foot.</p>
+          <div class="door__acts">
+            <a class="lnk" href="tel:+97142551288"><span class="num">+971 4 255 1288</span></a>
+            <a class="lnk" href="https://www.google.com/maps/dir/?api=1&amp;destination=Classic+Jewels+and+Diamonds+Gold+Souq+Extension+Deira+Dubai" target="_blank" rel="noopener"><span>Directions</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-out"/></svg></a>
+          </div>
+        </li>
+        <li class="door">
+          <span class="door__pin" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span>
+          <p class="door__em">Sharjah</p>
+          <h3 class="door__name">Rolla Mall</h3>
+          <p class="door__addr">Rolla Mall, Al Rolla, Sharjah.</p>
+          <p class="door__facts">Ask us on WhatsApp for the shop number and today’s hours.</p>
+          <div class="door__acts">
+            <a class="lnk" href="https://www.google.com/maps/search/?api=1&amp;query=Classic+Jewels+and+Diamonds+Rolla+Mall+Sharjah" target="_blank" rel="noopener"><span>Directions</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-out"/></svg></a>
+            <a class="lnk" href="/stores/rolla-mall-sharjah/"><span>Branch page</span></a>
+          </div>
+        </li>
+        <li class="door">
+          <span class="door__pin" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span>
+          <p class="door__em">Sharjah</p>
+          <h3 class="door__name">Safari Mall</h3>
+          <p class="door__addr">Safari Mall, Sharjah.</p>
+          <p class="door__facts">Ask us on WhatsApp for the shop number and today’s hours.</p>
+          <div class="door__acts">
+            <a class="lnk" href="https://www.google.com/maps/search/?api=1&amp;query=Classic+Jewels+and+Diamonds+Safari+Mall+Sharjah" target="_blank" rel="noopener"><span>Directions</span><svg class="ic ic--sm" aria-hidden="true"><use href="#i-out"/></svg></a>
+            <a class="lnk" href="/stores/safari-mall-sharjah/"><span>Branch page</span></a>
+          </div>
+        </li>
+      </ol>
+      <p class="doors__soon"><b>Opening soon in Abu Dhabi:</b> opposite the Etihad Rail station in Mohamed bin Zayed City, and in Musaffah and Al Ain. Dates to follow.</p>
+    </div>
+  </section>
+</main>
+
+<!-- FOOTER START -->
+<footer class="ftr on-dark">
+  <div class="wrap--wide">
+    <div class="ftr__mark">
+      <p class="ftr__slogan display">Every jewel <em>has a tale.</em></p>
+      <div class="ftr__lock">
+        <img src="img/logo-white.png" width="132" height="33" alt="Classic Jewels &amp; Diamonds">
+        <p>A Classic Group house. Jewellers since 2024; in the gold trade for over 35 years, more than 16 of them in the UAE.</p>
+      </div>
+    </div>
+    <div class="ftr__cols">
+      <div>
+        <h2 class="label">Branches</h2>
+        <ul>
+          <li><a href="/stores/deira-gold-souq-extension/">Gold Souq Extension, Deira</a> <span class="ftr__muted">· flagship</span></li>
+          <li><a href="/stores/safari-mall-sharjah/">Safari Mall, Sharjah</a></li>
+          <li><a href="/stores/rolla-mall-sharjah/">Rolla Mall, Sharjah</a></li>
+          <li><a href="/stores/madinat-zayed-abu-dhabi/">Madinat Zayed, Abu Dhabi</a></li>
+          <li class="ftr__muted">Opening soon: Mohamed bin Zayed City; Musaffah and Al Ain</li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="label">Today’s rate</h2>
+        <table class="ftr__rate" style="inline-size:100%; border-collapse:collapse">
+          <caption class="sr-only">AED per gram, 13 October 2026, 12:02</caption>
+          <tbody>
+            <tr><th scope="row">24K</th><td>505.75</td></tr>
+            <tr><th scope="row">22K</th><td>468.25</td></tr>
+            <tr><th scope="row">21K</th><td>449.00</td></tr>
+            <tr><th scope="row">18K</th><td>384.75</td></tr>
+          </tbody>
+        </table>
+        <p class="ftr__muted" style="margin-block-start:var(--space-3)">AED a gram · 13 Oct, 12:02</p>
+      </div>
+      <div>
+        <h2 class="label">Ask us</h2>
+        <ul>
+          <li><a href="https://wa.me/971505661416" target="_blank" rel="noopener">WhatsApp +971 50 566 1416</a></li>
+          <li><a href="tel:+97142551288">Call +971 4 255 1288</a></li>
+          <li><a href="mailto:hello@classicgroup.ae">hello@classicgroup.ae</a></li>
+          <li><a href="/contact/">Book a visit</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="label">The house</h2>
+        <ul>
+          <li><a href="/jewellery/">Jewellery</a></li>
+          <li><a href="/collections/">Collections</a></li>
+          <li><a href="/gold-exchange/">Old gold</a></li>
+          <li><a href="/custom-jewellery/">Made to order</a></li>
+          <li><a href="/our-promise/">Our promise</a></li>
+          <li><a href="/about/">About</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="ftr__legal">
+      <p>© 2026 Classic Jewels &amp; Diamonds · Trade licence 1921575</p>
+      <ul>
+        <li><a href="https://www.instagram.com/classicjewelsanddiamonds/" target="_blank" rel="noopener">Instagram</a></li>
+        <li><a href="https://www.tiktok.com/@classic_jewelz" target="_blank" rel="noopener">TikTok</a></li>
+        <li><a href="/privacy-policy/">Privacy</a></li>
+        <li><a href="/terms/">Terms</a></li>
+        <li><a href="/disclaimer/">Disclaimer</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+<!-- FOOTER END -->
+
+<nav class="bar" aria-label="Quick contact">
+  <a class="bar__wa" href="https://wa.me/971505661416?text=Hello%20Classic%20Jewels%2C%20I%E2%80%99d%20like%20to%20ask%20about%20your%20jewellery." target="_blank" rel="noopener"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-wa"/></svg>WhatsApp</a>
+  <a href="tel:+97142551288"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-phone"/></svg>Call</a>
+  <a href="#doors"><svg class="ic ic--sm" aria-hidden="true"><use href="#i-pin"/></svg>Branches</a>
+  <a href="/gold-rate/"><b>468.25</b>22K rate</a>
+</nav>
+
+<script>
+/* Prototype only. In the build these live in bundled modules under src/scripts/ (CSP: no inline JS). */
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 1. Image fade on decode (never the LCP image; only images not yet complete)
+  document.querySelectorAll('img.fade').forEach((img) => {
+    const done = () => img.classList.add('is-in');
+    if (img.complete && img.naturalWidth) done(); else img.addEventListener('load', done, { once: true });
+  });
+
+  // 2. Styles index: pin the last style pointed at or focused (CSS :has() handles the rest)
+  const styles = document.querySelector('.styles');
+  if (styles) {
+    const set = (row) => {
+      styles.dataset.active = row.dataset.style;
+      styles.querySelectorAll('.style-row[data-on]').forEach((r) => r.removeAttribute('data-on'));
+      row.setAttribute('data-on', '');
+    };
+    styles.querySelectorAll('.style-row').forEach((row) => {
+      row.addEventListener('pointerenter', () => set(row));
+      row.addEventListener('focusin', () => set(row));
+    });
+  }
+
+  // 3. Old-gold estimator: grams x stored rate, en-AE formatting
+  const form = document.getElementById('estim');
+  if (form) {
+    const out = document.getElementById('estim-out');
+    const rateEl = document.getElementById('estim-rate');
+    const wa = document.getElementById('estim-wa');
+    const fmt = new Intl.NumberFormat('en-AE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const calc = () => {
+      const g = Math.max(0, parseFloat(form.grams.value) || 0);
+      const checked = form.querySelector('input[name="ek"]:checked');
+      const r = parseFloat(checked.value);
+      const k = checked.nextElementSibling.textContent;
+      out.innerHTML = '<small>AED</small>' + fmt.format(g * r);
+      rateEl.textContent = 'AED ' + fmt.format(r) + ' a gram for ' + k;
+      const msg = `Hello Classic Jewels, I’d like to exchange about ${g} g of ${k} old gold. Which branch should I bring it to?`;
+      wa.href = 'https://wa.me/971505661416?text=' + encodeURIComponent(msg);
+    };
+    form.addEventListener('input', calc);
+    form.addEventListener('submit', (e) => e.preventDefault());
+  }
+
+  // 4. Drawer (production: commandfor/command invokers, nav.ts as fallback)
+  const drawer = document.getElementById('drawer');
+  document.getElementById('menu-open')?.addEventListener('click', () => drawer.showModal());
+  document.getElementById('menu-close')?.addEventListener('click', () => drawer.close());
+
+  // 5. Piece morph: name only the clicked image, clear it on the way back
+  let named = null;
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-morph]');
+    if (!a) return;
+    named = a.querySelector('img');
+    if (named) named.style.viewTransitionName = 'piece';
+  });
+  addEventListener('pageshow', () => { if (named) named.style.viewTransitionName = ''; named = null; });
+
+  // 6. Rate roll: digits roll for 600 ms ONLY when a refreshed value differs from the stored one.
+  //    Demo: add ?demo=refresh to the URL to simulate a refresh arriving (prototype only).
+  const roll = (el, next) => {
+    const prev = el.textContent;
+    if (prev === next) return;
+    if (reduce) { el.textContent = next; return; }
+    el.textContent = '';
+    [...next].forEach((ch, i) => {
+      const was = prev[i] ?? '';
+      const s = document.createElement('span');
+      s.style.cssText = 'display:inline-block;overflow:clip;height:0.8em;vertical-align:top;line-height:0.8';
+      if (was === ch) { s.textContent = ch; el.append(s); return; }
+      const col = document.createElement('span');
+      col.style.cssText = 'display:block;transition:translate 600ms cubic-bezier(.22,1,.36,1)';
+      col.innerHTML = `<span style="display:block">${was}</span><span style="display:block">${ch}</span>`;
+      s.append(col); el.append(s);
+      requestAnimationFrame(() => requestAnimationFrame(() => { col.style.translate = '0 -0.8em'; }));
+    });
+    setTimeout(() => { el.textContent = next; }, 700);
+  };
+  if (new URLSearchParams(location.search).get('demo') === 'refresh') {
+    setTimeout(() => {
+      const el = document.getElementById('roll22');
+      roll(el, '469.50');
+      document.querySelectorAll('.karat__v')[1].textContent = '469.50';
+      document.querySelector('.rate__label time').textContent = 'Demo refresh · 12:47';
+      roll(document.querySelector('.ratechip__v'), '469.50');
+      document.querySelector('.bar b').textContent = '469.50';
+    }, 2200);
+  }
+})();
+</script>
+</body>
+</html>
