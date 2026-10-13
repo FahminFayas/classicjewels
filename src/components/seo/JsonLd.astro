@@ -1,0 +1,16 @@
+---
+/**
+ * Serialises one schema.org object as JSON-LD.
+ * `is:inline` keeps Astro from bundling the block; the `<` escape prevents a closing-tag
+ * injection from any string that ends up in the data.
+ */
+import type { Thing, WithContext } from 'schema-dts';
+
+export interface Props {
+  data: WithContext<Thing>;
+}
+
+const json = JSON.stringify(Astro.props.data).replace(/</g, '\\u003c');
+---
+
+<script is:inline type="application/ld+json" set:html={json} />

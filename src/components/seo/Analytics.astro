@@ -1,0 +1,36 @@
+---
+/**
+ * Google Tag Manager, rendered only when PUBLIC_GTM_ID is set.
+ * GA4, Meta Pixel and TikTok Pixel are configured inside the container, not in code, so the
+ * marketing team can change tags without a deploy. The loader is a bundled module (no inline
+ * script), which keeps the Content-Security-Policy free of 'unsafe-inline'.
+ */
+import { PUBLIC_GTM_ID } from 'astro:env/client';
+
+const enabled = Boolean(PUBLIC_GTM_ID?.trim());
+---
+
+{enabled && (
+  <>
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
+    <script>
+      import { PUBLIC_GTM_ID } from 'astro:env/client';
+
+      declare global {
+        interface Window {
+          dataLayer: Record<string, unknown>[];
+        }
+      }
+
+      const id = PUBLIC_GTM_ID?.trim();
+      if (id) {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+        const s = document.createElement('script');
+        s.async = true;
+        s.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(id)}`;
+        document.head.appendChild(s);
+      }
+    </script>
+  </>
+)}

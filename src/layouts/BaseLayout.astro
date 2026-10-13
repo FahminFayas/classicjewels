@@ -1,0 +1,105 @@
+---
+/**
+ * The one layout every page uses. Owns the <head> (SEO, fonts, icons, analytics, site-wide
+ * JSON-LD), the chrome (utility strip, header, footer, mobile action bar) and the two scripts.
+ * Pages pass their SEO fields and render into the default slot; extra <head> tags (preloads,
+ * page-specific JSON-LD) go in the `head` slot.
+ */
+import { Font } from 'astro:assets';
+import type { Thing, WithContext } from 'schema-dts';
+
+import '@/styles/base.css';
+import Footer from '@/components/layout/Footer.astro';
+import MobileActionBar from '@/components/layout/MobileActionBar.astro';
+import SiteHeader from '@/components/layout/SiteHeader.astro';
+import UtilityStrip from '@/components/layout/UtilityStrip.astro';
+import Analytics from '@/components/seo/Analytics.astro';
+import JsonLd from '@/components/seo/JsonLd.astro';
+import Seo, { type Props as SeoProps } from '@/components/seo/Seo.astro';
+import IconSprite from '@/components/ui/IconSprite.astro';
+import { flagship } from '@/data/site';
+import { getRates } from '@/lib/rates';
+import { jewelryStoreSchema, organizationSchema, websiteSchema } from '@/lib/schema';
+
+export interface Props extends SeoProps {
+  /** Page-level JSON-LD entities (Product, Article, ItemList …). Breadcrumbs emit their own. */
+  jsonLd?: WithContext<Thing>[];
+  /** Extra class on <main> for page-specific layout hooks. */
+  mainClass?: string;
+}
+
+const { jsonLd = [], mainClass, ...seo } = Astro.props;
+const { latest: rate, stale } = await getRates();
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const logoUrl = new URL('/icons/icon-512.png', origin).toString();
+const storeImage = new URL('/og/default.png', origin).toString();
+---
+
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <Seo {...seo} />
+    <Font cssVariable="--font-display" preload />
+    <Font cssVariable="--font-text" preload />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#4B2849" />
+    <meta name="generator" content={Astro.generator} />
+    <JsonLd data={websiteSchema()} />
+    <JsonLd data={organizationSchema(logoUrl)} />
+    <JsonLd data={jewelryStoreSchema(flagship, storeImage)} />
+    {jsonLd.map((data) => (
+      <JsonLd data={data} />
+    ))}
+    <slot name="head" />
+    <Analytics />
+  </head>
+  <body>
+    <a class="skip" href="#main">
+      Skip to content
+    </a>
+    <UtilityStrip rate={rate} stale={stale} />
+    <SiteHeader rate={rate} />
+    <main id="main" class={mainClass} tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+    <MobileActionBar />
+    <IconSprite />
+    <script src="@/scripts/nav.ts"></script>
+    <script src="@/scripts/rate.ts"></script>
+  </body>
+</html>
+
+<style is:global>
+  .skip {
+    position: absolute;
+    inset-block-start: var(--space-2);
+    inset-inline-start: var(--space-2);
+    z-index: var(--z-skip);
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface-0);
+    color: var(--plum-700);
+    font-weight: 500;
+    text-decoration: none;
+    transform: translateY(-200%);
+  }
+
+  .skip:focus-visible {
+    transform: none;
+  }
+
+  main:focus {
+    outline: none;
+  }
+
+  /* Keep page content clear of the fixed action bar on phones and tablets. */
+  @media (max-width: 63.99em) {
+    body {
+      padding-block-end: calc(var(--action-bar-h) + env(safe-area-inset-bottom));
+    }
+  }
+</style>

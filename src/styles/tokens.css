@@ -1,0 +1,136 @@
+/*
+ * Design tokens. The only place a colour, size or font is defined.
+ * Components reference these custom properties; never a raw hex value.
+ * See docs/design-spec.md §2–4 for the rationale and the contrast table.
+ */
+:root {
+  /* ---- Surfaces: the page is ivory; white is a tray or plate; plum is a band. ---- */
+  --surface-0: #ffffff; /* trays, plates, inputs, mega-nav panel; equals photo white */
+  --surface-1: #faf7f2; /* page ivory: body, header, every section by default */
+  --surface-2: #f3eee6; /* parchment: table heads, FAQ answers, table stripes */
+  --surface-plum: #4b2849; /* rate board, old-gold band, "how buying works" band */
+  --surface-plum-deep: #2e1a2d; /* utility strip, footer, mobile drawer */
+
+  /* ---- Ink ---- */
+  --ink-900: #1c1418;
+  --ink-700: #4a3f46;
+  --ink-500: #6b5f66;
+  --ink-300: #b8afb3; /* non-text only (disabled fills, decorative) */
+  --ink-on-plum: #faf7f2;
+  --ink-on-plum-muted: #d9ccd6;
+
+  /* ---- Plum scale (brand #4B2849 kept verbatim as plum-700) ---- */
+  --plum-900: #2e1a2d;
+  --plum-700: #4b2849;
+  --plum-500: #6b3f68;
+  --plum-300: #b498b2;
+  --plum-100: #eadfe9;
+  --plum-050: #f6f0f5;
+
+  /* ---- Gold scale. gold-600 is the brand bronze #BE8658 darkened a touch so numerals pass 3:1 on ivory ---- */
+  --gold-800: #6f4a24;
+  --gold-700: #8a5c32; /* gold text on light surfaces (AA) */
+  --gold-600: #b9814f;
+  --gold-500: #cda678;
+  --gold-300: #dcc29a; /* champagne: numerals and eyebrows on plum */
+  --gold-100: #f1e6d3;
+
+  /* ---- Rules (hairlines) ---- */
+  --rule-1: #e6e0d6; /* default hairline, tray dividers */
+  --rule-2: #cfc6b8; /* table borders, section dividers */
+  --rule-input: #8f858b; /* input borders, 3:1 on all light surfaces */
+  --rule-gold: #be8658; /* eyebrow rule, rate-board rules, footer top rule */
+  --rule-on-plum: rgb(250 247 242 / 0.22);
+
+  /* ---- Semantic ---- */
+  --ok: #2e6b4f;
+  --err: #a3362b;
+  --ok-on-plum: #8fd1b0;
+  --err-on-plum: #f3a89c;
+  --focus: #4b2849;
+  --focus-on-plum: #dcc29a;
+  --link: #4b2849;
+  --link-hover: #8a5c32;
+
+  /* ---- Typography ---- */
+  /* --font-display and --font-text are declared by Astro's <Font> components (self-hosted,
+     with metric-matched fallbacks). These aliases keep component CSS readable. */
+  --ff-display: var(--font-display, 'Bodoni Moda', Georgia, serif);
+  --ff-text: var(--font-text, 'IBM Plex Sans', Arial, sans-serif);
+
+  /* Fluid scale, 360 → 1280 px viewport */
+  --t-display: clamp(2.5rem, 1.7rem + 3.6vw, 4.5rem); /* 40 → 72 */
+  --t-h1: clamp(2.125rem, 1.55rem + 2.5vw, 3.5rem); /* 34 → 56 */
+  --t-h2: clamp(1.625rem, 1.3rem + 1.4vw, 2.5rem); /* 26 → 40 */
+  --t-h3: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem); /* 20 → 24 */
+  --t-numeral-xl: clamp(2.5rem, 1.6rem + 3.8vw, 4.5rem); /* rate board figures */
+  --t-numeral: 1.125rem;
+  --t-lead: clamp(1.125rem, 1.05rem + 0.35vw, 1.3125rem);
+  --t-body: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --t-title: 1.0625rem;
+  --t-small: 0.875rem;
+  --t-caption: 0.8125rem;
+  --t-eyebrow: 0.75rem;
+  --t-note: 1.125rem;
+
+  --track-display: -0.012em;
+  --track-h1: -0.008em;
+  --track-h2: -0.004em;
+  --track-eyebrow: 0.14em;
+
+  /* ---- Spacing (4 px base) ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --space-10: 8rem;
+  --section-y: clamp(3.5rem, 2.5rem + 5vw, 7rem);
+
+  /* ---- Layout ---- */
+  --container: 80rem; /* 1280 px */
+  --container-wide: 90rem; /* tray grids, hero */
+  --prose: 68ch;
+  --gutter: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
+  --grid-gap: clamp(1rem, 0.75rem + 1.25vw, 1.5rem);
+  --header-h: 3.5rem; /* 56 px; 72 px from the desktop breakpoint, see base.css */
+  --strip-h: 2rem;
+  --action-bar-h: 3.5rem;
+
+  /* ---- Controls ---- */
+  --control-h: 3rem; /* 48 px buttons and inputs */
+  --tap: 2.75rem; /* 44 px minimum hit area */
+  --radius: 0; /* the only curve on the site is the C-ring */
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-slow: 240ms;
+
+  /* ---- Z-index ---- */
+  --z-sticky: 10;
+  --z-bar: 20;
+  --z-nav: 30;
+  --z-dialog: 40;
+  --z-skip: 50;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+}
+
+@media (min-width: 64em) {
+  :root {
+    --header-h: 4.5rem;
+    --strip-h: 2.25rem;
+  }
+}

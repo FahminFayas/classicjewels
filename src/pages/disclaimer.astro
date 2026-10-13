@@ -1,0 +1,208 @@
+---
+/**
+ * Disclaimer. Design-spec §7.18: typographic hero, dated, prose with numbered H2s. The one
+ * substantive point is the gold rate: the figure on the site is indicative and the board in the
+ * shop sets the price at the time of sale. No enquiry block on legal pages.
+ */
+import Hero from '@/components/sections/Hero.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import { site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatDate } from '@/lib/format';
+import { routes } from '@/lib/routes';
+
+const updated = '2026-10-13';
+const law = site.returnPolicy.lawReference;
+
+const sections = [
+  { id: 'general', title: 'General information' },
+  { id: 'gold-rate', title: 'The gold rate shown' },
+  { id: 'liability', title: 'Limitation of liability' },
+  { id: 'external-links', title: 'External links' },
+  { id: 'availability', title: 'Availability of pieces' },
+  { id: 'changes', title: 'Changes' },
+];
+const no = (i: number) => String(i + 1).padStart(2, '0');
+
+const title = 'Disclaimer';
+const description =
+  'The gold rate on this site is indicative and may change during the day; the board in the shop sets the price at the time of sale. Read how we limit liability, then ask us for a quote.';
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Disclaimer', href: routes.disclaimer }]} />
+  </div>
+
+  <Hero
+    eyebrow="Legal"
+    title="Disclaimer"
+    lead="What this website does and does not promise: about the gold rate it shows, the pieces it lists and the sites it links to."
+  >
+    <p class="small">
+      <time datetime={updated}>Last updated {formatDate(updated)}</time>
+    </p>
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container legal">
+      <nav class="legal__nav" aria-label="On this page">
+        <p class="legal__nav-title small">On this page</p>
+        <ol class="legal__nav-list small" role="list">
+          {sections.map((s, i) => (
+            <li>
+              <a href={`#${s.id}`}>
+                <span class="tabular" aria-hidden="true">
+                  {no(i)}
+                </span>{' '}
+                {s.title}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      <div class="legal__body prose">
+        <h2 id="general">
+          <span class="legal__no" aria-hidden="true">01</span>General information
+        </h2>
+        <p>
+          The content of classicjewels.ae is general information about our jewellery, our branches
+          and the gold trade in the UAE. It is not investment, tax or legal advice. A decision to
+          buy gold as an investment is your own; if you need advice, ask a licensed adviser.
+        </p>
+
+        <h2 id="gold-rate">
+          <span class="legal__no" aria-hidden="true">02</span>The gold rate shown
+        </h2>
+        <p>
+          The <a href={routes.goldRate}>rate on this site</a> is the latest rate posted on our board,
+          in AED per gram by karat, excluding making charges and 5% VAT. It is indicative. The
+          published Dubai rate can change more than once in a trading day, so the board in the shop
+          may be ahead of the site. The price you pay is worked out at the counter, from the rate on
+          the board at the time of sale, the weight on the scale and the making charge quoted for
+          the piece.
+        </p>
+        <p>
+          Each rate carries the date it was posted. When the figure is more than two days old, the
+          site marks it as last posted on that date rather than as today’s rate.
+        </p>
+
+        <h2 id="liability">
+          <span class="legal__no" aria-hidden="true">03</span>Limitation of liability
+        </h2>
+        <p>
+          We take care to keep the site accurate, but we do not guarantee that it is complete,
+          current or free of errors, or that it will be available without interruption. To the
+          extent UAE law allows, {site.legalName} is not liable for loss arising from reliance on
+          the site, including on the gold rate shown, or from the site being unavailable.
+        </p>
+        <p>
+          Nothing here limits liability that cannot be limited under UAE law, and nothing here
+          limits your rights for defective goods under {law}.
+        </p>
+
+        <h2 id="external-links">
+          <span class="legal__no" aria-hidden="true">04</span>External links
+        </h2>
+        <p>
+          Links to other websites, including Google Maps, WhatsApp, social networks and the Classic
+          Group’s site, are provided for convenience. We are not responsible for their content,
+          accuracy or availability, and a link is not an endorsement.
+        </p>
+
+        <h2 id="availability">
+          <span class="legal__no" aria-hidden="true">05</span>Availability of pieces
+        </h2>
+        <p>
+          The pieces shown on this site are sold in our branches and may be sold, moved between
+          branches or withdrawn at any time. Showing a piece does not promise that it is in a
+          particular branch on a particular day. If you are travelling for a specific piece, message
+          us first and we will tell you where it is. Branch details are on the{' '}
+          <a href={routes.stores}>stores page</a>.
+        </p>
+
+        <h2 id="changes">
+          <span class="legal__no" aria-hidden="true">06</span>Changes
+        </h2>
+        <p>
+          We may change the site and this disclaimer at any time. The date at the top shows the last
+          revision. See also our <a href={routes.terms}>terms of use</a> and{' '}
+          <a href={routes.privacy}>privacy policy</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Mirrors the typographic hero's 2 / 7 / 3 grid so the prose sits under the H1. */
+  .legal {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .legal__nav-title {
+    margin-block-end: var(--space-2);
+    font-weight: 500;
+    color: var(--ink-700);
+  }
+
+  .legal__nav-list {
+    display: grid;
+  }
+
+  .legal__nav-list a {
+    display: inline-flex;
+    gap: var(--space-2);
+    min-block-size: var(--tap);
+    align-items: center;
+    color: var(--ink-500);
+    text-decoration: none;
+  }
+
+  .legal__nav-list a:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+  }
+
+  .legal__nav-list span {
+    color: var(--gold-600);
+  }
+
+  .legal__body {
+    min-inline-size: 0;
+  }
+
+  .legal__body > h2:first-child {
+    margin-block-start: 0;
+  }
+
+  .legal__no {
+    display: inline-block;
+    min-inline-size: 2.2ch;
+    margin-inline-end: var(--space-3);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-600);
+  }
+
+  @media (min-width: 64em) {
+    .legal {
+      grid-template-columns: 2fr 7fr 3fr;
+      column-gap: calc(var(--grid-gap) * 2);
+    }
+
+    .legal__nav {
+      grid-column: 1;
+      position: sticky;
+      inset-block-start: calc(var(--header-h) + var(--space-4));
+      align-self: start;
+    }
+
+    .legal__body {
+      grid-column: 2;
+    }
+  }
+</style>

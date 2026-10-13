@@ -1,0 +1,258 @@
+---
+/**
+ * Terms of use. Design-spec §7.18: typographic hero, dated, prose with numbered H2s. Restates
+ * the return and exchange terms from site.promises with the statutory-rights sentence. The sale
+ * itself is governed by the invoice and the written promises, not by these website terms.
+ * No enquiry block on legal pages.
+ */
+import Hero from '@/components/sections/Hero.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import { site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatDate } from '@/lib/format';
+import { routes } from '@/lib/routes';
+
+const updated = '2026-10-13';
+const days = site.returnPolicy.days;
+const law = site.returnPolicy.lawReference;
+
+const sections = [
+  { id: 'acceptance', title: 'Acceptance' },
+  { id: 'who-we-are', title: 'Who we are' },
+  { id: 'information', title: 'Information, not an offer' },
+  { id: 'pricing', title: 'Prices and the gold rate' },
+  { id: 'intellectual-property', title: 'Intellectual property' },
+  { id: 'images', title: 'Product images and weights' },
+  { id: 'returns', title: 'Returns and exchange' },
+  { id: 'third-party-links', title: 'Links to other sites' },
+  { id: 'governing-law', title: 'Governing law' },
+  { id: 'contact', title: 'Contact' },
+];
+const no = (i: number) => String(i + 1).padStart(2, '0');
+
+const title = 'Terms of Use';
+const description = `Terms for using classicjewels.ae: prices follow the daily gold rate and are quoted per piece, the ${days}-day return policy, and UAE law applies. Read them before you enquire.`;
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Terms', href: routes.terms }]} />
+  </div>
+
+  <Hero
+    eyebrow="Legal"
+    title="Terms of use"
+    lead="The terms on which this website is offered. A sale is governed by your invoice and our written promises; these terms cover the site."
+  >
+    <p class="small">
+      <time datetime={updated}>Last updated {formatDate(updated)}</time>
+    </p>
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container legal">
+      <nav class="legal__nav" aria-label="On this page">
+        <p class="legal__nav-title small">On this page</p>
+        <ol class="legal__nav-list small" role="list">
+          {sections.map((s, i) => (
+            <li>
+              <a href={`#${s.id}`}>
+                <span class="tabular" aria-hidden="true">
+                  {no(i)}
+                </span>{' '}
+                {s.title}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      <div class="legal__body prose">
+        <h2 id="acceptance">
+          <span class="legal__no" aria-hidden="true">01</span>Acceptance
+        </h2>
+        <p>
+          By using classicjewels.ae you accept these terms. If you do not accept them, please do not
+          use the site. They cover the website only: the terms of a purchase are those on your
+          invoice and in <a href={routes.promise}>our written promises</a>.
+        </p>
+
+        <h2 id="who-we-are">
+          <span class="legal__no" aria-hidden="true">02</span>Who we are
+        </h2>
+        <p>
+          The site is published by {site.legalName}, registration number {site.registrationNumber},
+          the jewellery division of the {site.group.name}. Registered office: {site.address.oneLine}.
+        </p>
+
+        <h2 id="information">
+          <span class="legal__no" aria-hidden="true">03</span>Information, not an offer
+        </h2>
+        <p>
+          The site describes jewellery, coins and bars that we sell in our branches. A listing is
+          information, not an offer for sale. A piece may be sold, moved to another branch or
+          withdrawn without notice, and stock varies by branch. The sale happens at the counter, on
+          the invoice, after the piece has been weighed in front of you.
+        </p>
+        <p>
+          We take care over what is published, but we do not promise that every description, weight
+          or availability line is complete or current at the moment you read it. See the{' '}
+          <a href={routes.disclaimer}>disclaimer</a>.
+        </p>
+
+        <h2 id="pricing">
+          <span class="legal__no" aria-hidden="true">04</span>Prices and the gold rate
+        </h2>
+        <p>
+          The website shows no prices. Jewellery is priced per piece at the counter: the day’s rate
+          for its karat multiplied by its gold weight, plus the making charge for the work, plus 5%
+          VAT, all itemised on the invoice.
+        </p>
+        <p>
+          The <a href={routes.goldRate}>rate shown on this site</a> is the latest rate posted on our
+          board, in AED per gram, and it may change during the day. The rate on the board at the
+          time of sale is the one that applies.
+        </p>
+        <p>
+          <a href={routes.offers}>Offers</a> run until the end date shown on each offer page, and
+          their conditions are stated there. An expired offer is not published and cannot be
+          claimed.
+        </p>
+
+        <h2 id="intellectual-property">
+          <span class="legal__no" aria-hidden="true">05</span>Intellectual property
+        </h2>
+        <p>
+          The text, photographs, logos, collection names and wordmarks on this site belong to{' '}
+          {site.legalName} or its licensors. You may view and print pages for your own use. Do not
+          copy, publish or use them commercially without written permission.
+        </p>
+
+        <h2 id="images">
+          <span class="legal__no" aria-hidden="true">06</span>Product images and weights
+        </h2>
+        <p>
+          Photographs show the piece, or a representative piece of the same design. They may differ
+          from the piece in front of you in scale, colour rendering and finish, and screens render
+          gold differently. Weights on the site are gross weights unless marked otherwise, and the
+          weight that counts is the one read off the scale at the counter.
+        </p>
+
+        <h2 id="returns">
+          <span class="legal__no" aria-hidden="true">07</span>Returns and exchange
+        </h2>
+        <p>
+          Our {days}-day return and exchange policy is our own commitment. Unworn pieces in their
+          original condition, with the invoice and certificate, can be returned within {days} days
+          of purchase. Customised, engraved and resized pieces are exchange-only. A piece bought
+          from us can be exchanged for a different design at its gold value, by weight at the day’s
+          rate; making charges and VAT apply to the new piece.
+        </p>
+        <p>
+          This policy is in addition to, and never limits, your rights for defective goods under{' '}
+          {law}. The full conditions, including what each promise does not cover, are on{' '}
+          <a href={routes.promise}>our promise page</a>.
+        </p>
+
+        <h2 id="third-party-links">
+          <span class="legal__no" aria-hidden="true">08</span>Links to other sites
+        </h2>
+        <p>
+          Links to Google Maps, WhatsApp, social networks and other sites are provided for
+          convenience. We do not control those sites and are not responsible for their content or
+          their terms.
+        </p>
+
+        <h2 id="governing-law">
+          <span class="legal__no" aria-hidden="true">09</span>Governing law
+        </h2>
+        <p>
+          These terms are governed by the laws of the United Arab Emirates as applied in the Emirate
+          of Dubai, and any dispute about the website goes to the courts of Dubai. Nothing here
+          removes the protection that UAE consumer-protection law gives you.
+        </p>
+
+        <h2 id="contact">
+          <span class="legal__no" aria-hidden="true">10</span>Contact
+        </h2>
+        <p>
+          Questions about these terms: <a href={`mailto:${site.email}`}>{site.email}</a>, or call{' '}
+          <a href={`tel:${site.phone.landline.e164}`}>{site.phone.landline.display}</a>. See also
+          our <a href={routes.privacy}>privacy policy</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Mirrors the typographic hero's 2 / 7 / 3 grid so the prose sits under the H1. */
+  .legal {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .legal__nav-title {
+    margin-block-end: var(--space-2);
+    font-weight: 500;
+    color: var(--ink-700);
+  }
+
+  .legal__nav-list {
+    display: grid;
+  }
+
+  .legal__nav-list a {
+    display: inline-flex;
+    gap: var(--space-2);
+    min-block-size: var(--tap);
+    align-items: center;
+    color: var(--ink-500);
+    text-decoration: none;
+  }
+
+  .legal__nav-list a:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+  }
+
+  .legal__nav-list span {
+    color: var(--gold-600);
+  }
+
+  .legal__body {
+    min-inline-size: 0;
+  }
+
+  .legal__body > h2:first-child {
+    margin-block-start: 0;
+  }
+
+  .legal__no {
+    display: inline-block;
+    min-inline-size: 2.2ch;
+    margin-inline-end: var(--space-3);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-600);
+  }
+
+  @media (min-width: 64em) {
+    .legal {
+      grid-template-columns: 2fr 7fr 3fr;
+      column-gap: calc(var(--grid-gap) * 2);
+    }
+
+    .legal__nav {
+      grid-column: 1;
+      position: sticky;
+      inset-block-start: calc(var(--header-h) + var(--space-4));
+      align-self: start;
+    }
+
+    .legal__body {
+      grid-column: 2;
+    }
+  }
+</style>

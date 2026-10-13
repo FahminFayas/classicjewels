@@ -1,0 +1,94 @@
+---
+/**
+ * Occasion portrait (3:5) with the caption below: no text on the image, no overlay.
+ * The whole figure is one link.
+ */
+import { Picture } from 'astro:assets';
+
+import Icon from '@/components/ui/Icon.astro';
+import type { Occasion } from '@/lib/content';
+import { routes } from '@/lib/routes';
+
+export interface Props {
+  occasion: Occasion;
+  class?: string;
+}
+
+const { occasion, class: className } = Astro.props;
+const { data } = occasion;
+const widths = [392, 640, 784].filter((w) => w <= data.image.width);
+if (widths.length === 0) widths.push(data.image.width);
+---
+
+<a class:list={['occasion', className]} href={routes.occasion(occasion.id)}>
+  <span class="occasion__media">
+    <Picture
+      src={data.image}
+      alt={data.imageAlt}
+      formats={['avif', 'webp']}
+      widths={widths}
+      sizes="(min-width: 64em) 25vw, 50vw"
+      fit="cover"
+      position="top"
+    />
+  </span>
+  <span class="occasion__caption">
+    <span class="occasion__name">{data.name}</span>
+    <span class="occasion__fact small">{data.summary}</span>
+    <span class="occasion__more small">
+      See pieces <Icon name="arrow-right" />
+    </span>
+  </span>
+</a>
+
+<style>
+  .occasion {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--space-3);
+    color: var(--ink-900);
+    text-decoration: none;
+  }
+
+  .occasion__media {
+    min-inline-size: 0;
+  }
+
+  .occasion__media :global(img) {
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 3 / 5;
+    object-fit: cover;
+  }
+
+  .occasion__caption {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .occasion__name {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .occasion:hover .occasion__name {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-700);
+    text-underline-offset: 0.15em;
+  }
+
+  .occasion__fact {
+    color: var(--ink-700);
+  }
+
+  .occasion__more {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-block-start: var(--space-1);
+    color: var(--plum-700);
+    font-weight: 500;
+  }
+</style>

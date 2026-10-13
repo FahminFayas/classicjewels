@@ -1,0 +1,120 @@
+---
+/**
+ * The six promises as a numbered ledger: two ruled columns on wide screens, one below.
+ * Each row links to its section on the promise page. `condensed` shows three rows (product pages).
+ */
+import Icon from '@/components/ui/Icon.astro';
+import { site } from '@/data/site';
+import { routes } from '@/lib/routes';
+
+export interface Props {
+  variant?: 'full' | 'condensed';
+  class?: string;
+}
+
+const { variant = 'full', class: className } = Astro.props;
+const rows =
+  variant === 'condensed'
+    ? site.promises.filter((p) => ['hallmark-916', 'certified-diamonds', 'returns'].includes(p.id))
+    : site.promises;
+---
+
+<ol class:list={['ledger', `ledger--${variant}`, className]} role="list">
+  {rows.map((p, i) => (
+    <li class="ledger__row">
+      <a class="ledger__link" href={`${routes.promise}#${p.id}`}>
+        <span class="ledger__no" aria-hidden="true">
+          {String(i + 1).padStart(2, '0')}
+        </span>
+        <span class="ledger__text">
+          <span class="ledger__title">{p.title}</span>
+          <span class="ledger__detail">{p.detail}</span>
+        </span>
+        <Icon name="arrow-right" class="ledger__arrow" />
+      </a>
+    </li>
+  ))}
+</ol>
+
+<style>
+  .ledger {
+    display: grid;
+    border-block-start: 1px solid var(--rule-1);
+  }
+
+  .ledger__row {
+    border-block-end: 1px solid var(--rule-1);
+  }
+
+  .ledger__link {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: start;
+    gap: var(--space-4);
+    padding-block: var(--space-5);
+    color: var(--ink-900);
+    text-decoration: none;
+  }
+
+  .ledger__no {
+    font-family: var(--ff-display);
+    font-size: var(--t-h2);
+    font-weight: 400;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-600);
+    min-inline-size: 2.2ch;
+  }
+
+  .ledger__text {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .ledger__title {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .ledger__link:hover .ledger__title {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-700);
+    text-underline-offset: 0.15em;
+  }
+
+  .ledger__detail {
+    color: var(--ink-700);
+  }
+
+  .ledger__arrow {
+    margin-block-start: 0.35em;
+    color: var(--gold-600);
+  }
+
+  .ledger--condensed .ledger__link {
+    padding-block: var(--space-3);
+  }
+
+  .ledger--condensed .ledger__no {
+    font-size: var(--t-h3);
+  }
+
+  .ledger--condensed .ledger__title {
+    font-family: var(--ff-text);
+    font-size: var(--t-title);
+    font-weight: 500;
+  }
+
+  .ledger--condensed .ledger__detail {
+    font-size: var(--t-small);
+  }
+
+  @media (min-width: 56.25em) {
+    .ledger--full {
+      grid-template-columns: 1fr 1fr;
+      column-gap: var(--space-8);
+    }
+  }
+</style>

@@ -1,0 +1,163 @@
+---
+/**
+ * One campaign offer: headline, summary, the numbered terms, the body copy, the validity line,
+ * the offers FAQ and the enquiry block. Only offers that are live today are built, so an expired
+ * campaign disappears with its next build.
+ */
+import type { InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Hero from '@/components/sections/Hero.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import { branches, openBranches, site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getActiveOffers, getFaqGroup } from '@/lib/content';
+import { formatDate } from '@/lib/format';
+import { routes } from '@/lib/routes';
+import { whatsappUrl } from '@/lib/whatsapp';
+
+export async function getStaticPaths() {
+  const offers = await getActiveOffers();
+  return offers.map((offer) => ({ params: { slug: offer.id }, props: { offer } }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { offer } = Astro.props;
+const { data } = offer;
+const [faq, { Content }] = await Promise.all([getFaqGroup('offers'), render(offer)]);
+
+/** "Dubai, Sharjah and Abu Dhabi" */
+const listWords = (items: string[]) =>
+  items.length > 1
+    ? `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
+    : (items[0] ?? '');
+
+const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+const sameYear = data.startsOn.getFullYear() === data.endsOn.getFullYear();
+const startLabel = sameYear
+  ? data.startsOn.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'Asia/Dubai' })
+  : formatDate(data.startsOn);
+const period = `${startLabel} to ${formatDate(data.endsOn)}`;
+
+const branchName = new Map(branches.map((b) => [b.id, b.name]));
+const where =
+  data.branches.length > 0
+    ? data.branches.map((id) => branchName.get(id) ?? id)
+    : openBranches.map((b) => b.name);
+
+const whatsapp = whatsappUrl(
+  data.whatsappMessage ??
+    `${site.whatsapp.greeting} I’d like to know more about the offer “${data.headline}”.`,
+);
+---
+
+<BaseLayout title={data.title} description={data.description}>
+  <div class="container">
+    <Breadcrumbs
+      items={[
+        { name: 'Offers', href: routes.offers },
+        { name: data.title, href: routes.offer(offer.id) },
+      ]}
+    />
+  </div>
+
+  <Hero
+    eyebrow={`Offer · ${period}`}
+    title={data.headline}
+    lead={data.summary}
+    media={data.image ? 'image' : 'none'}
+    image={data.image}
+    imageAlt={data.imageAlt ?? ''}
+  >
+    <Button href={whatsapp} icon="whatsapp" external>
+      Ask on WhatsApp
+    </Button>
+    <Button href={routes.stores} variant="secondary" icon="map-pin">
+      Our stores
+    </Button>
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split split--reverse">
+        <div class="terms">
+          <h2 class="terms__heading">The terms</h2>
+          <ol class="rows" role="list">
+            {data.terms.map((term, i) => (
+              <li class="terms__row">
+                <span class="terms__no" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <p class="terms__text">{term}</p>
+              </li>
+            ))}
+          </ol>
+          <p class="terms__valid small">
+            Valid until <time datetime={isoDate(data.endsOn)}>{formatDate(data.endsOn)}</time>.
+            Available at {listWords(where)}.
+          </p>
+        </div>
+        <div class="prose body">
+          <Content />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <Faq heading={faq.data.heading} items={faq.data.items} />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <EnquiryBlock
+        heading="Ask about this offer"
+        text="WhatsApp is fastest during shop hours. Tell us which branch you plan to visit and we will confirm which pieces qualify."
+        whatsappUrl={whatsapp}
+        whatsappLabel="Ask on WhatsApp"
+      />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .terms__heading {
+    margin-block-end: var(--space-5);
+  }
+
+  .terms__row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-4);
+    align-items: start;
+    padding-block: var(--space-4);
+  }
+
+  .terms__no {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 400;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-600);
+    min-inline-size: 2.2ch;
+  }
+
+  .terms__text {
+    color: var(--ink-700);
+  }
+
+  .terms__valid {
+    margin-block-start: var(--space-5);
+  }
+
+  .body {
+    min-inline-size: 0;
+  }
+</style>

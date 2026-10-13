@@ -1,0 +1,266 @@
+---
+/**
+ * Filter and sort controls for a tray grid (catalogue index and category pages).
+ * Karat and collection chips are <button aria-pressed>; sort is a <select>. State lives in
+ * location.hash so the page keeps one canonical URL. The controls stay hidden until
+ * src/scripts/filter.ts runs; without JavaScript the block shows plain links to the category
+ * pages instead, so nothing on the page is a dead control.
+ */
+import { routes } from '@/lib/routes';
+import { whatsappGeneral } from '@/lib/whatsapp';
+
+export interface Props {
+  /** id of the <TrayGrid filterable> this block controls. */
+  gridId: string;
+  /** Number of cells in the grid, for the initial "{n} pieces shown" line. */
+  total: number;
+  /** Karats present in the grid, in display order. Chips render only when there are two or more. */
+  karats: number[];
+  /** Collections present in the grid. Chips render only when there are two or more. */
+  collections?: { id: string; name: string }[];
+  /** Category links shown when JavaScript is unavailable. */
+  categories: { id: string; name: string }[];
+  class?: string;
+}
+
+const { gridId, total, karats, collections = [], categories, class: className } = Astro.props;
+const sorts = [
+  { value: 'featured', label: 'Featured order' },
+  { value: 'newest', label: 'Newest first' },
+  { value: 'name', label: 'Name, A to Z' },
+];
+---
+
+<div class:list={['filters', className]} data-filters={gridId}>
+  <noscript>
+    <nav class="filters__nojs" aria-label="Browse by piece">
+      <p class="small">By piece:</p>
+      <ul class="filters__links" role="list">
+        {categories.map((c) => (
+          <li>
+            <a href={routes.category(c.id)}>{c.name}</a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </noscript>
+
+  <div class="filters__controls" data-filter-controls hidden>
+    <div class="filters__facets">
+      {karats.length > 1 && (
+        <div class="filters__group" role="group" aria-label="Karat">
+          <span class="filters__label small">Karat</span>
+          {karats.map((k) => (
+            <button
+              type="button"
+              class="chip"
+              aria-pressed="false"
+              data-facet="karat"
+              data-value={String(k)}
+            >
+              {k}K
+            </button>
+          ))}
+        </div>
+      )}
+      {collections.length > 1 && (
+        <div class="filters__group" role="group" aria-label="Collection">
+          <span class="filters__label small">Collection</span>
+          {collections.map((c) => (
+            <button
+              type="button"
+              class="chip"
+              aria-pressed="false"
+              data-facet="collection"
+              data-value={c.id}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+    <label class="filters__sort">
+      <span class="filters__label small">Sort</span>
+      <select class="field__input filters__select" data-sort>
+        {sorts.map((s) => (
+          <option value={s.value}>{s.label}</option>
+        ))}
+      </select>
+    </label>
+    <p class="filters__status small" aria-live="polite">
+      <span data-count>
+        {total} {total === 1 ? 'piece' : 'pieces'} shown
+      </span>
+      <span class="filters__sep" aria-hidden="true">
+        ·
+      </span>
+      <button type="button" class="filters__clear" data-clear hidden>
+        Clear
+      </button>
+    </p>
+    <p class="filters__empty" data-empty hidden>
+      No pieces match.{' '}
+      <a href={whatsappGeneral()} target="_blank" rel="noopener">
+        Ask us on WhatsApp
+      </a>
+      : we have more in the trays than online.
+    </p>
+  </div>
+  <script src="@/scripts/filter.ts"></script>
+</div>
+
+<style>
+  .filters {
+    margin-block-end: var(--space-5);
+  }
+
+  .filters__nojs {
+    display: grid;
+    gap: var(--space-2);
+    padding-block: var(--space-4);
+    border-block: 1px solid var(--rule-1);
+  }
+
+  .filters__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .filters__links a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--tap);
+  }
+
+  .filters__controls {
+    display: grid;
+    gap: var(--space-4);
+    align-items: end;
+    padding-block: var(--space-4);
+    border-block: 1px solid var(--rule-1);
+  }
+
+  .filters__controls[hidden] {
+    display: none;
+  }
+
+  .filters__facets {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .filters__group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .filters__label {
+    min-inline-size: 5.5rem;
+    color: var(--ink-500);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--tap);
+    padding-inline: var(--space-4);
+    border: 1px solid var(--rule-2);
+    border-radius: var(--radius);
+    background: var(--surface-0);
+    color: var(--plum-700);
+    font-size: var(--t-small);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums lining-nums;
+    transition:
+      background-color var(--dur-fast) var(--ease),
+      border-color var(--dur-fast) var(--ease);
+  }
+
+  .chip:hover {
+    border-color: var(--plum-700);
+  }
+
+  .chip[aria-pressed='true'] {
+    background: var(--plum-700);
+    border-color: var(--plum-700);
+    color: var(--ink-on-plum);
+  }
+
+  .filters__sort {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .filters__select {
+    inline-size: auto;
+    min-inline-size: 11rem;
+    padding-inline-end: var(--space-6);
+  }
+
+  .filters__status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: var(--tap);
+  }
+
+  .filters__clear {
+    min-block-size: var(--tap);
+    color: var(--plum-700);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-color: var(--rule-2);
+    text-underline-offset: 0.15em;
+  }
+
+  .filters__clear:hover {
+    text-decoration-color: var(--gold-600);
+  }
+
+  .filters__clear[hidden],
+  .filters__sep:has(+ [hidden]) {
+    display: none;
+  }
+
+  .filters__empty {
+    padding: var(--space-5);
+    background: var(--surface-2);
+    color: var(--ink-700);
+    max-inline-size: var(--prose);
+  }
+
+  .filters__empty[hidden] {
+    display: none;
+  }
+
+  @media (min-width: 56.25em) {
+    .filters__controls {
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        'facets sort'
+        'status status'
+        'empty empty';
+    }
+
+    .filters__facets {
+      grid-area: facets;
+    }
+
+    .filters__sort {
+      grid-area: sort;
+    }
+
+    .filters__status {
+      grid-area: status;
+    }
+
+    .filters__empty {
+      grid-area: empty;
+    }
+  }
+</style>

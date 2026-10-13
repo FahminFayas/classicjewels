@@ -1,0 +1,220 @@
+---
+/**
+ * Catalogue index (/jewellery/): every category with its piece count, then every published
+ * piece in one filterable tray. Follows docs/design-spec.md §7.2, adapted to the four branches.
+ */
+import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
+import CategoryTile from '@/components/sections/CategoryTile.astro';
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Filters from '@/components/sections/Filters.astro';
+import Hero from '@/components/sections/Hero.astro';
+import ProductCard from '@/components/sections/ProductCard.astro';
+import TrayGrid from '@/components/sections/TrayGrid.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { emirates, openBranches } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getCategories, getDesignCollections, getFaqGroup, getProducts } from '@/lib/content';
+import { countWord } from '@/lib/format';
+import { getRates } from '@/lib/rates';
+import { routes } from '@/lib/routes';
+import { itemListSchema } from '@/lib/schema';
+import { whatsappGeneral } from '@/lib/whatsapp';
+
+const [categories, products, collections, faq, rates] = await Promise.all([
+  getCategories(),
+  getProducts(),
+  getDesignCollections(),
+  getFaqGroup('jewellery'),
+  getRates(),
+]);
+
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const rate = rates.latest;
+
+const countByCategory = new Map<string, number>();
+for (const p of products) {
+  countByCategory.set(p.data.category.id, (countByCategory.get(p.data.category.id) ?? 0) + 1);
+}
+const collectionName = new Map(collections.map((c) => [c.id, c.data.name]));
+const shortCollection = (name: string) => name.replace(/ (Collection|Jewellery)$/i, '');
+
+/** Facets present in the tray, in the order the counter reads them. */
+const karats = [22, 21, 18, 24].filter((k) => products.some((p) => p.data.karat === k));
+const collectionsInTray = collections
+  .filter((c) => products.some((p) => p.data.collection?.id === c.id))
+  .map((c) => ({ id: c.id, name: shortCollection(c.data.name) }));
+const categoryLinks = categories.map((c) => ({ id: c.id, name: c.data.shortName ?? c.data.name }));
+
+const branchCount = countWord(openBranches.length).toLowerCase();
+const emirateList = emirates.join(', ').replace(/, ([^,]*)$/, ' and $1');
+
+const jsonLd = [
+  itemListSchema(
+    products.map((p) => ({
+      name: p.data.name,
+      url: new URL(routes.product(p.data.category.id, p.id), origin).toString(),
+      image: p.data.images[0] ? new URL(p.data.images[0].src.src, origin).toString() : undefined,
+    })),
+    'Gold and diamond jewellery',
+  ),
+];
+---
+
+<BaseLayout
+  title="Gold & Diamond Jewellery in Dubai, Sharjah & Abu Dhabi"
+  description={`22K and 18K hallmarked gold, certified diamonds and 24K coins, each listed with karat and weight and priced at today’s Dubai rate. Enquire on WhatsApp or view at ${branchCount} branches.`}
+  jsonLd={jsonLd}
+>
+  <div class="container container--wide">
+    <Breadcrumbs items={[{ name: 'Jewellery', href: routes.jewellery }]} />
+  </div>
+
+  <Hero
+    eyebrow="Jewellery"
+    title="Gold and diamond jewellery, by the gram."
+    lead={`Every piece lists its karat and hallmark, and its gross weight once the store has confirmed it. Prices follow today’s Dubai rate plus a making charge quoted per piece, at ${branchCount} branches in ${emirateList}.`}
+    display
+  >
+    <Button href={whatsappGeneral()} icon="whatsapp" external>
+      Ask on WhatsApp
+    </Button>
+    <Button href={routes.goldRate} variant="secondary">
+      Today’s gold rate
+    </Button>
+    {rate && (
+      <Fragment slot="note">
+        22K today: AED <span data-rate="22k">{rate.perGram['22k'].toFixed(2)}</span> per gram, as
+        posted on the board.
+      </Fragment>
+    )}
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead eyebrow="By piece" title="Necklaces to anklets, coins to bars.">
+        {countWord(categories.length)} trays. The count beside each is what is online; the trays
+        in store hold more.
+      </SectionHead>
+      <div class="tiles">
+        {categories.map((c) => (
+          <CategoryTile category={c} count={countByCategory.get(c.id)} />
+        ))}
+      </div>
+      <p class="also small">
+        By material:
+        <a href={routes.diamonds}>Diamonds</a> ·
+        <a href={routes.collection('gemstone')}>Gemstones</a> ·
+        <a href={routes.customJewellery}>Made to order</a> ·
+        <a href={routes.collections}>All collections</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--ruled" id="pieces">
+    <div class="container container--wide">
+      <SectionHead
+        eyebrow="All pieces"
+        title={`${countWord(products.length)} pieces online, weighed and ready to quote.`}
+      >
+        Filter by karat or collection; the address stays the same. Tap a piece for its
+        specification, or Enquire to send its reference straight to the counter.
+      </SectionHead>
+      <Filters
+        gridId="tray-all"
+        total={products.length}
+        karats={karats}
+        collections={collectionsInTray}
+        categories={categoryLinks}
+      />
+      <TrayGrid id="tray-all" filterable>
+        {products.map((p) => (
+          <div
+            class="cell"
+            data-karat={String(p.data.karat)}
+            data-collection={p.data.collection?.id ?? ''}
+            data-name={p.data.name}
+            data-new={p.data.isNew ? '1' : '0'}
+          >
+            <ProductCard
+              product={p}
+              collectionName={
+                p.data.collection ? collectionName.get(p.data.collection.id) : undefined
+              }
+              rate={rate}
+            />
+          </div>
+        ))}
+      </TrayGrid>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead
+        eyebrow="Our terms, in writing"
+        title="Hallmark on every piece. Diamonds tested. 14 days to return."
+      >
+        <Fragment slot="aside">
+          <a class="link-quiet section__link" href={routes.promise}>
+            All six promises <Icon name="arrow-right" />
+          </a>
+        </Fragment>
+      </SectionHead>
+      <AssuranceLedger variant="condensed" />
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <Faq heading={faq.data.heading} items={faq.data.items} />
+        <EnquiryBlock
+          compact
+          text="Send a reference or a photo of what you are looking for. WhatsApp is fastest during shop hours; calls go straight to the counter."
+        />
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .section__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    color: var(--plum-700);
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--grid-gap);
+  }
+
+  .also {
+    margin-block-start: var(--space-6);
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--rule-1);
+  }
+
+  .cell {
+    display: grid;
+    min-inline-size: 0;
+  }
+
+  .cell[hidden] {
+    display: none;
+  }
+
+  /* Nine trays sit as a 3 × 3 block from tablet width up. */
+  @media (min-width: 40em) {
+    .tiles {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>

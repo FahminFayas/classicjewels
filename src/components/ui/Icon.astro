@@ -1,0 +1,43 @@
+---
+/**
+ * Inline icon from the sprite in IconSprite.astro. Decorative by default (aria-hidden);
+ * pass `label` when the icon is the only content of a control.
+ */
+export type IconName =
+  | 'whatsapp'
+  | 'phone'
+  | 'map-pin'
+  | 'mail'
+  | 'clock'
+  | 'arrow-right'
+  | 'arrow-up-right'
+  | 'plus'
+  | 'minus'
+  | 'menu'
+  | 'close'
+  | 'copy'
+  | 'check'
+  | 'external'
+  | 'c-ring';
+
+export interface Props {
+  name: IconName;
+  label?: string;
+  class?: string;
+  /** CSS size, e.g. "1rem" or "48px". Defaults to 1.25em of the surrounding text. */
+  size?: string;
+}
+
+const { name, label, class: className, size } = Astro.props;
+---
+
+<svg
+  class:list={['icon', className]}
+  style={size ? `inline-size:${size};block-size:${size}` : undefined}
+  aria-hidden={label ? undefined : 'true'}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  focusable="false"
+>
+  <use href={`#i-${name}`}></use>
+</svg>

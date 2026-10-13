@@ -1,0 +1,555 @@
+---
+/**
+ * One branch: address and contact, hours as listed, directions and map, what the counter does,
+ * the other branches, the visiting FAQ and a branch-specific enquiry. Built for every open branch
+ * in src/data/site.ts; an opening-soon branch has no page until its status changes.
+ */
+import type { InferGetStaticPropsType } from 'astro';
+
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Hero from '@/components/sections/Hero.astro';
+import StoreCard from '@/components/sections/StoreCard.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { openBranches, site, type DayName } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getFaqGroup } from '@/lib/content';
+import { routes } from '@/lib/routes';
+import { jewelryStoreSchema } from '@/lib/schema';
+import { TITLE_MAX } from '@/lib/seo';
+import { whatsappUrl } from '@/lib/whatsapp';
+
+export function getStaticPaths() {
+  return openBranches.map((branch) => ({ params: { slug: branch.id }, props: { branch } }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { branch } = Astro.props;
+const faq = await getFaqGroup('stores');
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const storeImage = new URL('/og/default.png', origin).toString();
+
+const DAYS: DayName[] = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+/** "Dubai, Sharjah and Abu Dhabi" */
+const listWords = (items: string[]) =>
+  items.length > 1
+    ? `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
+    : (items[0] ?? '');
+
+/** "10:00:00" -> "10:00" */
+const hhmm = (t: string) => t.slice(0, 5);
+
+const phone = branch.phone ?? site.phone.landline;
+const others = openBranches.filter((b) => b.id !== branch.id);
+const inMall = /mall/i.test(branch.venue);
+
+/** Address lines with the locality/region duplicate that mall branches carry removed. */
+const addressLines = [branch.address.street, branch.address.locality, branch.address.region].filter(
+  (line, i, all) => all.indexOf(line) === i,
+);
+const hasUnit = /\b(shop|unit|no\.)/i.test(branch.address.street);
+const lead = hasUnit
+  ? `${addressLines.join(', ')}.${
+      branch.isFlagship ? ` Our first counter, open since ${site.founded.brandYear}.` : ''
+    }`
+  : `${inMall ? 'Inside' : 'In'} ${branch.venue}, ${branch.city}. Call or WhatsApp for the shop number and we will direct you.`;
+
+const hours = branch.hours;
+const hourRows = hours
+  ? DAYS.map((day) => ({ day, slot: hours.weekly.find((w) => w.days.includes(day)) }))
+  : [];
+
+const instagramHandle = branch.instagram
+  ? new URL(branch.instagram).pathname.split('/').filter(Boolean)[0]
+  : undefined;
+
+const services = [
+  {
+    title: 'See the trays',
+    detail: 'Every piece is weighed in front of you and quoted at the day’s rate plus making charge.',
+    href: routes.jewellery,
+  },
+  {
+    title: 'Exchange old gold',
+    detail: 'Tested and weighed at the counter, credited at full weight against a new piece.',
+    href: routes.goldExchange,
+  },
+  {
+    title: 'Book a custom piece',
+    detail:
+      'Bring a sketch, a photo or an heirloom. Karat, weight and making charge are agreed before work begins.',
+    href: routes.customJewellery,
+  },
+  {
+    title: 'Collect an online enquiry',
+    detail:
+      'Ask about a piece on WhatsApp or through the contact form and arrange to see it at this counter.',
+    href: routes.contact,
+  },
+  {
+    title: 'Pay by card, cash or cheque',
+    detail: `In store we accept ${listWords(
+      site.paymentAccepted.map((p) => (p === 'Cash' || p === 'Cheque' ? p.toLowerCase() : p)),
+    )}.`,
+  },
+];
+
+const visitWhatsapp = whatsappUrl(
+  `${site.whatsapp.greeting} I’d like to visit the ${branch.name} branch. Could you confirm today’s hours?`,
+);
+const enquiryWhatsapp = whatsappUrl(
+  `${site.whatsapp.greeting} I’m planning to visit the ${branch.name} branch and would like to ask about a piece.`,
+);
+
+const longTitle = `Jewellers in ${branch.name}: Hours & Directions`;
+const title = longTitle.length <= TITLE_MAX ? longTitle : `${branch.name}: Hours & Directions`;
+const description = `${site.name} at ${branch.venue}, ${branch.city}: address, hours and directions. WhatsApp us to confirm today’s hours before you visit.`;
+
+/** The flagship's JewelryStore is already in every page head (BaseLayout). */
+const jsonLd = branch.isFlagship ? [] : [jewelryStoreSchema(branch, storeImage)];
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <div class="container">
+    <Breadcrumbs
+      items={[
+        { name: 'Stores', href: routes.stores },
+        { name: branch.name, href: routes.store(branch.id) },
+      ]}
+    />
+  </div>
+
+  <Hero
+    eyebrow={`${branch.emirate}${branch.isFlagship ? ' · Flagship' : ''}`}
+    title={`${site.name}, ${branch.name}`}
+    lead={lead}
+    media="none"
+  >
+    {branch.map?.url && (
+      <Button href={branch.map.url} icon="map-pin" external>
+        Get directions
+      </Button>
+    )}
+    <Button href={visitWhatsapp} variant="secondary" icon="whatsapp" external>
+      WhatsApp
+    </Button>
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="facts">
+        <div class="facts__cell">
+          <h2 class="facts__title">Address and contact</h2>
+          <address class="facts__address">
+            {addressLines.map((line) => (
+              <span>{line}</span>
+            ))}
+            <span>{site.address.countryName}</span>
+          </address>
+          <ul class="facts__contact" role="list">
+            <li>
+              <a href={`tel:${phone.e164}`}>
+                <Icon name="phone" /> {phone.display}
+              </a>
+              {!branch.phone && <span class="small">Calls go to the Deira counter.</span>}
+            </li>
+            <li>
+              <a href={visitWhatsapp} target="_blank" rel="noopener">
+                <Icon name="whatsapp" /> {site.whatsapp.display}
+              </a>
+            </li>
+            <li>
+              <a href={`mailto:${site.email}`}>
+                <Icon name="mail" /> {site.email}
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="facts__cell">
+          <h2 class="facts__title">Opening hours</h2>
+          {hours ? (
+            <>
+              <table class="hours">
+                <caption class="sr-only">Opening hours, {branch.name}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Day</th>
+                    <th scope="col">Hours</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hourRows.map(({ day, slot }) => (
+                    <tr data-hours-days={day}>
+                      <th scope="row">{day}</th>
+                      <td class="tabular">
+                        {slot ? `${hhmm(slot.opens)}–${hhmm(slot.closes)}` : 'Call to confirm'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {hours.breaks?.map((b) => (
+                <p class="facts__note small">
+                  {b.label}: closed {hhmm(b.from)} to {hhmm(b.to)} on {listWords(b.days)}.
+                </p>
+              ))}
+              {hours.confirmed ? (
+                hours.note && <p class="facts__note small">{hours.note}</p>
+              ) : (
+                <p class="facts__note small">
+                  As listed on Google; call to confirm Friday and Ramadan timings.
+                </p>
+              )}
+            </>
+          ) : (
+            <p class="facts__nohours">Call or WhatsApp for today’s hours.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <div class="prose">
+          <h2>Getting here</h2>
+          <p>
+            {branch.directions ??
+              `The shop is ${inMall ? 'inside' : 'in'} ${branch.venue}, ${branch.city}. Open the map link for a route, or call if you cannot find us.`}
+          </p>
+          {branch.facilities && branch.facilities.length > 0 && (
+            <>
+              <h3>Facilities</h3>
+              <ul>
+                {branch.facilities.map((f) => (
+                  <li>{f}</li>
+                ))}
+              </ul>
+            </>
+          )}
+          {branch.instagram && instagramHandle && (
+            <p>
+              This branch on Instagram:{' '}
+              <a href={branch.instagram} target="_blank" rel="noopener">
+                @{instagramHandle} <Icon name="external" />
+              </a>
+            </p>
+          )}
+        </div>
+
+        {branch.isFlagship && branch.map?.embedUrl ? (
+          <div class="map">
+            <iframe
+              src={branch.map.embedUrl}
+              title={`Map of ${site.name}, ${branch.name}`}
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              height="360"
+            ></iframe>
+          </div>
+        ) : (
+          <div class="map map--panel">
+            <div class="map__text">
+              <p class="map__lead">The exact pin for this branch is not listed here yet.</p>
+              <p class="small">
+                Search Google Maps for the branch, or call and we will direct you from the mall
+                entrance.
+              </p>
+            </div>
+            {branch.map?.url && (
+              <Button href={branch.map.url} variant="secondary" icon="map-pin" external>
+                Open in Google Maps
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead eyebrow="At the counter" title="What you can do here." />
+      <ol class="rows ledger" role="list">
+        {services.map((s, i) => (
+          <li class="ledger__row">
+            <span class="ledger__no" aria-hidden="true">
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            <div class="ledger__text">
+              <h3 class="ledger__title">
+                {s.href ? (
+                  <a class="link-quiet" href={s.href}>
+                    {s.title}
+                  </a>
+                ) : (
+                  s.title
+                )}
+              </h3>
+              <p class="ledger__detail">{s.detail}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  {others.length > 0 && (
+    <section class="section section--ruled">
+      <div class="container">
+        <SectionHead eyebrow="Also open" title="Our other branches.">
+          <Fragment slot="aside">
+            <a class="link-quiet section__link" href={routes.stores}>
+              All stores <Icon name="arrow-right" />
+            </a>
+          </Fragment>
+        </SectionHead>
+        <div class="rows">
+          {others.map((b) => (
+            <StoreCard branch={b} compact />
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="section section--ruled">
+    <div class="container">
+      <Faq
+        heading={branch.isFlagship ? faq.data.heading : 'Visiting the Deira flagship'}
+        items={faq.data.items}
+      />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <EnquiryBlock
+        heading={`Ask before you visit ${branch.shortName}`}
+        text="WhatsApp is fastest during shop hours. Tell us which branch you are coming to and what you want to see, and we will have it ready at the counter."
+        whatsappUrl={enquiryWhatsapp}
+        whatsappLabel="WhatsApp about this branch"
+      />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .section__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    color: var(--plum-700);
+  }
+
+  /* ---------- Address and hours: two ruled cells ---------- */
+  .facts {
+    display: grid;
+    border-block: 1px solid var(--rule-1);
+  }
+
+  .facts__cell {
+    display: grid;
+    gap: var(--space-4);
+    align-content: start;
+    padding-block: var(--space-6);
+  }
+
+  .facts__cell + .facts__cell {
+    border-block-start: 1px solid var(--rule-1);
+  }
+
+  .facts__title {
+    font-size: var(--t-h3);
+  }
+
+  .facts__address {
+    display: grid;
+    gap: var(--space-1);
+    color: var(--ink-700);
+  }
+
+  .facts__contact {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .facts__contact li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .facts__contact a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: var(--tap);
+    color: var(--plum-700);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .facts__contact a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+  }
+
+  .facts__note {
+    color: var(--ink-500);
+    max-inline-size: 36rem;
+  }
+
+  .facts__nohours {
+    color: var(--ink-700);
+  }
+
+  .hours {
+    border-block: 1px solid var(--rule-2);
+    font-size: var(--t-small);
+  }
+
+  .hours th,
+  .hours td {
+    padding-block: var(--space-2);
+    padding-inline: var(--space-3);
+    text-align: start;
+    border-block-end: 1px solid var(--rule-1);
+  }
+
+  .hours thead th {
+    background: var(--surface-2);
+    font-weight: 500;
+    color: var(--ink-700);
+  }
+
+  .hours tbody th {
+    font-weight: 400;
+    color: var(--ink-700);
+  }
+
+  .hours tr[data-today='true'] th,
+  .hours tr[data-today='true'] td {
+    background: var(--plum-050);
+    color: var(--ink-900);
+    font-weight: 500;
+  }
+
+  .hours tr[data-today='true'] th::after {
+    content: ' · Today';
+    font-weight: 400;
+    color: var(--gold-700);
+  }
+
+  /* ---------- Map ---------- */
+  .map {
+    min-inline-size: 0;
+    aspect-ratio: 4 / 3;
+    border: 1px solid var(--rule-1);
+  }
+
+  .map iframe {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    border: 0;
+  }
+
+  .map--panel {
+    display: grid;
+    gap: var(--space-5);
+    align-content: start;
+    padding: var(--space-6);
+    background: var(--plum-050);
+    border: 0;
+  }
+
+  .map__text {
+    display: grid;
+    gap: var(--space-2);
+    max-inline-size: 28rem;
+  }
+
+  .map__lead {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--plum-700);
+  }
+
+  /* ---------- Numbered ledger ---------- */
+  .ledger__row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-4);
+    padding-block: var(--space-5);
+  }
+
+  .ledger__no {
+    font-family: var(--ff-display);
+    font-size: var(--t-h2);
+    font-weight: 400;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-600);
+    min-inline-size: 2.2ch;
+  }
+
+  .ledger__text {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .ledger__title {
+    font-size: var(--t-h3);
+  }
+
+  .ledger__title a {
+    color: var(--ink-900);
+  }
+
+  .ledger__title a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-700);
+    text-underline-offset: 0.15em;
+  }
+
+  .ledger__detail {
+    color: var(--ink-700);
+    max-inline-size: 48rem;
+  }
+
+  @media (min-width: 48em) {
+    .facts {
+      grid-template-columns: 5fr 7fr;
+    }
+
+    .facts__cell + .facts__cell {
+      border-block-start: 0;
+      border-inline-start: 1px solid var(--rule-1);
+      padding-inline-start: var(--space-7);
+    }
+
+    .facts__cell:first-child {
+      padding-inline-end: var(--space-7);
+    }
+  }
+</style>

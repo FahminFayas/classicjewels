@@ -1,0 +1,276 @@
+---
+/**
+ * Occasion page (/occasions/{slug}/), design-spec §7.15: portrait hero, the categories to start
+ * with, the pieces tagged for the occasion, a short buying note and the enquiry block.
+ */
+import type { InferGetStaticPropsType } from 'astro';
+import { getEntries, render } from 'astro:content';
+
+import CategoryTile from '@/components/sections/CategoryTile.astro';
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Hero from '@/components/sections/Hero.astro';
+import ProductCard from '@/components/sections/ProductCard.astro';
+import TrayGrid from '@/components/sections/TrayGrid.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import {
+  getActiveOffers,
+  getDesignCollections,
+  getFaqGroup,
+  getOccasions,
+  getProductsByOccasion,
+} from '@/lib/content';
+import { countWord, formatDate } from '@/lib/format';
+import { getRates } from '@/lib/rates';
+import { routes } from '@/lib/routes';
+import { itemListSchema } from '@/lib/schema';
+import { TITLE_MAX } from '@/lib/seo';
+import { whatsappUrl } from '@/lib/whatsapp';
+
+export async function getStaticPaths() {
+  const occasions = await getOccasions();
+  return occasions.map((occasion) => ({ params: { slug: occasion.id }, props: { occasion } }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { occasion } = Astro.props as Props;
+const { data } = occasion;
+
+const [products, categories, collections, faq, rates, offers, { Content }] = await Promise.all([
+  getProductsByOccasion(occasion.id),
+  getEntries(data.suggestedCategories),
+  getDesignCollections(),
+  getFaqGroup('occasions'),
+  getRates(),
+  getActiveOffers(),
+  render(occasion),
+]);
+
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const collectionName = new Map(collections.map((c) => [c.id, c.data.name]));
+const offer = offers[0];
+
+/** H1 and lead per design-spec §5.1 and §7.15; unknown occasions fall back to the content. */
+const copy: Record<string, { h1: string; lead: string; ask: string; note: string }> = {
+  wedding: {
+    h1: 'Bridal gold sets',
+    lead: '22K bridal sets, bangles and haars for Indian, Pakistani and Arab weddings, hallmarked 916 and priced at the day’s rate.',
+    ask: 'I’m planning wedding jewellery. Could we arrange a consultation?',
+    note: 'A wedding order is usually agreed three months out. Once the design and gold weight are fixed, an advance can lock the day’s rate for the whole order, so a rise in the market before the date does not change the price. Every piece is invoiced with its karat, weight, rate, making charge and 5% VAT on separate lines.',
+  },
+  anniversary: {
+    h1: 'Anniversary jewellery',
+    lead: '18K diamond pieces with their paperwork, and 22K classics that hold their value by weight.',
+    ask: 'I’m looking for an anniversary gift. Could you suggest a few pieces?',
+    note: 'Diamonds are set in 18K because it holds a stone better than 22K. Every stone is instrument-tested in the shop before it reaches the tray, and larger diamonds come with an independent grading report that goes in the box with the invoice.',
+  },
+  birthday: {
+    h1: 'Birthday gold',
+    lead: 'Pendants, light earrings and children’s bangles, weighed and invoiced, boxed and ready to give.',
+    ask: 'I’m looking for a birthday gift in gold. What would you suggest?',
+    note: 'For a child, a 22K bangle or a small coin is the gift that keeps its value: both are priced by weight, and the invoice records the karat and grams for any later exchange. For adults, an initial pendant or a pair of hoops is the safe choice.',
+  },
+  festivals: {
+    h1: 'Gold for Diwali, Dhanteras, Akshaya Tritiya and Eid',
+    lead: 'Coins, Lakshmi pendants and 22K sets, reserved on WhatsApp and collected from the branch of your choice.',
+    ask: 'I’d like to buy gold for the festival. What do you have in coins and sets?',
+    note: 'The rate is set each morning and can move during the day. Coins and plain chains are the easiest pieces to compare across shops because they are bought almost entirely by weight; 24K coins and bars of 99% purity or more are zero-rated for VAT, while 22K coins and jewellery carry 5%.',
+  },
+};
+const page = copy[occasion.id] ?? {
+  h1: data.name,
+  lead: data.summary,
+  ask: `I’m looking for jewellery for ${data.name.toLowerCase()}.`,
+  note: '',
+};
+
+const title = data.title.length <= TITLE_MAX ? data.title : `${page.h1} in Dubai`;
+const whatsapp = whatsappUrl(`${site.whatsapp.greeting} ${page.ask}`);
+
+const jsonLd = [
+  itemListSchema(
+    products.map((p) => ({
+      name: p.data.name,
+      url: new URL(routes.product(p.data.category.id, p.id), origin).toString(),
+    })),
+    page.h1,
+  ),
+];
+---
+
+<BaseLayout title={title} description={data.description} jsonLd={jsonLd}>
+  <div class="container container--wide">
+    <Breadcrumbs
+      items={[
+        { name: 'Occasions', href: routes.occasions },
+        { name: data.name, href: routes.occasion(occasion.id) },
+      ]}
+    />
+  </div>
+
+  <Hero
+    eyebrow="Occasion"
+    title={page.h1}
+    lead={page.lead}
+    media="image"
+    image={data.image}
+    imageAlt={data.imageAlt}
+  >
+    <Button href={whatsapp} icon="whatsapp" external>
+      Ask on WhatsApp
+    </Button>
+    <Button href={routes.stores} variant="secondary">
+      Visit a branch
+    </Button>
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead eyebrow="Start with" title="The pieces people usually choose." />
+      <div class="tiles">
+        {categories.map((c) => (
+          <CategoryTile category={c} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container container--wide">
+      {products.length > 0 ? (
+        <>
+          <SectionHead
+            eyebrow="In the trays"
+            title={`${countWord(products.length)} ${products.length === 1 ? 'piece' : 'pieces'} for ${data.name.toLowerCase()}.`}
+          >
+            <Fragment slot="aside">
+              <a class="link-quiet section__link" href={routes.jewellery}>
+                All jewellery <Icon name="arrow-right" />
+              </a>
+            </Fragment>
+          </SectionHead>
+          <TrayGrid>
+            {products.map((p) => (
+              <ProductCard
+                product={p}
+                collectionName={
+                  p.data.collection ? collectionName.get(p.data.collection.id) : undefined
+                }
+                rate={rates.latest}
+              />
+            ))}
+          </TrayGrid>
+        </>
+      ) : (
+        <div class="empty">
+          <h2>Nothing for this occasion is online yet.</h2>
+          <p class="lead">Ask us on WhatsApp; we have more in the trays than on the site.</p>
+          <Button href={whatsapp} icon="whatsapp" external>
+            Ask on WhatsApp
+          </Button>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="prose">
+        <h2>Buying for {data.name.toLowerCase()}</h2>
+        <Content />
+        {page.note && <p>{page.note}</p>}
+      </div>
+      {offer && (
+        <a class="offer link-quiet" href={routes.offer(offer.id)}>
+          <span class="small offer__when">
+            Current offer · until {formatDate(offer.data.endsOn)}
+          </span>
+          <span class="offer__headline">{offer.data.headline}</span>
+          <Icon name="arrow-right" />
+        </a>
+      )}
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <Faq heading={faq.data.heading} items={faq.data.items} />
+        <EnquiryBlock
+          compact
+          text="Tell us the date, the pieces and a budget. We reply with a shortlist and today’s prices."
+          whatsappUrl={whatsapp}
+        />
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .section__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    color: var(--plum-700);
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--grid-gap);
+  }
+
+  .empty {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+    padding-block: var(--space-7);
+    border-block: 1px solid var(--rule-1);
+  }
+
+  .prose > h2:first-child {
+    margin-block-start: 0;
+  }
+
+  .offer {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-1) var(--space-4);
+    align-items: center;
+    max-inline-size: var(--prose);
+    margin-block-start: var(--space-7);
+    padding-block: var(--space-4);
+    border-block: 1px solid var(--rule-1);
+    color: var(--ink-900);
+  }
+
+  .offer__when {
+    grid-column: 1;
+    color: var(--gold-700);
+  }
+
+  .offer__headline {
+    grid-column: 1;
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 500;
+  }
+
+  .offer .icon {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    color: var(--gold-600);
+  }
+
+  @media (min-width: 40em) {
+    .tiles {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>

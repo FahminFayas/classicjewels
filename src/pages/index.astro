@@ -1,0 +1,560 @@
+---
+/**
+ * Home. Section order follows docs/design-spec.md §7.1, adjusted for the multi-branch brand
+ * (proof strip, campaign slot and store strip from the October 2026 research report).
+ * This page is also the reference for how the other templates compose the shared components.
+ */
+import { Picture } from 'astro:assets';
+
+import heroImage from '@/assets/story/store-lifestyle.jpg';
+import storyImage from '@/assets/story/about-1.jpg';
+import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
+import CategoryTile from '@/components/sections/CategoryTile.astro';
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Hero from '@/components/sections/Hero.astro';
+import JournalCard from '@/components/sections/JournalCard.astro';
+import OccasionFeature from '@/components/sections/OccasionFeature.astro';
+import PlumBand from '@/components/sections/PlumBand.astro';
+import ProductCard from '@/components/sections/ProductCard.astro';
+import ProofStrip from '@/components/sections/ProofStrip.astro';
+import RateBoard from '@/components/sections/RateBoard.astro';
+import StoreCard from '@/components/sections/StoreCard.astro';
+import TrayGrid from '@/components/sections/TrayGrid.astro';
+import Button from '@/components/ui/Button.astro';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import Icon from '@/components/ui/Icon.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { branches, openBranches, site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import {
+  getActiveOffers,
+  getArticles,
+  getDesignCollections,
+  getFaqGroup,
+  getFeaturedProducts,
+  getNavCategories,
+  getOccasions,
+  getProducts,
+} from '@/lib/content';
+import { countWord, formatDate } from '@/lib/format';
+import { getRates } from '@/lib/rates';
+import { routes } from '@/lib/routes';
+import { itemListSchema, jewelryStoreSchema } from '@/lib/schema';
+import { whatsappGeneral, whatsappUrl } from '@/lib/whatsapp';
+
+const [categories, products, featured, collections, occasions, articles, faq, rates, offers] =
+  await Promise.all([
+    getNavCategories(),
+    getProducts(),
+    getFeaturedProducts(9),
+    getDesignCollections(),
+    getOccasions(),
+    getArticles(),
+    getFaqGroup('home'),
+    getRates(),
+    getActiveOffers(),
+  ]);
+
+if (featured.length < 6) {
+  throw new Error(`Home needs at least six featured products; ${featured.length} are flagged.`);
+}
+
+const countByCategory = new Map<string, number>();
+for (const p of products) {
+  countByCategory.set(p.data.category.id, (countByCategory.get(p.data.category.id) ?? 0) + 1);
+}
+const collectionName = new Map(collections.map((c) => [c.id, c.data.name]));
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const storeImage = new URL('/og/default.png', origin).toString();
+const offer = offers[0];
+const years = site.group.yearsInGold;
+
+const jsonLd = [
+  itemListSchema(
+    featured.map((p) => ({
+      name: p.data.name,
+      url: new URL(routes.product(p.data.category.id, p.id), origin).toString(),
+    })),
+    'Featured pieces',
+  ),
+  ...openBranches.filter((b) => !b.isFlagship).map((b) => jewelryStoreSchema(b, storeImage)),
+];
+---
+
+<BaseLayout
+  title="Gold Jewellers in Dubai, UAE"
+  brandFirst
+  description="22K and 18K hallmarked gold, certified diamonds and 24K coins from four branches in Dubai, Sharjah and Abu Dhabi. Classic Group, 35 years in gold. Today’s rate daily."
+  jsonLd={jsonLd}
+>
+  <Hero
+    eyebrow="Gold & diamond jewellers · Dubai · Sharjah · Abu Dhabi"
+    title="Gold and diamond jewellers in Dubai, Sharjah and Abu Dhabi."
+    lead={`Weighed in front of you, priced at today’s rate. 22K and 18K hallmarked jewellery, tested diamonds and 24K coins and bars from the jewellery house of the Classic Group: bullion traders and refiners in Dubai for over ${years} years.`}
+    media="image"
+    image={heroImage}
+    imageAlt="Two rose-gold diamond rings from the Diamonds collection on textured blue paper"
+  >
+    <Button href={whatsappGeneral()} icon="whatsapp" external>
+      WhatsApp the shop
+    </Button>
+    <Button href="#rate" variant="secondary">
+      Today’s gold rate
+    </Button>
+    <Fragment slot="note">{site.slogan}.</Fragment>
+  </Hero>
+
+  <ProofStrip rate={rates.latest} />
+
+  {offer && (
+    <section class="section offer">
+      <div class="container offer__inner">
+        <div>
+          <Eyebrow>Until {formatDate(offer.data.endsOn)}</Eyebrow>
+          <h2 class="offer__title">{offer.data.headline}</h2>
+          <p class="offer__summary lead">{offer.data.summary}</p>
+        </div>
+        <div class="offer__actions">
+          <Button href={routes.offer(offer.id)} iconEnd="arrow-right">
+            See the offer
+          </Button>
+          {offer.data.whatsappMessage && (
+            <Button
+              href={whatsappUrl(offer.data.whatsappMessage)}
+              variant="secondary"
+              icon="whatsapp"
+              external
+            >
+              Ask on WhatsApp
+            </Button>
+          )}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <RateBoard
+    rate={rates.latest}
+    stale={rates.stale}
+    history={rates.history}
+    variant="band"
+    id="rate"
+  />
+
+  <section class="section">
+    <div class="container">
+      <SectionHead eyebrow="By piece" title="Necklaces to anklets, by the gram.">
+        Every listing states karat and hallmark, and the gross weight once the store has confirmed
+        it.
+      </SectionHead>
+      <div class="tiles">
+        {categories.slice(0, 8).map((c) => (
+          <CategoryTile category={c} count={countByCategory.get(c.id)} />
+        ))}
+      </div>
+      <p class="also small">
+        Also:
+        <a href={routes.jewellery}>22K &amp; 18K gold</a> ·<a href={routes.diamonds}>Diamonds</a> ·
+        <a href={routes.collection('gemstone')}>Gemstones</a> ·
+        <a href={routes.goldCoinsBars}>Coins &amp; bars</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container container--wide">
+      <SectionHead
+        eyebrow="From the trays"
+        title={`${countWord(featured.length)} pieces from the trays, weighed and ready to quote.`}
+      >
+        <Fragment slot="aside">
+          <a class="link-quiet section__link" href={routes.jewellery}>
+            All jewellery <Icon name="arrow-right" />
+          </a>
+        </Fragment>
+      </SectionHead>
+      <TrayGrid>
+        {featured.map((p, i) => (
+          <ProductCard
+            product={p}
+            collectionName={
+              p.data.collection ? collectionName.get(p.data.collection.id) : undefined
+            }
+            rate={rates.latest}
+            priority={i < 2}
+          />
+        ))}
+      </TrayGrid>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead eyebrow="Our terms, in writing" title="Six things you can hold us to.">
+        <Fragment slot="aside">
+          <a class="link-quiet section__link" href={routes.promise}>
+            Read the conditions <Icon name="arrow-right" />
+          </a>
+        </Fragment>
+      </SectionHead>
+      <AssuranceLedger />
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead eyebrow="Collections" title="By origin, by style, by stone.">
+        Named for the place whose goldsmiths set the style, for a tradition, or for who will wear
+        it.
+      </SectionHead>
+      <ol class="index" role="list">
+        {collections.map((c, i) => (
+          <li class="index__row">
+            <a class="index__link" href={routes.collection(c.id)}>
+              <span class="index__no" aria-hidden="true">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <span class="index__text">
+                <span class="index__name">{c.data.name.replace(/ Collection$/i, '')}</span>
+                <span class="index__desc small">{c.data.summary}</span>
+              </span>
+              <span class="index__karat small tabular">
+                {c.data.karats.map((k) => `${k}K`).join(' · ')}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead
+        eyebrow="Occasions"
+        title="Wedding sets. Anniversary diamonds. Birthday gold. Festival coins."
+      >
+        <Fragment slot="aside">
+          <a class="link-quiet section__link" href={routes.occasions}>
+            All occasions <Icon name="arrow-right" />
+          </a>
+        </Fragment>
+      </SectionHead>
+      <div class="occasions">
+        {occasions.map((o) => (
+          <OccasionFeature occasion={o} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <PlumBand>
+    <div class="band-cols">
+      <div>
+        <Eyebrow>Old gold</Eyebrow>
+        <h2>Bring old gold. Leave with its full weight.</h2>
+        <p>
+          We weigh and test it in front of you and credit every gram at the day’s rate against a new
+          piece, with no deduction for wear or design. The Classic Group has bought and refined
+          scrap gold in Dubai for over {years} years; we price old gold the way traders do.
+        </p>
+        <Button href={routes.goldExchange} variant="secondary">
+          How exchange works
+        </Button>
+      </div>
+      <div>
+        <Eyebrow>Coins and bars</Eyebrow>
+        <h3>24K coins and PAMP bars at the day’s rate.</h3>
+        <p>
+          Coins in 22K and 24K from 1 g; PAMP Suisse bars with the assay card. Priced near the rate
+          with no making charge. Ask for the coin premium before you come in.
+        </p>
+        <Button
+          href={whatsappUrl(
+            `${site.whatsapp.greeting} what is today’s price for gold coins and bars?`,
+          )}
+          variant="secondary"
+          icon="whatsapp"
+          external
+        >
+          Ask today’s coin price
+        </Button>
+      </div>
+    </div>
+  </PlumBand>
+
+  <section class="section">
+    <div class="container">
+      <div class="split split--reverse story">
+        <div class="story__text">
+          <Eyebrow>Classic Group</Eyebrow>
+          <h2>Gold traders first. Jewellers since {site.founded.brandYear}.</h2>
+          <p class="lead">
+            The Classic Group began with Classic Bullion and has traded, bought and refined gold in
+            Dubai for over {years} years. In {site.founded.brandYear} it opened Classic Jewels &amp;
+            Diamonds in the Gold Souq Extension to sell what it knows best: honest weight, correct
+            karat, stones with paperwork. {countWord(openBranches.length)} branches followed within
+            two years.
+          </p>
+          <a class="link-quiet section__link" href={routes.about}>
+            Our story <Icon name="arrow-right" />
+          </a>
+        </div>
+        <figure class="story__media">
+          <Picture
+            src={storyImage}
+            alt="Rose-gold pavé ball pendant and matching earrings on a mint box"
+            formats={['avif', 'webp']}
+            widths={[640, 900]}
+            sizes="(min-width: 64em) 58vw, 100vw"
+            fit="cover"
+          />
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead
+        eyebrow="Stores"
+        title={`${countWord(openBranches.length)} branches across the UAE.`}
+      >
+        <Fragment slot="aside">
+          <a class="link-quiet section__link" href={routes.stores}>
+            Hours and directions <Icon name="arrow-right" />
+          </a>
+        </Fragment>
+      </SectionHead>
+      <div class="stores rows">
+        {openBranches.map((b) => (
+          <StoreCard branch={b} compact />
+        ))}
+      </div>
+      {branches.some((b) => b.status === 'opening-soon') && (
+        <p class="small stores__soon">
+          {`Opening soon: ${branches
+            .filter((b) => b.status === 'opening-soon')
+            .map((b) => b.name)
+            .join('; ')}.`}
+        </p>
+      )}
+    </div>
+  </section>
+
+  {articles.length >= 3 && (
+    <section class="section section--ruled">
+      <div class="container">
+        <SectionHead eyebrow="Journal" title="Notes on gold, rates and hallmarks.">
+          <Fragment slot="aside">
+            <a class="link-quiet section__link" href={routes.journal}>
+              All articles <Icon name="arrow-right" />
+            </a>
+          </Fragment>
+        </SectionHead>
+        <div class="journal">
+          {articles.slice(0, 3).map((a) => (
+            <JournalCard article={a} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <Faq heading={faq.data.heading} items={faq.data.items} />
+        <EnquiryBlock compact />
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .section__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    color: var(--plum-700);
+  }
+
+  .offer {
+    padding-block: var(--space-7);
+    border-block-end: 1px solid var(--rule-1);
+  }
+
+  .offer__inner {
+    display: grid;
+    gap: var(--space-5);
+    align-items: end;
+  }
+
+  .offer__title {
+    max-inline-size: 30ch;
+  }
+
+  .offer__summary {
+    margin-block-start: var(--space-3);
+    max-inline-size: 48rem;
+  }
+
+  .offer__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--grid-gap);
+  }
+
+  .also {
+    margin-block-start: var(--space-6);
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--rule-1);
+  }
+
+  /* Twelve collections in two ruled columns: 01-06 left, 07-12 right on wide screens. */
+  .index {
+    display: grid;
+    column-gap: var(--space-8);
+    border-block-end: 1px solid var(--rule-1);
+  }
+
+  .index__row {
+    border-block-start: 1px solid var(--rule-1);
+  }
+
+  @media (min-width: 56.25em) {
+    .index {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(6, auto);
+      grid-auto-flow: column;
+    }
+  }
+
+  .index__link {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: var(--space-4);
+    align-items: baseline;
+    padding-block: var(--space-4);
+    color: var(--ink-900);
+    text-decoration: none;
+  }
+
+  .index__no {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-600);
+    min-inline-size: 2.2ch;
+  }
+
+  .index__text {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .index__name {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .index__link:hover .index__name {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-700);
+    text-underline-offset: 0.15em;
+  }
+
+  .index__desc {
+    color: var(--ink-700);
+  }
+
+  .index__karat {
+    color: var(--ink-500);
+    white-space: nowrap;
+  }
+
+  .occasions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--grid-gap);
+  }
+
+  .band-cols {
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  .band-cols h2,
+  .band-cols h3 {
+    margin-block-end: var(--space-4);
+  }
+
+  .band-cols p {
+    max-inline-size: 34rem;
+    margin-block-end: var(--space-5);
+  }
+
+  .story__text > * + * {
+    margin-block-start: var(--space-4);
+  }
+
+  .story__media {
+    min-inline-size: 0;
+  }
+
+  .story__media :global(img) {
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+  }
+
+  .stores__soon {
+    margin-block-start: var(--space-4);
+  }
+
+  .journal {
+    display: grid;
+    gap: var(--grid-gap);
+  }
+
+  @media (min-width: 40em) {
+    .tiles {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .journal {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 64em) {
+    .offer__inner {
+      grid-template-columns: 7fr 5fr;
+      column-gap: calc(var(--grid-gap) * 2);
+    }
+
+    .offer__actions {
+      justify-content: end;
+    }
+
+    .occasions {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .band-cols {
+      grid-template-columns: 7fr 5fr;
+      column-gap: calc(var(--grid-gap) * 2);
+    }
+  }
+</style>

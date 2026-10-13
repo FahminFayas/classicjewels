@@ -1,0 +1,141 @@
+---
+/**
+ * One branch in a ruled list or grid: name, venue, emirate, hours line and the two links that
+ * matter (directions, WhatsApp). Opening-soon branches render without links.
+ */
+import Icon from '@/components/ui/Icon.astro';
+import type { Branch } from '@/data/site';
+import { site } from '@/data/site';
+import { routes } from '@/lib/routes';
+import { whatsappUrl } from '@/lib/whatsapp';
+
+export interface Props {
+  branch: Branch;
+  /** Render as a compact row (home page strip) rather than a card. */
+  compact?: boolean;
+  class?: string;
+}
+
+const { branch, compact = false, class: className } = Astro.props;
+const open = branch.status === 'open';
+const hours = branch.hours?.weekly[0];
+const hoursLine = branch.hours?.confirmed
+  ? `${hours?.opens.slice(0, 5)}–${hours?.closes.slice(0, 5)} daily`
+  : branch.hours
+    ? `${hours?.opens.slice(0, 5)}–${hours?.closes.slice(0, 5)} daily (confirm by phone)`
+    : 'Hours: call ahead';
+const phone = branch.phone ?? site.phone.landline;
+const whatsapp = whatsappUrl(
+  `${site.whatsapp.greeting} I’d like to visit the ${branch.name} branch. Could you confirm today’s hours?`,
+);
+---
+
+<article class:list={['store', compact && 'store--compact', className]}>
+  <div class="store__text">
+    <p class="store__emirate small">
+      {branch.emirate}
+      {branch.isFlagship ? ' · Flagship' : ''}
+    </p>
+    <h3 class="store__name">
+      {open ? (
+        <a class="link-quiet" href={routes.store(branch.id)}>
+          {branch.name}
+        </a>
+      ) : (
+        branch.name
+      )}
+    </h3>
+    <p class="store__venue">
+      {open ? branch.venue : (branch.openingNote?.split('. ')[0] ?? 'Opening soon')}
+    </p>
+    {open && <p class="store__hours small">{hoursLine}</p>}
+  </div>
+  {open && (
+    <ul class="store__links small" role="list">
+      {branch.map?.url && (
+        <li>
+          <a href={branch.map.url} target="_blank" rel="noopener">
+            <Icon name="map-pin" /> Directions
+          </a>
+        </li>
+      )}
+      <li>
+        <a href={`tel:${phone.e164}`}>
+          <Icon name="phone" /> {phone.display}
+        </a>
+      </li>
+      <li>
+        <a href={whatsapp} target="_blank" rel="noopener">
+          <Icon name="whatsapp" /> WhatsApp
+        </a>
+      </li>
+    </ul>
+  )}
+  {!open && <p class="store__soon small">Opening soon</p>}
+</article>
+
+<style>
+  .store {
+    display: grid;
+    gap: var(--space-4);
+    padding-block: var(--space-5);
+  }
+
+  .store__text {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .store__emirate {
+    color: var(--gold-700);
+    letter-spacing: 0.04em;
+  }
+
+  .store__name {
+    font-size: var(--t-h3);
+  }
+
+  .store__name a {
+    color: var(--ink-900);
+  }
+
+  .store__venue {
+    color: var(--ink-700);
+  }
+
+  .store__hours {
+    color: var(--ink-500);
+  }
+
+  .store__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+
+  .store__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-block-size: var(--tap);
+    color: var(--plum-700);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .store__links a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+  }
+
+  .store__soon {
+    color: var(--ink-500);
+  }
+
+  @media (min-width: 64em) {
+    .store--compact {
+      grid-template-columns: 1fr auto;
+      align-items: end;
+    }
+  }
+</style>

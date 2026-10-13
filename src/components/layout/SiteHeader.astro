@@ -1,0 +1,571 @@
+---
+/**
+ * Site header: logo, primary navigation with a mega panel under "Jewellery", the two contact
+ * actions, and the mobile drawer (<dialog>). Sticky on desktop only. Behaviour is in
+ * src/scripts/nav.ts; without it, every link still works and the drawer can be reached via
+ * the Jewellery index.
+ */
+import RateBoard from '@/components/sections/RateBoard.astro';
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import Logo from '@/components/ui/Logo.astro';
+import { site } from '@/data/site';
+import { getDesignCollections, getNavCategories } from '@/lib/content';
+import type { GoldRate } from '@/lib/gold-rate';
+import { routes } from '@/lib/routes';
+import { whatsappGeneral } from '@/lib/whatsapp';
+
+export interface Props {
+  rate: GoldRate | null;
+}
+
+const { rate } = Astro.props;
+const [categories, collections] = await Promise.all([getNavCategories(), getDesignCollections()]);
+const path = Astro.url.pathname;
+const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+
+const primary = [
+  { label: 'Collections', href: routes.collections },
+  { label: 'Occasions', href: routes.occasions },
+  { label: 'Gold rate', href: routes.goldRate },
+  { label: 'Coins & bars', href: routes.goldCoinsBars },
+  { label: 'Our story', href: routes.about },
+  { label: 'Stores', href: routes.stores },
+];
+
+const materials = [
+  { label: '22K & 18K gold', href: routes.jewellery },
+  { label: 'Diamonds', href: routes.diamonds },
+  { label: 'Gemstones', href: routes.collection('gemstone') },
+  { label: 'Coins & bars', href: routes.goldCoinsBars },
+];
+
+const drawerLinks = [
+  { label: 'Occasions', href: routes.occasions },
+  { label: 'Gold rate', href: routes.goldRate },
+  { label: 'Coins & bars', href: routes.goldCoinsBars },
+  { label: 'Custom jewellery', href: routes.customJewellery },
+  { label: 'Gold exchange', href: routes.goldExchange },
+  { label: 'Our story', href: routes.about },
+  { label: 'Our promise', href: routes.promise },
+  { label: 'Journal', href: routes.journal },
+  { label: 'Stores', href: routes.stores },
+  { label: 'Offers', href: routes.offers },
+  { label: 'Contact', href: routes.contact },
+];
+const whatsapp = whatsappGeneral();
+---
+
+<div data-scroll-sentinel aria-hidden="true"></div>
+<header class="header" data-site-header data-scrolled="false">
+  <div class="container header__inner">
+    <a class="header__logo" href={routes.home} aria-label={`${site.name} home`}>
+      <Logo />
+    </a>
+
+    <nav class="header__nav from-lg" aria-label="Primary">
+      <ul class="nav" role="list">
+        <li class="nav__item nav__item--mega" data-mega-item>
+          <a
+            class="nav__link link-quiet"
+            href={routes.jewellery}
+            aria-current={isActive(routes.jewellery) ? 'page' : undefined}
+          >
+            Jewellery
+          </a>
+          <button
+            class="nav__toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="mega-jewellery"
+            data-mega-trigger
+            aria-label="Browse jewellery by piece, material and collection"
+          >
+            <Icon name="plus" />
+          </button>
+          <div class="mega" id="mega-jewellery" hidden>
+            <div class="container mega__grid">
+              <div class="mega__col">
+                <p class="mega__title small">By piece</p>
+                <ul class="mega__list" role="list">
+                  {categories.map((c) => (
+                    <li>
+                      <a class="link-quiet" href={routes.category(c.id)}>
+                        {c.data.shortName ?? c.data.name}
+                      </a>
+                    </li>
+                  ))}
+                  <li>
+                    <a class="link-quiet mega__all" href={routes.jewellery}>
+                      All jewellery
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <div class="mega__col">
+                <p class="mega__title small">By material</p>
+                <ul class="mega__list" role="list">
+                  {materials.map((m) => (
+                    <li>
+                      <a class="link-quiet" href={m.href}>
+                        {m.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div class="mega__col">
+                <p class="mega__title small">By collection</p>
+                <ul class="mega__list mega__list--two" role="list">
+                  {collections.map((c) => (
+                    <li>
+                      <a class="link-quiet" href={routes.collection(c.id)}>
+                        {c.data.name.replace(/ Collection$/i, '')}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div class="mega__col mega__col--rate">
+                <RateBoard rate={rate} variant="mini" />
+              </div>
+            </div>
+          </div>
+        </li>
+        {primary.map((item) => (
+          <li class="nav__item">
+            <a
+              class="nav__link link-quiet"
+              href={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="header__actions">
+      <a class="header__call link-quiet from-xl" href={`tel:${site.phone.landline.e164}`}>
+        <Icon name="phone" />
+        <span>{site.phone.landline.display}</span>
+      </a>
+      <Button
+        href={whatsapp}
+        variant="secondary"
+        icon="whatsapp"
+        external
+        class="header__whatsapp from-md"
+      >
+        WhatsApp
+      </Button>
+      <button
+        class="header__menu until-lg"
+        type="button"
+        aria-expanded="false"
+        aria-controls="site-drawer"
+        data-drawer-open
+      >
+        <Icon name="menu" />
+        <span>Menu</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<dialog class="drawer" id="site-drawer" aria-label="Site menu" data-surface="plum">
+  <div class="drawer__inner">
+    <div class="drawer__top">
+      <Logo tone="light" />
+      <button class="drawer__close" type="button" data-drawer-close aria-label="Close menu">
+        <Icon name="close" />
+      </button>
+    </div>
+
+    <nav aria-label="Mobile">
+      <details class="drawer__group">
+        <summary class="drawer__summary">
+          By piece <Icon name="plus" />
+        </summary>
+        <ul class="drawer__sub" role="list">
+          {categories.map((c) => (
+            <li>
+              <a href={routes.category(c.id)}>{c.data.shortName ?? c.data.name}</a>
+            </li>
+          ))}
+          <li>
+            <a href={routes.jewellery}>All jewellery</a>
+          </li>
+        </ul>
+      </details>
+      <details class="drawer__group">
+        <summary class="drawer__summary">
+          By material <Icon name="plus" />
+        </summary>
+        <ul class="drawer__sub" role="list">
+          {materials.map((m) => (
+            <li>
+              <a href={m.href}>{m.label}</a>
+            </li>
+          ))}
+        </ul>
+      </details>
+      <details class="drawer__group">
+        <summary class="drawer__summary">
+          By collection <Icon name="plus" />
+        </summary>
+        <ul class="drawer__sub" role="list">
+          {collections.map((c) => (
+            <li>
+              <a href={routes.collection(c.id)}>{c.data.name}</a>
+            </li>
+          ))}
+        </ul>
+      </details>
+      <ul class="drawer__links" role="list">
+        {drawerLinks.map((item) => (
+          <li>
+            <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    {rate && (
+      <p class="drawer__rate small">
+        22K today{' '}
+        <span class="tabular">
+          AED <span data-rate="22k">{rate.perGram['22k'].toFixed(2)}</span> / g
+        </span>
+      </p>
+    )}
+
+    <div class="drawer__actions">
+      <a href={`tel:${site.phone.landline.e164}`}>
+        <Icon name="phone" /> Call
+      </a>
+      <a href={whatsapp} target="_blank" rel="noopener">
+        <Icon name="whatsapp" /> WhatsApp
+      </a>
+      <a href={routes.stores}>
+        <Icon name="map-pin" /> Visit
+      </a>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .header {
+    position: relative;
+    z-index: var(--z-sticky);
+    background: var(--surface-1);
+    border-block-end: 1px solid transparent;
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+
+  .header[data-scrolled='true'] {
+    border-block-end-color: var(--rule-1);
+  }
+
+  .header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-block-size: var(--header-h);
+  }
+
+  .header__logo {
+    text-decoration: none;
+    flex: none;
+  }
+
+  .header__nav {
+    flex: 1;
+  }
+
+  .nav {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-4);
+  }
+
+  .nav__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .nav__link {
+    display: inline-flex;
+    white-space: nowrap;
+    align-items: center;
+    min-block-size: var(--tap);
+    font-size: var(--t-title);
+    font-weight: 500;
+    color: var(--ink-900);
+    text-underline-offset: 0.35em;
+  }
+
+  .nav__link[aria-current='page'] {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+  }
+
+  .nav__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 1.75rem;
+    block-size: var(--tap);
+    color: var(--ink-500);
+  }
+
+  .nav__toggle[aria-expanded='true'] {
+    color: var(--plum-700);
+  }
+
+  .nav__toggle[aria-expanded='true'] .icon {
+    transform: rotate(45deg);
+  }
+
+  .mega {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 100%;
+    z-index: var(--z-nav);
+    background: var(--surface-0);
+    border-block: 1px solid var(--rule-1);
+    padding-block: var(--space-7);
+  }
+
+  .mega[hidden] {
+    display: none;
+  }
+
+  .mega__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.6fr 1.4fr;
+    gap: var(--space-7);
+  }
+
+  .mega__title {
+    margin-block-end: var(--space-3);
+    padding-block-end: var(--space-2);
+    border-block-end: 1px solid var(--rule-1);
+    font-weight: 500;
+    color: var(--ink-500);
+  }
+
+  .mega__list {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .mega__list--two {
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--space-5);
+  }
+
+  .mega__list a {
+    display: inline-block;
+    padding-block: var(--space-1);
+    color: var(--ink-900);
+  }
+
+  .mega__all {
+    margin-block-start: var(--space-2);
+    font-weight: 500;
+  }
+
+  .header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex: none;
+  }
+
+  .header__call {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: var(--tap);
+    font-size: var(--t-small);
+    font-weight: 500;
+    color: var(--ink-700);
+    white-space: nowrap;
+  }
+
+  .header__menu {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: var(--tap);
+    padding-inline: var(--space-2);
+    font-size: var(--t-small);
+    font-weight: 500;
+    color: var(--ink-900);
+  }
+
+  @media (min-width: 64em) {
+    .header {
+      position: sticky;
+      inset-block-start: 0;
+    }
+  }
+
+  /* ---------- Drawer ---------- */
+  .drawer {
+    inset: 0;
+    inline-size: min(100%, 24rem);
+    max-inline-size: none;
+    block-size: 100dvh;
+    max-block-size: none;
+    margin: 0;
+    margin-inline-start: auto;
+    padding: 0;
+    border: 0;
+    background: var(--surface-plum-deep);
+    color: var(--ink-on-plum);
+    overflow-y: auto;
+  }
+
+  .drawer::backdrop {
+    background: rgb(28 20 24 / 0.5);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .drawer[open] {
+      animation: drawer-in var(--dur-slow) var(--ease);
+    }
+
+    @keyframes drawer-in {
+      from {
+        transform: translateX(100%);
+      }
+      to {
+        transform: translateX(0);
+      }
+    }
+  }
+
+  :global(body:has(.drawer[open])) {
+    overflow: hidden;
+  }
+
+  .drawer__inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-block-size: 100%;
+    padding: var(--space-4) var(--gutter) var(--space-8);
+  }
+
+  .drawer__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .drawer__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: var(--tap);
+    block-size: var(--tap);
+    color: var(--ink-on-plum);
+  }
+
+  .drawer__group {
+    border-block-start: 1px solid var(--rule-on-plum);
+  }
+
+  .drawer__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-block-size: var(--control-h);
+    padding-block: var(--space-2);
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 500;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .drawer__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .drawer__group[open] .drawer__summary .icon {
+    transform: rotate(45deg);
+  }
+
+  .drawer__sub {
+    display: grid;
+    gap: var(--space-1);
+    padding-block: var(--space-2) var(--space-4);
+  }
+
+  .drawer__sub a,
+  .drawer__links a {
+    display: inline-block;
+    padding-block: var(--space-2);
+    color: var(--ink-on-plum);
+    text-decoration: none;
+  }
+
+  .drawer__sub a {
+    color: var(--ink-on-plum-muted);
+  }
+
+  .drawer__links {
+    display: grid;
+    border-block: 1px solid var(--rule-on-plum);
+    padding-block: var(--space-3);
+  }
+
+  .drawer__links a {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 500;
+  }
+
+  .drawer__links a[aria-current='page'] {
+    color: var(--gold-300);
+  }
+
+  .drawer__rate {
+    color: var(--ink-on-plum-muted);
+  }
+
+  .drawer__rate .tabular {
+    color: var(--gold-300);
+    font-weight: 500;
+  }
+
+  .drawer__actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    margin-block-start: auto;
+    background: var(--rule-on-plum);
+    border: 1px solid var(--rule-on-plum);
+  }
+
+  .drawer__actions a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-block-size: var(--control-h);
+    background: var(--surface-plum-deep);
+    color: var(--gold-300);
+    font-size: var(--t-small);
+    font-weight: 500;
+    text-decoration: none;
+  }
+</style>

@@ -1,0 +1,88 @@
+# ---------------------------------------------------------------------------
+# Classic Jewels & Diamonds - Apache configuration for the static Astro build.
+# Upload the contents of dist/ (this file included) to the web root.
+# Needs mod_rewrite, mod_headers, mod_expires, mod_deflate (standard on cPanel / LiteSpeed).
+# ---------------------------------------------------------------------------
+
+Options -Indexes
+DirectoryIndex index.html
+AddDefaultCharset utf-8
+
+# --- Canonical host: https, no www -----------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  RewriteCond %{HTTPS} off [OR]
+  RewriteCond %{HTTP_HOST} ^www\. [NC]
+  RewriteRule ^ https://classicjewels.ae%{REQUEST_URI} [R=301,L]
+
+  # --- Redirects from the previous site -------------------------------------
+  RewriteRule ^index\.html$             /                [R=301,L]
+  RewriteRule ^about-us\.html$          /about/          [R=301,L]
+  RewriteRule ^contact\.html$           /contact/        [R=301,L]
+  RewriteRule ^privacy-policy\.html$    /privacy-policy/ [R=301,L]
+  RewriteRule ^terms-conditions\.html$  /terms/          [R=301,L]
+  RewriteRule ^disclaimer\.html$        /disclaimer/     [R=301,L]
+  # The old site later served the same pages without .html; template links pointed at gallery/news/blog.
+  RewriteRule ^about-us/?$                 /about/          [R=301,L]
+  RewriteRule ^terms-conditions/?$         /terms/          [R=301,L]
+  RewriteRule ^gallery(.html)?/?$          /collections/    [R=301,L]
+  RewriteRule ^(news|blog|blogs)(.html)?/?$ /journal/       [R=301,L]
+  RewriteRule ^ar/?$                       /                [R=302,L]
+
+  # --- Trailing slash: /about -> /about/ (only when a directory exists) ------
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteCond %{REQUEST_URI} !/$
+  RewriteRule ^(.*)$ /$1/ [R=301,L]
+</IfModule>
+
+ErrorDocument 404 /404.html
+
+# --- MIME types the default config may lack --------------------------------
+<IfModule mod_mime.c>
+  AddType image/avif                  .avif
+  AddType image/webp                  .webp
+  AddType font/woff2                  .woff2
+  AddType application/manifest+json   .webmanifest
+</IfModule>
+
+# --- Compression -----------------------------------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/xml application/json application/javascript application/manifest+json image/svg+xml
+</IfModule>
+
+# --- Caching: hashed assets for a year, HTML always revalidated ------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType image/avif "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/png  "access plus 1 year"
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType font/woff2 "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  # Astro writes every bundled asset under /_astro/ with a content hash in the file name.
+  <If "%{REQUEST_URI} =~ m#^/_astro/#">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </If>
+
+  # --- Security headers ----------------------------------------------------
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  # CSP: first-party everything, plus Google Tag Manager / Analytics and the Google Maps embed.
+  # A GTM "Custom HTML" tag would need 'unsafe-inline' added to script-src.
+  Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; form-action 'self' https://wa.me; frame-ancestors 'self'; img-src 'self' data: https://www.googletagmanager.com https://*.google-analytics.com https://*.google.com https://*.gstatic.com https://*.facebook.com; script-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://connect.facebook.net https://analytics.tiktok.com; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.facebook.com https://analytics.tiktok.com; frame-src https://www.google.com https://maps.google.com https://www.googletagmanager.com; object-src 'none'; upgrade-insecure-requests"
+  Header unset X-Powered-By
+</IfModule>

@@ -1,0 +1,126 @@
+---
+/**
+ * Occasions index (design-spec §7.15): the four occasions as portrait features, captions below.
+ */
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Hero from '@/components/sections/Hero.astro';
+import OccasionFeature from '@/components/sections/OccasionFeature.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getActiveOffers, getFaqGroup, getOccasions } from '@/lib/content';
+import { formatDate } from '@/lib/format';
+import { routes } from '@/lib/routes';
+import { itemListSchema } from '@/lib/schema';
+import { whatsappGeneral } from '@/lib/whatsapp';
+
+const [occasions, faq, offers] = await Promise.all([
+  getOccasions(),
+  getFaqGroup('occasions'),
+  getActiveOffers(),
+]);
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const offer = offers[0];
+
+const jsonLd = [
+  itemListSchema(
+    occasions.map((o) => ({
+      name: o.data.name,
+      url: new URL(routes.occasion(o.id), origin).toString(),
+    })),
+    'Jewellery by occasion',
+  ),
+];
+---
+
+<BaseLayout
+  title="Wedding, Anniversary & Festival Gold in the UAE"
+  description="Bridal gold sets, anniversary diamonds, birthday gold and festival coins from Classic Jewels in Dubai, Sharjah and Abu Dhabi, bought by weight at the day’s rate."
+  jsonLd={jsonLd}
+>
+  <div class="container container--wide">
+    <Breadcrumbs items={[{ name: 'Occasions', href: routes.occasions }]} />
+  </div>
+
+  <Hero
+    eyebrow="Occasions"
+    title="Jewellery by occasion"
+    lead="Wedding sets, anniversary diamonds, birthday gold and festival coins, each bought by weight at the day’s rate."
+    display
+  >
+    <Button href={whatsappGeneral()} icon="whatsapp" external>
+      Tell us the occasion
+    </Button>
+    <Button href={routes.goldRate} variant="secondary">
+      Today’s gold rate
+    </Button>
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="occasions">
+        {occasions.map((o) => (
+          <OccasionFeature occasion={o} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {offer && (
+    <section class="section section--ruled offer">
+      <div class="container offer__inner">
+        <p class="small offer__when">Current offer · until {formatDate(offer.data.endsOn)}</p>
+        <a class="offer__link link-quiet" href={routes.offer(offer.id)}>
+          {offer.data.headline}
+        </a>
+      </div>
+    </section>
+  )}
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <Faq heading={faq.data.heading} items={faq.data.items} />
+        <EnquiryBlock
+          compact
+          text="Tell us the occasion, the date and a budget. We reply with a shortlist from the trays at all four branches."
+        />
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .occasions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--grid-gap);
+  }
+
+  .offer {
+    padding-block: var(--space-6);
+  }
+
+  .offer__inner {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .offer__when {
+    color: var(--gold-700);
+  }
+
+  .offer__link {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 500;
+    color: var(--ink-900);
+  }
+
+  @media (min-width: 64em) {
+    .occasions {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>

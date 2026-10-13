@@ -1,0 +1,87 @@
+---
+/**
+ * Category link tile: the cut-out photo in a 5:2 box, the name and the piece count.
+ * The whole tile is one anchor.
+ */
+import { Picture } from 'astro:assets';
+
+import type { Category } from '@/lib/content';
+import { routes } from '@/lib/routes';
+
+export interface Props {
+  category: Category;
+  count?: number;
+  class?: string;
+}
+
+const { category, count, class: className } = Astro.props;
+const { data } = category;
+const widths = [400, 800].filter((w) => w <= data.image.width);
+if (widths.length === 0) widths.push(data.image.width);
+---
+
+<a class:list={['tile', className]} href={routes.category(category.id)}>
+  <span class="tile__media">
+    <Picture
+      src={data.image}
+      alt=""
+      formats={['avif', 'webp']}
+      widths={widths}
+      sizes="(min-width: 64em) 25vw, 50vw"
+      fit="cover"
+    />
+  </span>
+  <span class="tile__text">
+    <span class="tile__name">{data.shortName ?? data.name}</span>
+    {typeof count === 'number' && count > 0 && (
+      <span class="tile__count small">
+        {count} {count === 1 ? 'piece' : 'pieces'}
+      </span>
+    )}
+  </span>
+</a>
+
+<style>
+  .tile {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--space-3);
+    color: var(--ink-900);
+    text-decoration: none;
+  }
+
+  /* The category photographs are 5:2 cut-outs on their own pale ground, so they fill the box. */
+  .tile__media {
+    display: block;
+    min-inline-size: 0;
+    aspect-ratio: 5 / 2;
+    overflow: hidden;
+    background: var(--surface-0);
+    border: 1px solid var(--rule-1);
+  }
+
+  .tile__media :global(img) {
+    inline-size: 100%;
+    max-inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .tile__text {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .tile__name {
+    font-size: var(--t-title);
+    font-weight: 500;
+  }
+
+  .tile:hover .tile__name {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+    text-underline-offset: 0.2em;
+  }
+</style>

@@ -1,0 +1,7 @@
+# https://classicjewels.ae
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /thank-you/
+
+Sitemap: https://classicjewels.ae/sitemap-index.xml

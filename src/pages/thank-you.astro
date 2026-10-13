@@ -1,0 +1,49 @@
+---
+/**
+ * Where the contact endpoint sends a no-JavaScript submission. Kept out of search results and
+ * the sitemap (see SITEMAP_EXCLUDE in astro.config.mjs).
+ */
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Hero from '@/components/sections/Hero.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { routes } from '@/lib/routes';
+---
+
+<BaseLayout
+  title="Message received"
+  description="Your message to Classic Jewels & Diamonds has been received. We reply by email or phone during shop hours. Meanwhile, see the jewellery or today’s gold rate."
+  noindex
+>
+  <div class="container">
+    <Breadcrumbs
+      items={[
+        { name: 'Contact', href: routes.contact },
+        { name: 'Message received', href: routes.thankYou },
+      ]}
+    />
+  </div>
+
+  <Hero
+    eyebrow="Contact"
+    title="Message received"
+    lead="Thank you. We reply by email or phone during shop hours; if it cannot wait, WhatsApp is faster."
+  >
+    <Button href={routes.jewellery} iconEnd="arrow-right">
+      See the jewellery
+    </Button>
+    <Button href={routes.goldRate} variant="secondary">
+      Today’s gold rate
+    </Button>
+  </Hero>
+
+  <section class="section">
+    <div class="container">
+      <EnquiryBlock
+        heading="Need an answer sooner?"
+        text="WhatsApp is fastest during shop hours. Calls go to the Deira counter."
+      />
+    </div>
+  </section>
+</BaseLayout>

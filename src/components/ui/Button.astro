@@ -1,0 +1,54 @@
+---
+/**
+ * Button or link styled as a button. Renders <a> when `href` is given, otherwise <button>.
+ * Variants: primary (plum fill), secondary (plum outline), text (underline on hover).
+ * On a plum surface the colours invert automatically via [data-surface="plum"] in base.css.
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+import Icon, { type IconName } from '@/components/ui/Icon.astro';
+
+export interface Props extends HTMLAttributes<'a'> {
+  href?: string;
+  variant?: 'primary' | 'secondary' | 'text';
+  icon?: IconName;
+  iconEnd?: IconName;
+  type?: 'button' | 'submit';
+  /** Opens in a new tab with rel="noopener". Used for WhatsApp and Maps links. */
+  external?: boolean;
+  class?: string;
+}
+
+const {
+  href,
+  variant = 'primary',
+  icon,
+  iconEnd,
+  type = 'button',
+  external = false,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const classes = ['btn', `btn--${variant}`, className];
+---
+
+{href ? (
+  <a
+    href={href}
+    class:list={classes}
+    target={external ? '_blank' : undefined}
+    rel={external ? 'noopener' : undefined}
+    {...rest}
+  >
+    {icon && <Icon name={icon} />}
+    <slot />
+    {iconEnd && <Icon name={iconEnd} />}
+  </a>
+) : (
+  <button type={type} class:list={classes} {...(rest as HTMLAttributes<'button'>)}>
+    {icon && <Icon name={icon} />}
+    <slot />
+    {iconEnd && <Icon name={iconEnd} />}
+  </button>
+)}

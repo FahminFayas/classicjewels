@@ -1,0 +1,63 @@
+---
+/**
+ * Product specification table: a parchment head column and one row per known fact.
+ * Rows whose value is missing are dropped by the component, so a page never prints a dash.
+ */
+export interface Props {
+  /** Label and value pairs in display order. Empty or undefined values are omitted. */
+  rows: { label: string; value?: string | number | null }[];
+  /** Visually hidden caption for assistive technology. */
+  caption?: string;
+  class?: string;
+}
+
+const { rows, caption = 'Specification', class: className } = Astro.props;
+const present = rows
+  .map((r) => ({ label: r.label, value: r.value === null || r.value === undefined ? '' : String(r.value).trim() }))
+  .filter((r) => r.value.length > 0);
+---
+
+<table class:list={['spec', className]}>
+  <caption class="sr-only">{caption}</caption>
+  <tbody>
+    {present.map((r) => (
+      <tr class="spec__row">
+        <th class="spec__label" scope="row">
+          {r.label}
+        </th>
+        <td class="spec__value tabular">{r.value}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+<style>
+  .spec {
+    border-block: 1px solid var(--rule-2);
+    font-size: var(--t-small);
+  }
+
+  .spec__row + .spec__row > * {
+    border-block-start: 1px solid var(--rule-1);
+  }
+
+  .spec__label,
+  .spec__value {
+    padding-block: var(--space-3);
+    padding-inline: var(--space-4);
+    text-align: start;
+    vertical-align: top;
+  }
+
+  .spec__label {
+    inline-size: 42%;
+    background: var(--surface-2);
+    font-weight: 500;
+    color: var(--ink-700);
+  }
+
+  .spec__value {
+    font-size: var(--t-body);
+    color: var(--ink-900);
+  }
+</style>

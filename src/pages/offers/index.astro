@@ -1,0 +1,186 @@
+---
+/**
+ * Offers index: the campaign offers that are live today as ruled rows, the six standing terms
+ * underneath, the offers FAQ and the enquiry block. An offer past its end date is not built,
+ * so the list can only ever show what is actually on.
+ */
+import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Hero from '@/components/sections/Hero.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { branches, site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getActiveOffers, getFaqGroup } from '@/lib/content';
+import { formatDate } from '@/lib/format';
+import { routes } from '@/lib/routes';
+import { clampDescription } from '@/lib/seo';
+import { whatsappUrl } from '@/lib/whatsapp';
+
+const [offers, faq] = await Promise.all([getActiveOffers(), getFaqGroup('offers')]);
+
+const branchName = new Map(branches.map((b) => [b.id, b.name]));
+/** Branch names an offer is limited to, or "every branch" when the list is empty. */
+const whereFor = (ids: string[]) =>
+  ids.length > 0 ? ids.map((id) => branchName.get(id) ?? id).join(' · ') : 'every branch';
+
+const first = offers[0];
+const description = clampDescription(
+  first
+    ? `On now, until ${formatDate(first.data.endsOn)}: ${first.data.headline.replace(/[.!]?$/, '.')} Offers apply in store at every branch unless stated. Ask us on WhatsApp.`
+    : 'Campaign offers at Classic Jewels & Diamonds run for a stated period and apply in store at every branch. See what is on now, or WhatsApp us to ask.',
+);
+const enquiry = whatsappUrl(
+  first?.data.whatsappMessage ?? `${site.whatsapp.greeting} is there an offer running at the moment?`,
+);
+---
+
+<BaseLayout title="Gold Jewellery Offers in Dubai, Sharjah & Abu Dhabi" description={description}>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Offers', href: routes.offers }]} />
+  </div>
+
+  <Hero
+    eyebrow="Offers"
+    title="Current offers"
+    lead="Campaign offers run for a stated period and apply in store at every branch unless the offer says otherwise."
+  />
+
+  <section class="section section--ruled">
+    <div class="container">
+      {offers.length > 0 ? (
+        <div class="rows">
+          {offers.map((o) => (
+            <article class="offer">
+              <div class="offer__text">
+                <Eyebrow>Until {formatDate(o.data.endsOn)}</Eyebrow>
+                <h2 class="offer__title">
+                  <a class="link-quiet" href={routes.offer(o.id)}>
+                    {o.data.headline}
+                  </a>
+                </h2>
+                <p class="offer__summary lead">{o.data.summary}</p>
+                <p class="offer__where small">
+                  Applies at {whereFor(o.data.branches)}. Terms on the offer page.
+                </p>
+              </div>
+              <div class="offer__actions">
+                <Button href={routes.offer(o.id)} iconEnd="arrow-right">
+                  See the offer
+                </Button>
+                {o.data.whatsappMessage && (
+                  <Button
+                    href={whatsappUrl(o.data.whatsappMessage)}
+                    variant="secondary"
+                    icon="whatsapp"
+                    external
+                  >
+                    Ask on WhatsApp
+                  </Button>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div class="empty">
+          <p class="lead">
+            No campaign offer is running right now. Today’s rate and our standing promises apply.
+          </p>
+          <div class="empty__actions">
+            <Button href={routes.goldRate} iconEnd="arrow-right">
+              Today’s gold rate
+            </Button>
+            <Button href={routes.promise} variant="secondary">
+              Our promises
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead eyebrow="Standing terms" title="Offers come and go. These six do not.">
+        Whatever is on, the same six commitments apply to every purchase at every counter.
+      </SectionHead>
+      <AssuranceLedger />
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <Faq heading={faq.data.heading} items={faq.data.items} />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <EnquiryBlock
+        heading="Ask about an offer"
+        text="WhatsApp is fastest during shop hours. Tell us which offer and which branch, and we will confirm what qualifies before you visit."
+        whatsappUrl={enquiry}
+        whatsappLabel="Ask on WhatsApp"
+      />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .offer {
+    display: grid;
+    gap: var(--space-5);
+    padding-block: var(--space-7);
+    align-items: end;
+  }
+
+  .offer__title {
+    max-inline-size: 30ch;
+  }
+
+  .offer__title a {
+    color: var(--ink-900);
+  }
+
+  .offer__summary {
+    margin-block-start: var(--space-3);
+    max-inline-size: 48rem;
+  }
+
+  .offer__where {
+    margin-block-start: var(--space-3);
+  }
+
+  .offer__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .empty {
+    display: grid;
+    gap: var(--space-5);
+    max-inline-size: 44rem;
+  }
+
+  .empty__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  @media (min-width: 64em) {
+    .offer {
+      grid-template-columns: 7fr 5fr;
+      column-gap: calc(var(--grid-gap) * 2);
+    }
+
+    .offer__actions {
+      justify-content: end;
+    }
+  }
+</style>

@@ -1,0 +1,105 @@
+---
+/**
+ * The dark strip above the header: today's 22K rate (baked at build, refreshed by rate.ts) and
+ * the branch line. Not sticky; scrolls away on every device.
+ */
+import { emirates, openBranches, site } from '@/data/site';
+import { countWord, formatDate } from '@/lib/format';
+import type { GoldRate } from '@/lib/gold-rate';
+import { routes } from '@/lib/routes';
+
+export interface Props {
+  rate: GoldRate | null;
+  stale?: boolean;
+}
+
+const { rate, stale = false } = Astro.props;
+const emirateList =
+  emirates.length > 1
+    ? `${emirates.slice(0, -1).join(', ')} and ${emirates.at(-1)}`
+    : (emirates[0] ?? '');
+---
+
+<div class="strip" data-surface="plum">
+  <div class="container strip__inner">
+    {rate ? (
+      <a class="strip__rate link-quiet" href={routes.goldRate}>
+        <span>22K today</span>
+        <span class="strip__figure tabular">
+          AED <span data-rate="22k">{rate.perGram['22k'].toFixed(2)}</span> / g
+        </span>
+        <time class="strip__date from-md" datetime={rate.date} data-rate-date={rate.date}>
+          {stale ? 'last posted ' : ''}
+          <span data-rate-date-text>{formatDate(rate.date, { year: undefined })}</span>
+        </time>
+      </a>
+    ) : (
+      <a class="strip__rate link-quiet" href={`tel:${site.phone.landline.e164}`}>
+        Today's rate at the shop: {site.phone.landline.display}
+      </a>
+    )}
+    <p class="strip__contact from-md">
+      <a class="link-quiet" href={routes.stores}>
+        {countWord(openBranches.length)} branches: {emirateList}
+      </a>
+      <span class="strip__sep" aria-hidden="true">
+        ·
+      </span>
+      <a class="link-quiet" href={`tel:${site.phone.landline.e164}`}>
+        {site.phone.landline.display}
+      </a>
+    </p>
+  </div>
+</div>
+
+<style>
+  .strip {
+    background: var(--surface-plum-deep);
+    color: var(--ink-on-plum-muted);
+    font-size: var(--t-small);
+    line-height: 1;
+  }
+
+  .strip__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-block-size: var(--strip-h);
+  }
+
+  .strip__rate,
+  .strip__contact {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: var(--strip-h);
+    white-space: nowrap;
+  }
+
+  .strip__rate {
+    color: var(--ink-on-plum-muted);
+  }
+
+  .strip__figure {
+    font-weight: 500;
+    color: var(--gold-300);
+  }
+
+  .strip__date {
+    color: var(--ink-on-plum-muted);
+  }
+
+  .strip__date::before {
+    content: '·';
+    margin-inline-end: var(--space-2);
+  }
+
+  .strip a {
+    color: inherit;
+  }
+
+  .strip a:hover {
+    color: var(--gold-300);
+  }
+</style>

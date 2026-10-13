@@ -1,0 +1,403 @@
+---
+/**
+ * Journal article (design-spec §7.16). One page per entry in src/content/journal, rendered from
+ * Markdown. A 7/5 split puts the text in the wide column and a sticky "On this page" list in the
+ * gutter; the footer links the collections the article names and today's rate, then three more
+ * articles, then the enquiry block.
+ */
+import { getImage, Picture } from 'astro:assets';
+import { getEntries, render } from 'astro:content';
+
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import JournalCard from '@/components/sections/JournalCard.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import Icon from '@/components/ui/Icon.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getArticles, type Article } from '@/lib/content';
+import { formatAed, formatDate } from '@/lib/format';
+import { getRates } from '@/lib/rates';
+import { routes } from '@/lib/routes';
+import { articleSchema } from '@/lib/schema';
+import { whatsappUrl } from '@/lib/whatsapp';
+
+export async function getStaticPaths() {
+  const articles = await getArticles();
+  return articles.map((article) => ({
+    params: { slug: article.id },
+    props: { article, more: articles.filter((a) => a.id !== article.id).slice(0, 3) },
+  }));
+}
+
+interface Props {
+  article: Article;
+  /** Up to three other articles, newest first, for the footer. */
+  more: Article[];
+}
+
+const { article, more } = Astro.props;
+const { data } = article;
+
+const [{ Content, headings }, relatedCollections, rates] = await Promise.all([
+  render(article),
+  getEntries(data.relatedCollections),
+  getRates(),
+]);
+
+const headline = data.headline ?? data.title;
+const words = (article.body ?? '').split(/\s+/).filter(Boolean).length;
+const minutes = Math.max(1, Math.round(words / 200));
+const sections = headings.filter((h) => h.depth === 2);
+const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const canonical = new URL(routes.article(article.id), origin).toString();
+
+/** Rendition widths for the cover: the standard set below the source width, plus the source. */
+const coverWidths = [480, 800, 1200, 1600].filter((w) => w < data.cover.width);
+if (data.cover.width <= 1600) coverWidths.push(data.cover.width);
+
+/** One JPEG for the share card and the Article image, never wider than the source. */
+const share = await getImage({
+  src: data.cover,
+  width: Math.min(1200, data.cover.width),
+  format: 'jpeg',
+  layout: 'none',
+});
+const coverUrl = new URL(share.src, origin).toString();
+
+const rate = rates.latest;
+const rateDetail = rate
+  ? rates.stale
+    ? `22K was ${formatAed(rate.perGram['22k'])} per gram on ${formatDate(rate.date)}; the board has the latest.`
+    : `22K is ${formatAed(rate.perGram['22k'])} per gram today; 24K, 21K and 18K are on the board.`
+  : 'AED per gram for 24K, 22K, 21K and 18K, as posted on our board.';
+
+const related = [
+  ...relatedCollections.map((c) => ({
+    name: c.data.name,
+    detail: c.data.summary,
+    href: routes.collection(c.id),
+  })),
+  { name: 'Today’s gold rate in Dubai', detail: rateDetail, href: routes.goldRate },
+];
+
+const enquiry = whatsappUrl(
+  `${site.whatsapp.greeting} I read your article "${data.title}" and have a question.`,
+);
+
+const jsonLd = [
+  articleSchema({
+    headline,
+    description: data.description,
+    url: canonical,
+    image: coverUrl,
+    datePublished: data.pubDate,
+    dateModified: data.updatedDate,
+    author: data.author,
+  }),
+];
+---
+
+<BaseLayout
+  title={data.title}
+  description={data.description}
+  type="article"
+  image={coverUrl}
+  imageAlt={data.coverAlt}
+  publishedTime={data.pubDate}
+  modifiedTime={data.updatedDate}
+  jsonLd={jsonLd}
+>
+  <article class="article">
+    <div class="container">
+      <Breadcrumbs
+        items={[
+          { name: 'Journal', href: routes.journal },
+          { name: data.title, href: routes.article(article.id) },
+        ]}
+      />
+
+      <div class="article__grid">
+        <header class="article__head">
+          <Eyebrow>
+            <span>
+              <time datetime={isoDate(data.pubDate)}>{formatDate(data.pubDate)}</time>
+              {' · '}
+              {minutes} min read
+            </span>
+          </Eyebrow>
+          <h1 class="article__title">{headline}</h1>
+          <p class="article__standfirst lead">{data.description}</p>
+          <p class="article__byline small">By {data.author}</p>
+        </header>
+
+        <figure class="article__cover">
+          <Picture
+            src={data.cover}
+            alt={data.coverAlt}
+            formats={['avif', 'webp']}
+            widths={coverWidths}
+            sizes="(min-width: 64em) 58vw, 100vw"
+            fit="cover"
+            priority
+          />
+        </figure>
+
+        {sections.length >= 3 && (
+          <nav class="article__toc" aria-label="On this page">
+            <Eyebrow>On this page</Eyebrow>
+            <ol class="rows" role="list">
+              {sections.map((h, i) => (
+                <li>
+                  <a class="toc__link" href={`#${h.slug}`}>
+                    <span class="toc__no tabular" aria-hidden="true">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span class="toc__text">{h.text}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
+
+        <div class="article__body prose">
+          <Content />
+          {data.updatedDate && (
+            <p class="article__updated small">
+              Updated <time datetime={isoDate(data.updatedDate)}>{formatDate(data.updatedDate)}</time>.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <div class="related__head">
+          <Eyebrow>Related</Eyebrow>
+          <h2>The collections this article names, and today’s rate.</h2>
+          <p class="lead">
+            Every piece in them is weighed in front of you and priced at the posted rate for its
+            karat, plus the making charge and 5% VAT.
+          </p>
+        </div>
+        <ol class="rows" role="list">
+          {related.map((r) => (
+            <li>
+              <a class="related__link" href={r.href}>
+                <span class="related__text">
+                  <span class="related__name">{r.name}</span>
+                  <span class="related__detail small">{r.detail}</span>
+                </span>
+                <Icon name="arrow-right" class="related__arrow" />
+              </a>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  {more.length > 0 && (
+    <section class="section section--ruled">
+      <div class="container">
+        <SectionHead eyebrow="Journal" title="More from the counter.">
+          <Fragment slot="aside">
+            <a class="link-quiet section__link" href={routes.journal}>
+              All articles <Icon name="arrow-right" />
+            </a>
+          </Fragment>
+        </SectionHead>
+        <div class="more">
+          {more.map((a) => (
+            <JournalCard article={a} />
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="section">
+    <div class="container">
+      <EnquiryBlock
+        heading="Ask the counter about anything in this article."
+        text="Send the question on WhatsApp, with a photo if you have one. We reply with figures: the rate, the weight, the making charge."
+        whatsappUrl={enquiry}
+        whatsappLabel="Ask on WhatsApp"
+      />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .article {
+    padding-block-end: var(--section-y);
+  }
+
+  .article__grid {
+    display: grid;
+    gap: var(--space-6);
+    margin-block-start: var(--space-6);
+  }
+
+  .article__head {
+    max-inline-size: 44rem;
+  }
+
+  .article__title {
+    margin-block-end: var(--space-5);
+  }
+
+  .article__standfirst {
+    max-inline-size: 40rem;
+  }
+
+  .article__byline {
+    margin-block-start: var(--space-4);
+  }
+
+  .article__cover :global(img) {
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+  }
+
+  .toc__link {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-3);
+    align-items: baseline;
+    min-block-size: var(--tap);
+    padding-block: var(--space-3);
+    color: var(--ink-700);
+    text-decoration: none;
+  }
+
+  .toc__no {
+    font-family: var(--ff-display);
+    color: var(--gold-600);
+    min-inline-size: 2.2ch;
+  }
+
+  .toc__link:hover .toc__text {
+    color: var(--plum-700);
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+    text-underline-offset: 0.15em;
+  }
+
+  .article__updated {
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--rule-1);
+  }
+
+  /* Markdown tables keep their layout on wide screens; on phones they scroll inside their box
+     instead of pushing the page sideways. */
+  @media (max-width: 47.99em) {
+    .article__body :global(table) {
+      display: block;
+      overflow-x: auto;
+      border-block: 0;
+    }
+
+    .article__body :global(thead tr) {
+      border-block-start: 1px solid var(--rule-2);
+    }
+
+    .article__body :global(tbody tr:last-child) {
+      border-block-end: 1px solid var(--rule-2);
+    }
+  }
+
+  .related__head > h2 {
+    margin-block-end: var(--space-4);
+    max-inline-size: 20ch;
+  }
+
+  .related__head > .lead {
+    max-inline-size: 34rem;
+  }
+
+  .related__link {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-4);
+    align-items: center;
+    padding-block: var(--space-4);
+    color: var(--ink-900);
+    text-decoration: none;
+  }
+
+  .related__name {
+    display: block;
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .related__link:hover .related__name {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-700);
+    text-underline-offset: 0.15em;
+  }
+
+  .related__detail {
+    display: block;
+    margin-block-start: var(--space-1);
+    color: var(--ink-700);
+  }
+
+  .related__arrow {
+    color: var(--gold-600);
+  }
+
+  .section__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    color: var(--plum-700);
+  }
+
+  .more {
+    display: grid;
+    gap: var(--space-7) var(--grid-gap);
+  }
+
+  @media (min-width: 40em) {
+    .more {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 64em) {
+    .article__grid {
+      grid-template-columns: 7fr 5fr;
+      column-gap: calc(var(--grid-gap) * 2);
+      row-gap: var(--space-7);
+    }
+
+    .article__head,
+    .article__cover,
+    .article__body {
+      grid-column: 1;
+    }
+
+    /* Beside the body, sticking below the desktop header as the reader scrolls. */
+    .article__toc {
+      grid-column: 2;
+      grid-row: 3;
+      align-self: start;
+      position: sticky;
+      inset-block-start: calc(var(--header-h) + var(--space-6));
+    }
+  }
+</style>

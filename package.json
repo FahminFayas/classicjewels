@@ -1,0 +1,47 @@
+{
+  "name": "classicjewels-site",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "validate": "npm run check && npm run lint && npm run format:check",
+    "assets:placeholders": "node scripts/make-placeholders.mjs",
+    "assets:fetch-legacy": "node scripts/fetch-legacy-assets.mjs",
+    "assets:brand": "node scripts/generate-brand-assets.mjs",
+    "lighthouse": "node scripts/lighthouse.mjs",
+    "astro": "astro",
+    "rates:snapshot": "node scripts/snapshot-rate.mjs",
+    "audit": "node scripts/audit-dist.mjs"
+  },
+  "dependencies": {
+    "astro": "^7.3.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/sitemap": "^3.7.4",
+    "@eslint/js": "^10.0.1",
+    "@fontsource-variable/bodoni-moda": "^5.3.0",
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
+    "eslint": "^10.12.0",
+    "eslint-plugin-astro": "^3.2.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-astro": "^1.1.1",
+    "schema-dts": "^2.1.0",
+    "sharp": "^0.35.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.2"
+  },
+  "private": true,
+  "description": "Classic Jewels & Diamonds — brand website (Astro)"
+}

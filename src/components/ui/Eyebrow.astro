@@ -1,0 +1,48 @@
+---
+/**
+ * Section eyebrow: the only uppercase text on the site. A 24 px gold rule precedes it.
+ * Renders as a <p> by default; pass `as="span"` inside headings or links.
+ */
+export interface Props {
+  as?: 'p' | 'span' | 'div';
+  class?: string;
+}
+
+const { as: Tag = 'p', class: className } = Astro.props;
+---
+
+<Tag class:list={['eyebrow', className]}>
+  <slot />
+</Tag>
+
+<style>
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-block-end: var(--space-3);
+    font-family: var(--ff-text);
+    font-size: var(--t-eyebrow);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: var(--track-eyebrow);
+    text-transform: uppercase;
+    color: var(--gold-700);
+  }
+
+  .eyebrow::before {
+    content: '';
+    flex: none;
+    inline-size: 1.5rem;
+    block-size: 1px;
+    background: var(--rule-gold);
+  }
+
+  :global([data-surface='plum']) .eyebrow {
+    color: var(--gold-300);
+  }
+
+  :global([data-surface='plum']) .eyebrow::before {
+    background: var(--gold-300);
+  }
+</style>

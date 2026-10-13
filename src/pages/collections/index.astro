@@ -1,0 +1,254 @@
+---
+/**
+ * Collections index (design-spec §7.5): a typographic hero, then every collection as one
+ * numbered ruled row (wordmark stamp, name, origin, summary, karats, pieces online), each row a
+ * single link. The number of collections is read from content, never hard-coded.
+ */
+import { Image } from 'astro:assets';
+
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Hero from '@/components/sections/Hero.astro';
+import Button from '@/components/ui/Button.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import { emirates } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getDesignCollections, getFaqGroup, getProducts } from '@/lib/content';
+import { countWord, formatKarat } from '@/lib/format';
+import { routes } from '@/lib/routes';
+import { itemListSchema } from '@/lib/schema';
+import { whatsappGeneral } from '@/lib/whatsapp';
+
+const [collections, products, faq] = await Promise.all([
+  getDesignCollections(),
+  getProducts(),
+  getFaqGroup('collections'),
+]);
+
+const countByCollection = new Map<string, number>();
+for (const p of products) {
+  if (!p.data.collection) continue;
+  const id = p.data.collection.id;
+  countByCollection.set(id, (countByCollection.get(id) ?? 0) + 1);
+}
+
+/** Wordmark PNGs for the stamp cells, keyed by collection id (same pattern as the home page). */
+const wordmarks = import.meta.glob<{ default: ImageMetadata }>(
+  '@/assets/collections/wordmarks/*.png',
+  { eager: true },
+);
+const wordmarkFor = (id: string) =>
+  Object.entries(wordmarks).find(([path]) => path.endsWith(`/${id}.png`))?.[1].default;
+
+const shortName = (name: string) => name.replace(/ Collection$/i, '');
+const piecesLabel = (n: number) => (n === 0 ? 'Ask in store' : `${n} ${n === 1 ? 'piece' : 'pieces'}`);
+
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const count = countWord(collections.length);
+const places = emirates.join(', ').replace(/, ([^,]*)$/, ' and $1');
+
+const jsonLd = [
+  itemListSchema(
+    collections.map((c) => ({
+      name: c.data.name,
+      url: new URL(routes.collection(c.id), origin).toString(),
+    })),
+    'Jewellery collections',
+  ),
+];
+---
+
+<BaseLayout
+  title="Gold & Diamond Jewellery Collections in Dubai"
+  description={`${count} collections, from Kolkata filigree to Italian 18K chains, each listing its karats and hallmark fineness. See them in ${places}, or enquire on WhatsApp.`}
+  jsonLd={jsonLd}
+>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Collections', href: routes.collections }]} />
+  </div>
+
+  <Hero
+    eyebrow="Collections"
+    title="Collections"
+    display
+    lead={`${count} ways of working gold, each with its own weight, finish and karat.`}
+  >
+    <Button href={routes.jewellery} variant="secondary" iconEnd="arrow-right">
+      Browse by piece instead
+    </Button>
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <ol class="cindex rows" role="list">
+        {collections.map((c, i) => {
+          const mark = wordmarkFor(c.id);
+          const pieces = countByCollection.get(c.id) ?? 0;
+          return (
+            <li class="cindex__row">
+              <a class="cindex__link" href={routes.collection(c.id)}>
+                <span class="cindex__no" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span class="cindex__stamp">
+                  {mark ? (
+                    <Image
+                      src={mark}
+                      alt=""
+                      width={120}
+                      height={Math.round((mark.height / mark.width) * 120)}
+                      densities={[1, 2]}
+                    />
+                  ) : (
+                    <span class="cindex__stamp-text">{shortName(c.data.name)}</span>
+                  )}
+                </span>
+                <span class="cindex__text">
+                  <span class="cindex__name">{shortName(c.data.name)}</span>
+                  <span class="cindex__origin small">{c.data.origin}</span>
+                  <span class="cindex__summary">{c.data.summary}</span>
+                </span>
+                <span class="cindex__karat small tabular">
+                  {c.data.karats.map(formatKarat).join(' · ')}
+                </span>
+                <span class="cindex__count small tabular">{piecesLabel(pieces)}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ol>
+      <p class="cindex__note small">
+        Piece counts are what is listed on the site. The trays at each branch hold more; ask which
+        branch has a collection on the counter today.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <Faq heading={faq.data.heading} items={faq.data.items} />
+        <EnquiryBlock
+          compact
+          whatsappUrl={whatsappGeneral()}
+          text="Name a collection and we will send photos of what is on the tray, with weights, from the branch nearest you."
+        />
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .cindex__link {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'no stamp'
+      'no text'
+      'no meta';
+    gap: var(--space-3) var(--space-4);
+    align-items: start;
+    padding-block: var(--space-5);
+    color: var(--ink-900);
+    text-decoration: none;
+  }
+
+  .cindex__no {
+    grid-area: no;
+    font-family: var(--ff-display);
+    font-size: var(--t-h2);
+    font-variant-numeric: tabular-nums lining-nums;
+    line-height: 1;
+    color: var(--gold-600);
+    min-inline-size: 2.2ch;
+  }
+
+  .cindex__stamp {
+    grid-area: stamp;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 10rem;
+    min-block-size: 3.5rem;
+    padding: var(--space-2) var(--space-3);
+    background: var(--surface-0);
+    border: 1px solid var(--rule-1);
+  }
+
+  .cindex__stamp :global(img) {
+    max-inline-size: 7.5rem;
+    block-size: auto;
+  }
+
+  .cindex__stamp-text {
+    font-family: var(--ff-display);
+    font-size: var(--t-title);
+    color: var(--plum-700);
+  }
+
+  .cindex__text {
+    grid-area: text;
+    display: grid;
+    gap: var(--space-1);
+    min-inline-size: 0;
+  }
+
+  .cindex__name {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .cindex__link:hover .cindex__name {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-700);
+    text-underline-offset: 0.15em;
+  }
+
+  .cindex__summary {
+    color: var(--ink-700);
+    max-inline-size: 52ch;
+  }
+
+  .cindex__karat,
+  .cindex__count {
+    white-space: nowrap;
+  }
+
+  .cindex__karat {
+    grid-area: meta;
+  }
+
+  .cindex__count {
+    grid-area: meta;
+    justify-self: end;
+  }
+
+  .cindex__note {
+    margin-block-start: var(--space-5);
+    max-inline-size: 52ch;
+  }
+
+  @media (min-width: 48em) {
+    .cindex__link {
+      grid-template-columns: 3rem 10rem minmax(0, 1fr) auto auto;
+      grid-template-areas: 'no stamp text karat count';
+      column-gap: var(--space-6);
+      align-items: start;
+    }
+
+    .cindex__karat {
+      grid-area: karat;
+      min-inline-size: 7ch;
+      padding-block-start: var(--space-1);
+    }
+
+    .cindex__count {
+      grid-area: count;
+      min-inline-size: 7ch;
+      padding-block-start: var(--space-1);
+      text-align: end;
+    }
+  }
+</style>

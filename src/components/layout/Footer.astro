@@ -1,0 +1,299 @@
+---
+/**
+ * Site footer on the deep plum surface: link columns, every branch, the registered office
+ * (byte-identical to the store pages and the JSON-LD), social links and the legal row.
+ */
+import Icon from '@/components/ui/Icon.astro';
+import Logo from '@/components/ui/Logo.astro';
+import { branches, flagship, site } from '@/data/site';
+import { getDesignCollections, getNavCategories } from '@/lib/content';
+import { routes } from '@/lib/routes';
+import { whatsappGeneral } from '@/lib/whatsapp';
+
+const [categories, collections] = await Promise.all([getNavCategories(), getDesignCollections()]);
+const year = new Date().getFullYear();
+const listFormat = new Intl.ListFormat('en-GB', { style: 'long', type: 'conjunction' });
+
+const services = [
+  { label: 'Gold exchange', href: routes.goldExchange },
+  { label: 'Custom jewellery', href: routes.customJewellery },
+  { label: 'Occasions', href: routes.occasions },
+  { label: 'Offers', href: routes.offers },
+  { label: "Today's gold rate", href: routes.goldRate },
+  { label: 'Coins & bars', href: routes.goldCoinsBars },
+];
+const company = [
+  { label: 'About', href: routes.about },
+  { label: 'Our promise', href: routes.promise },
+  { label: 'Journal', href: routes.journal },
+  { label: 'Contact', href: routes.contact },
+];
+const legal = [
+  { label: 'Privacy policy', href: routes.privacy },
+  { label: 'Terms', href: routes.terms },
+  { label: 'Disclaimer', href: routes.disclaimer },
+];
+const hours = flagship.hours;
+---
+
+<footer class="footer" data-surface="plum">
+  <div class="container">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <Logo tone="light" />
+        <p class="footer__tag">{site.tagline}.</p>
+        <address class="footer__address">
+          <span class="footer__label">Registered office and flagship</span>
+          <span>{site.address.street}</span>
+          <span>
+            {site.address.locality}, {site.address.region}, {site.address.countryName}
+          </span>
+        </address>
+        <ul class="footer__contact" role="list">
+          <li>
+            <a href={`tel:${site.phone.landline.e164}`}>
+              <Icon name="phone" /> {site.phone.landline.display}
+            </a>
+          </li>
+          <li>
+            <a href={whatsappGeneral()} target="_blank" rel="noopener">
+              <Icon name="whatsapp" /> {site.whatsapp.display}
+            </a>
+          </li>
+          <li>
+            <a href={`mailto:${site.email}`}>
+              <Icon name="mail" /> {site.email}
+            </a>
+          </li>
+        </ul>
+        <p class="footer__hours small">
+          {hours?.confirmed
+            ? `Deira: ${hours.weekly[0]?.opens.slice(0, 5)}–${hours.weekly[0]?.closes.slice(0, 5)} daily.`
+            : 'Branch hours are on each store page. Call ahead for Friday timings.'}
+        </p>
+      </div>
+
+      <nav class="footer__cols" aria-label="Footer">
+        <div class="footer__col">
+          <p class="footer__title">Stores</p>
+          <ul role="list">
+            {branches.map((b) => (
+              <li>
+                {b.status === 'open' ? (
+                  <a href={routes.store(b.id)}>{b.name}</a>
+                ) : (
+                  <span class="footer__soon">{b.name} · opening soon</span>
+                )}
+              </li>
+            ))}
+            <li>
+              <a href={routes.stores}>All stores</a>
+            </li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <p class="footer__title">Jewellery</p>
+          <ul role="list">
+            {categories.map((c) => (
+              <li>
+                <a href={routes.category(c.id)}>{c.data.shortName ?? c.data.name}</a>
+              </li>
+            ))}
+            <li>
+              <a href={routes.jewellery}>All jewellery</a>
+            </li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <p class="footer__title">Collections</p>
+          <ul role="list">
+            {collections.map((c) => (
+              <li>
+                <a href={routes.collection(c.id)}>{c.data.name.replace(/ Collection$/i, '')}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div class="footer__col">
+          <p class="footer__title">Services</p>
+          <ul role="list">
+            {services.map((s) => (
+              <li>
+                <a href={s.href}>{s.label}</a>
+              </li>
+            ))}
+          </ul>
+          <p class="footer__title footer__title--gap">Company</p>
+          <ul role="list">
+            {company.map((s) => (
+              <li>
+                <a href={s.href}>{s.label}</a>
+              </li>
+            ))}
+          </ul>
+          <p class="footer__title footer__title--gap">Follow</p>
+          <ul role="list">
+            {site.social.map((s) => (
+              <li>
+                <a href={s.url} target="_blank" rel="noopener me">
+                  {s.label} <Icon name="external" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <div class="footer__bottom small">
+      <p>Payment in store: {listFormat.format(site.paymentAccepted)}.</p>
+      <p>
+        {site.legalName} · part of {site.group.name} · Registration no. {site.registrationNumber} ·
+        ©{year}
+      </p>
+      <ul class="footer__legal" role="list">
+        {legal.map((l) => (
+          <li>
+            <a href={l.href}>{l.label}</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    margin-block-start: var(--section-y);
+    padding-block: var(--space-8) var(--space-7);
+    background: var(--surface-plum-deep);
+    color: var(--ink-on-plum-muted);
+    border-block-start: 1px solid var(--rule-gold);
+  }
+
+  .footer__top {
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  .footer__brand {
+    display: grid;
+    gap: var(--space-4);
+    align-content: start;
+  }
+
+  .footer__tag {
+    color: var(--ink-on-plum);
+  }
+
+  .footer__address {
+    display: grid;
+    font-size: var(--t-small);
+  }
+
+  .footer__label {
+    margin-block-end: var(--space-1);
+    color: var(--gold-300);
+  }
+
+  .footer__contact {
+    display: grid;
+    gap: var(--space-2);
+    font-size: var(--t-small);
+  }
+
+  .footer a {
+    color: var(--ink-on-plum);
+    text-decoration: none;
+  }
+
+  .footer a:hover {
+    color: var(--gold-300);
+    text-decoration: underline;
+    text-decoration-color: var(--gold-300);
+  }
+
+  .footer__hours {
+    color: var(--ink-on-plum-muted);
+    max-inline-size: 28rem;
+  }
+
+  .footer__cols {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+
+  .footer__col ul {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .footer__col a,
+  .footer__soon {
+    display: inline-block;
+    padding-block: var(--space-1);
+    font-size: var(--t-small);
+  }
+
+  .footer__soon {
+    color: var(--ink-on-plum-muted);
+  }
+
+  .footer__title {
+    margin-block-end: var(--space-3);
+    font-size: var(--t-eyebrow);
+    font-weight: 500;
+    letter-spacing: var(--track-eyebrow);
+    text-transform: uppercase;
+    color: var(--gold-300);
+  }
+
+  .footer__title--gap {
+    margin-block-start: var(--space-5);
+  }
+
+  .footer__bottom {
+    display: grid;
+    gap: var(--space-2);
+    margin-block-start: var(--space-8);
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule-on-plum);
+    color: var(--ink-on-plum-muted);
+  }
+
+  .footer__legal {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+
+  @media (min-width: 48em) {
+    .footer__cols {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 64em) {
+    .footer__top {
+      grid-template-columns: 4fr 8fr;
+      column-gap: calc(var(--grid-gap) * 2);
+    }
+
+    .footer__bottom {
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: var(--space-6);
+    }
+
+    .footer__bottom p:nth-child(2) {
+      text-align: center;
+    }
+  }
+
+  @media (max-width: 63.99em) {
+    .footer {
+      padding-block-end: calc(var(--space-7) + var(--action-bar-h));
+    }
+  }
+</style>

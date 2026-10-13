@@ -1,0 +1,446 @@
+---
+/**
+ * Our promise: the six commitments from site.ts, each with what it covers, what it does not and
+ * how to claim it. Design-spec §7.10 collapsed into one page (the ledger rows link to #ids here).
+ * Facts about the law come from docs/research/facts-and-sources.md; anything the owner has not
+ * confirmed is phrased as "ask in store".
+ */
+import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Hero from '@/components/sections/Hero.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getFaqGroup } from '@/lib/content';
+import { countWord } from '@/lib/format';
+import { KARAT_META, type Karat } from '@/lib/gold-rate';
+import { routes } from '@/lib/routes';
+import { itemListSchema } from '@/lib/schema';
+
+const faq = await getFaqGroup('our-promise');
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+
+const years = site.group.yearsInGold;
+const days = site.returnPolicy.days;
+const law = site.returnPolicy.lawReference;
+
+interface Terms {
+  covers: string[];
+  excludes: string[];
+  claim: string[];
+  links?: { label: string; href: string }[];
+}
+
+const terms: Record<string, Terms> = {
+  'certified-diamonds': {
+    covers: [
+      'Every diamond we sell is tested on an instrument at the counter before it is sold. Ask to watch the test; most customers do.',
+      'Larger diamonds come with a grading report from an independent laboratory, stating carat, colour, clarity and cut.',
+      'Keep the report with your invoice. Both are needed for a return or an exchange.',
+    ],
+    excludes: [
+      'The counter test shows that a stone is a diamond; it is not a grading. Only the laboratory report states carat, colour, clarity and cut.',
+      'Small stones and melee are sold tested, not certified. Ask in store which stones in a piece carry a report.',
+      'The laboratory varies by stone. Ask which laboratory issued the report for the piece you are considering, and check the report number on that laboratory’s own website.',
+      'Stones bought elsewhere: ask in store whether we can test them for you.',
+    ],
+    claim: [
+      'Ask to see the test at the counter before you pay.',
+      'For a stone with a report, ask for the report and check its number against the laboratory’s verification page.',
+      'If a question comes up later, bring the piece, the invoice and the report to any branch, or WhatsApp us with the invoice number.',
+    ],
+    links: [{ label: 'Diamond jewellery', href: routes.diamonds }],
+  },
+  'hallmark-916': {
+    covers: [
+      'Every piece of gold jewellery we sell carries a hallmark, as UAE Federal Law No. 11 of 2015 requires. 22K is stamped 916: 916 parts per thousand, or 91.6% gold.',
+      '18K is stamped 750, 21K 875 and 24K 999. The stamp is applied after assay, so the purity is verified rather than promised.',
+      'Dubai Municipality’s Dubai Central Laboratory inspects jewellers and their scales. Your invoice states the weight and the fineness of what you bought.',
+    ],
+    excludes: [
+      'Pieces under one gram of gold are exempt from stamping under the law, and a piece too small to stamp comes with an identification card instead.',
+      'The hallmark certifies the gold, not the stones set in it, and not the weight. Stones are covered by the diamond promise; the weight is on the invoice.',
+      'Plating and surface finishes are not part of the hallmark. A rhodium finish on white gold is a coating over the stamped gold.',
+    ],
+    claim: [
+      'Ask to see the stamp before you pay. On a very small piece, ask for the identification card.',
+      'If you ever doubt a piece we sold, bring it with the invoice to any branch and we will test it in front of you.',
+      'Any piece can also be tested independently by Dubai Municipality’s Dubai Central Laboratory.',
+    ],
+    links: [{ label: 'Today’s rate by karat', href: routes.goldRate }],
+  },
+  'lifetime-maintenance': {
+    covers: [
+      'Cleaning, polishing, stone tightening and minor repairs on any piece bought from us, for as long as you own it.',
+      'There is no charge for routine care. Bring the piece in whenever it needs attention, at any branch.',
+      'Surface finishes wear with daily use: rhodium on white gold, matte and antique finishes. Restoring them is maintenance, not a defect.',
+    ],
+    excludes: [
+      'Accidental damage, and alterations made by another jeweller: ask in store before you assume these are covered.',
+      'Resizing, remodelling and replacing a lost stone are separate work, quoted before we start.',
+      'Wear of a finish is not a defect. Your rights for a genuinely defective piece under UAE consumer law are separate and unaffected.',
+    ],
+    claim: [
+      'Bring the piece and, if you have it, the invoice to any branch.',
+      'Tell us what you have noticed: a loose stone, a dull finish, a bent clasp.',
+      'Message us on WhatsApp first if you want to know whether a particular repair falls under maintenance.',
+    ],
+    links: [{ label: 'Remaking old jewellery', href: routes.customJewellery }],
+  },
+  'gold-exchange': {
+    covers: [
+      'Any old gold jewellery, bought from us or anywhere else, in any condition, with or without its receipt.',
+      'We test its purity and weigh it in front of you, then credit its full gold weight at the day’s rate for its karat against a new piece. No deduction for wear or design.',
+      `The Classic Group has bought and refined scrap gold in Dubai for over ${years} years; we price old gold the way traders do.`,
+    ],
+    excludes: [
+      'The credit is against a new piece. Terms for a cash sale of old gold differ; ask before you come in.',
+      'Making charges and 5% VAT apply to the new piece as normal. The credit covers the gold value only.',
+      'Stones and non-gold parts are not gold weight. Ask in store how stones in an old piece are treated before it is weighed.',
+    ],
+    claim: [
+      'Bring the gold to any branch, with or without the receipt, and photo identification (Emirates ID or passport).',
+      'Watch the test and the weighing, and ask for the weight and the rate used to be shown on the new invoice.',
+      'If you want an idea before you travel, WhatsApp first with the karat stamped on the piece and its approximate weight.',
+    ],
+    links: [
+      { label: 'How gold exchange works', href: routes.goldExchange },
+      { label: 'Today’s rate', href: routes.goldRate },
+    ],
+  },
+  returns: {
+    covers: [
+      `Unworn pieces in their original condition, with the invoice and, where one was issued, the certificate, returned within ${days} days of purchase.`,
+      `This is our own commitment, over and above the law. It never limits your rights for defective goods under ${law}, under which a defective item must be repaired, replaced or refunded.`,
+      'The policy is the same at every branch. Ask in store whether a return must go back to the branch of purchase.',
+    ],
+    excludes: [
+      'Customised, engraved and resized pieces, which are exchange-only.',
+      'Pieces that have been worn, altered or damaged, or that come back without the invoice or the certificate.',
+      'Coins, bars and deposits on a booked rate: ask in store how these are treated, before you buy.',
+    ],
+    claim: [
+      `Bring the piece, the invoice and the certificate to any branch within ${days} days of the invoice date.`,
+      'Tell us whether you want a refund or an exchange. If how a refund is paid matters to you, ask in store before you buy.',
+      `For a defective piece at any time, bring it in with the invoice; your statutory rights apply regardless of the ${days} days.`,
+    ],
+    links: [{ label: 'Terms of use', href: routes.terms }],
+  },
+  'easy-exchange': {
+    covers: [
+      'A piece bought from us can be exchanged for a different design from our trays. Its gold is credited by weight at the day’s rate for its karat against the new piece.',
+      'Customised, engraved and resized pieces, which cannot be returned, can be exchanged this way.',
+      'No forms. Bring the piece and the invoice.',
+    ],
+    excludes: [
+      'The credit covers the gold value. Ask in store how the making charge and VAT paid on the original piece are treated; making charges and VAT apply to the new piece.',
+      'Diamond and stone-set pieces: the stones are valued separately from the gold. Ask in store how a stone-set piece is credited before you buy.',
+      'Pieces altered by another jeweller: ask in store before you bring them in.',
+    ],
+    claim: [
+      'Bring the piece and its invoice to any branch and choose the new design.',
+      'We weigh the old piece and credit its gold at the day’s rate. Any difference is paid at the counter; if the new piece is lighter, ask in store how the balance is handled.',
+      'Want an idea first? Message us on WhatsApp with the invoice number and the piece you have in mind.',
+    ],
+    links: [{ label: 'All jewellery', href: routes.jewellery }],
+  },
+};
+
+const rows = site.promises.map((p, i) => {
+  const t = terms[p.id];
+  if (!t) throw new Error(`No terms written for promise "${p.id}" on /our-promise/`);
+  return { p, t, no: String(i + 1).padStart(2, '0') };
+});
+
+/** Fineness table for the hallmark section: 24K to 18K, as stamped. */
+const stampRows = (['24k', '22k', '21k', '18k'] as Karat[]).map((k) => ({
+  ...KARAT_META[k],
+  purity: `${(Number.parseInt(KARAT_META[k].fineness, 10) / 10).toFixed(1)}%`,
+}));
+
+const jsonLd = [
+  itemListSchema(
+    site.promises.map((p) => ({
+      name: p.title,
+      url: `${new URL(routes.promise, origin).toString()}#${p.id}`,
+    })),
+    'Our promises',
+  ),
+];
+
+const title = 'Our Promises: Hallmark, Diamonds, Returns and Exchange';
+const description = `${countWord(site.promises.length)} written commitments: UAE hallmark, tested diamonds, ${days}-day returns, lifetime care and old gold credited by weight, at every branch. Ask on WhatsApp.`;
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Our promise', href: routes.promise }]} />
+  </div>
+
+  <Hero
+    eyebrow="Our terms, in writing"
+    title="Our terms, in writing"
+    lead={`${countWord(site.promises.length)} commitments, each with its conditions stated. They apply at every branch.`}
+  />
+
+  <section class="section">
+    <div class="container">
+      <AssuranceLedger />
+    </div>
+  </section>
+
+  {rows.map(({ p, t, no }) => (
+    <section class="section section--ruled promise" id={p.id}>
+      <div class="container">
+        <div class="promise__head">
+          <span class="promise__no" aria-hidden="true">
+            {no}
+          </span>
+          <div class="promise__text">
+            <h2>{p.title}</h2>
+            <p class="lead">{p.detail}</p>
+          </div>
+        </div>
+        <div class="terms">
+          <div class="terms__block">
+            <h3>What it covers</h3>
+            <ul class="terms__list" role="list">
+              {t.covers.map((item) => (
+                <li>
+                  <Icon name="c-ring" class="terms__glyph" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div class="terms__block">
+            <h3>What it does not cover</h3>
+            <ul class="terms__list" role="list">
+              {t.excludes.map((item) => (
+                <li>
+                  <Icon name="minus" class="terms__glyph" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div class="terms__block">
+            <h3>How to claim it</h3>
+            <ol class="terms__list terms__list--steps" role="list">
+              {t.claim.map((item, i) => (
+                <li>
+                  <span class="terms__step tabular" aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+        {p.id === 'hallmark-916' && (
+          <div class="stamp">
+            <h3>Reading the stamp</h3>
+            <table class="stamp__table">
+              <caption class="sr-only">Karat, fineness stamp and gold content</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Karat</th>
+                  <th scope="col">Stamp</th>
+                  <th scope="col">Gold content</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stampRows.map((r) => (
+                  <tr>
+                    <th scope="row">{r.label}</th>
+                    <td class="tabular">{r.fineness}</td>
+                    <td class="tabular">{r.purity}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p class="caption">
+              Parts per thousand of gold, as stamped under UAE Federal Law No. 11 of 2015 and
+              inspected by Dubai Municipality’s Dubai Central Laboratory.
+            </p>
+          </div>
+        )}
+        {t.links && (
+          <p class="promise__links small">
+            {t.links.map((l) => (
+              <a href={l.href}>
+                {l.label} <Icon name="arrow-right" />
+              </a>
+            ))}
+          </p>
+        )}
+      </div>
+    </section>
+  ))}
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <Faq heading={faq.data.heading} items={faq.data.items} />
+        <EnquiryBlock
+          compact
+          text="Ask about any of these terms before you buy. WhatsApp is fastest during shop hours."
+        />
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .promise__head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-4);
+    align-items: start;
+    margin-block-end: var(--space-7);
+  }
+
+  .promise__no {
+    font-family: var(--ff-display);
+    font-size: var(--t-h2);
+    font-weight: 400;
+    line-height: 1.12;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-600);
+    min-inline-size: 2.2ch;
+  }
+
+  .promise__text {
+    max-inline-size: 44rem;
+  }
+
+  .promise__text .lead {
+    margin-block-start: var(--space-4);
+  }
+
+  /* Three ruled sub-blocks: one column on phones, three with hairlines between on wide screens. */
+  .terms {
+    display: grid;
+    border-block-start: 1px solid var(--rule-1);
+  }
+
+  .terms__block {
+    min-inline-size: 0;
+    padding-block: var(--space-5);
+    border-block-end: 1px solid var(--rule-1);
+  }
+
+  .terms__block h3 {
+    font-family: var(--ff-text);
+    font-size: var(--t-title);
+    font-weight: 500;
+    margin-block-end: var(--space-4);
+  }
+
+  .terms__list {
+    display: grid;
+    gap: var(--space-3);
+    color: var(--ink-700);
+  }
+
+  .terms__list li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-3);
+    align-items: start;
+  }
+
+  .terms__glyph {
+    flex: none;
+    margin-block-start: 0.3em;
+    color: var(--gold-600);
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+  }
+
+  .terms__step {
+    font-family: var(--ff-display);
+    font-size: var(--t-title);
+    line-height: 1.5;
+    color: var(--gold-700);
+    min-inline-size: 1.5ch;
+  }
+
+  .stamp {
+    margin-block-start: var(--space-6);
+    max-inline-size: 32rem;
+  }
+
+  .stamp h3 {
+    font-family: var(--ff-text);
+    font-size: var(--t-title);
+    font-weight: 500;
+    margin-block-end: var(--space-4);
+  }
+
+  .stamp__table {
+    font-size: var(--t-small);
+    border-block: 1px solid var(--rule-2);
+  }
+
+  .stamp__table th,
+  .stamp__table td {
+    padding-block: var(--space-2);
+    padding-inline: var(--space-3);
+    text-align: start;
+    border-block-end: 1px solid var(--rule-1);
+  }
+
+  .stamp__table thead th {
+    background: var(--surface-2);
+    font-weight: 500;
+  }
+
+  .stamp__table tbody th {
+    font-weight: 500;
+  }
+
+  .stamp .caption {
+    margin-block-start: var(--space-3);
+  }
+
+  .promise__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-block-start: var(--space-5);
+  }
+
+  .promise__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-block-size: var(--tap);
+    font-weight: 500;
+    color: var(--plum-700);
+    text-decoration: none;
+  }
+
+  .promise__links a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+  }
+
+  @media (min-width: 64em) {
+    .terms {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .terms__block {
+      padding-inline-end: var(--space-6);
+    }
+
+    .terms__block + .terms__block {
+      padding-inline-start: var(--space-6);
+      border-inline-start: 1px solid var(--rule-1);
+    }
+  }
+</style>

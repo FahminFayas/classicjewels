@@ -1,0 +1,439 @@
+---
+/**
+ * Product detail (/jewellery/{category}/{slug}/), design-spec §7.7.
+ *
+ * Desktop: gallery in the 7-column block, a sticky 5-column block with the facts and the ways to
+ * enquire. Mobile: the DOM order below is the reading order (eyebrow, H1, gallery, description,
+ * spec, price, enquiry, reserve, ledger, care).
+ *
+ * No price is printed: pieces are priced at the day's rate on the net gold weight plus a making
+ * charge. When a net (or gross) weight is known, the gold value at today's rate is baked in.
+ */
+import type { InferGetStaticPropsType } from 'astro';
+
+import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import ProductCard from '@/components/sections/ProductCard.astro';
+import ProductGallery from '@/components/sections/ProductGallery.astro';
+import SpecTable from '@/components/sections/SpecTable.astro';
+import TrayGrid from '@/components/sections/TrayGrid.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import Icon from '@/components/ui/Icon.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { openBranches, site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import {
+  getFaqGroup,
+  getProducts,
+  getProductsByCategory,
+  getProductsByCollection,
+  productPath,
+  resolveProductRefs,
+} from '@/lib/content';
+import { formatAed, formatGrams, formatKarat, karatToFineness } from '@/lib/format';
+import type { Karat } from '@/lib/gold-rate';
+import { getRates } from '@/lib/rates';
+import { routes } from '@/lib/routes';
+import { productSchema } from '@/lib/schema';
+import { TITLE_MAX } from '@/lib/seo';
+import { whatsappForProduct, whatsappUrl } from '@/lib/whatsapp';
+
+export async function getStaticPaths() {
+  const products = await getProducts();
+  return products.map((product) => ({
+    params: { category: product.data.category.id, slug: product.id },
+    props: { product },
+  }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { product } = Astro.props as Props;
+const { data } = product;
+
+const [{ category, collection }, faq, rates] = await Promise.all([
+  resolveProductRefs(product),
+  getFaqGroup('product'),
+  getRates(),
+]);
+
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const url = new URL(productPath(product), origin).toString();
+const categoryName = category.data.shortName ?? category.data.name;
+const collectionName = collection?.data.name;
+const collectionShort = collectionName?.replace(/ (Collection|Jewellery)$/i, '');
+const fineness = karatToFineness(data.karat);
+const colour = data.colour.charAt(0).toUpperCase() + data.colour.slice(1).replace('-', ' ');
+const sold = data.availability === 'sold';
+
+/* ---------- Gold value at today's rate (only when a weight is known) ---------- */
+const rate = rates.latest;
+const pricedWeight = data.netWeightGrams ?? data.weightGrams;
+const perGram = rate ? rate.perGram[`${data.karat}k` as Karat] : undefined;
+const goldValue =
+  !sold && perGram && pricedWeight ? formatAed(Math.round(perGram * pricedWeight)) : null;
+
+/* ---------- Related pieces: same collection, else same category ---------- */
+const pool = collection
+  ? await getProductsByCollection(collection.id)
+  : await getProductsByCategory(category.id);
+let related = pool.filter((p) => p.id !== product.id).slice(0, 4);
+if (related.length < 2) {
+  related = (await getProductsByCategory(category.id))
+    .filter((p) => p.id !== product.id)
+    .slice(0, 4);
+}
+const relatedHeading =
+  collection && pool.length > 1
+    ? `Also in ${collectionShort}`
+    : `More ${categoryName.toLowerCase()}`;
+const relatedHref =
+  collection && pool.length > 1 ? routes.collection(collection.id) : routes.category(category.id);
+
+/* ---------- SEO ---------- */
+const longTitle = `${data.name}, ${formatKarat(data.karat)} ${categoryName}`;
+const title = longTitle.length <= TITLE_MAX ? longTitle : data.name;
+const firstImage = data.images[0]!;
+const imageUrl = new URL(firstImage.src.src, origin).toString();
+
+const jsonLd = [
+  productSchema({
+    name: data.name,
+    description: data.description,
+    url,
+    images: data.images.map((img) => new URL(img.src.src, origin).toString()),
+    sku: data.sku,
+    karat: data.karat,
+    fineness,
+    material: data.material === 'gold' ? 'gold' : `gold with ${data.material}`,
+    colour: data.colour,
+    category: category.data.name,
+    collection: collectionName,
+    weightGrams: data.weightGrams,
+    stones: data.stones,
+    certification: data.certification,
+  }),
+];
+
+/* ---------- Enquiry links ---------- */
+const enquiryUrl = whatsappForProduct({ name: data.name, sku: data.sku, url });
+const reserveUrl = (branchName: string) =>
+  whatsappUrl(
+    `${site.whatsapp.greeting} I’d like to view the ${data.name} (ref ${data.sku}) at your ${branchName} branch. Is it available there?`,
+  );
+---
+
+<BaseLayout
+  title={title}
+  description={data.description}
+  type="product"
+  image={imageUrl}
+  imageAlt={firstImage.alt}
+  jsonLd={jsonLd}
+>
+  <div class="container container--wide">
+    <Breadcrumbs
+      items={[
+        { name: 'Jewellery', href: routes.jewellery },
+        { name: categoryName, href: routes.category(category.id) },
+        { name: data.name, href: productPath(product) },
+      ]}
+    />
+  </div>
+
+  <article class="container container--wide product">
+    <header class="product__head">
+      <Eyebrow>{collectionShort ? `${collectionShort} · ${categoryName}` : categoryName}</Eyebrow>
+      <h1 class="product__title">{data.name}</h1>
+      <p class="product__facts tabular">
+        {formatKarat(data.karat)} · hallmark {fineness}
+        {data.weightGrams && <> · {formatGrams(data.weightGrams)}</>}
+        {sold && <> · Sold</>}
+        {data.availability === 'made-to-order' && <> · Made to order</>}
+      </p>
+    </header>
+
+    <div class="product__media">
+      <ProductGallery images={data.images} name={data.name} />
+    </div>
+
+    <div class="product__info">
+      <div class="product__body">
+        <p class="product__description lead">{data.description}</p>
+        {product.body && product.body.trim().length > 0 && (
+          <p class="product__story">{product.body.trim()}</p>
+        )}
+      </div>
+
+      <SpecTable
+        caption={`Specification of the ${data.name}`}
+        rows={[
+          { label: 'Karat and hallmark', value: `${formatKarat(data.karat)} · ${fineness}` },
+          { label: 'Metal colour', value: colour },
+          { label: 'Plating or finish coat', value: data.plating },
+          { label: 'Gross weight', value: data.weightGrams ? formatGrams(data.weightGrams) : null },
+          {
+            label: 'Net gold weight',
+            value: data.netWeightGrams ? formatGrams(data.netWeightGrams) : null,
+          },
+          { label: 'Stones', value: data.stones },
+          { label: 'Certificate', value: data.certification },
+          { label: 'Finish', value: data.finish },
+          { label: 'Collection', value: collectionShort },
+          { label: 'Reference', value: data.sku },
+        ]}
+      />
+
+      <div class="price">
+        {sold ? (
+          <p class="price__line">
+            Sold. Ask for a similar piece and we will send what is in the trays.
+          </p>
+        ) : (
+          <>
+            <p class="price__line">
+              Priced at <a href={routes.goldRate}>today’s {formatKarat(data.karat)} rate</a> × net
+              gold weight, plus making charge and 5% VAT, quoted in store as three separate lines.
+            </p>
+            {goldValue && perGram && pricedWeight && (
+              <p class="price__value tabular">
+                <span class="price__label">Gold value today</span>
+                <span class="price__figure">{goldValue}</span>
+                <span class="small">
+                  {formatGrams(pricedWeight)} × AED{' '}
+                  <span data-rate={`${data.karat}k`}>{perGram.toFixed(2)}</span>/g, before making
+                  charge and VAT
+                </span>
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      <EnquiryBlock
+        compact
+        text="Send the reference on WhatsApp and we reply with the weight, today’s price and which branch has it."
+        whatsappUrl={enquiryUrl}
+        whatsappLabel={sold ? 'Ask for a similar piece' : 'Enquire on WhatsApp'}
+        reference={data.sku}
+      />
+
+      {!sold && (
+        <div class="reserve">
+          <h2 class="reserve__title">Reserve to view</h2>
+          <p class="small">Pieces move between branches. Pick one and we will have it ready.</p>
+          <ul class="rows reserve__list" role="list">
+            {openBranches.map((b) => (
+              <li>
+                <a
+                  class="reserve__link link-quiet"
+                  href={reserveUrl(b.name)}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <span>
+                    <span class="reserve__name">{b.name}</span>
+                    <span class="small reserve__emirate">{b.emirate}</span>
+                  </span>
+                  <Icon name="whatsapp" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <AssuranceLedger variant="condensed" />
+
+      <div class="care">
+        <h2 class="care__title">Care and warranty</h2>
+        <p class="small">
+          Surface finishes and plating wear with time; they are restored free under our lifetime
+          cleaning and polishing. Bring the piece and its invoice to any branch. Stone settings are
+          checked and tightened at the same visit.
+        </p>
+      </div>
+    </div>
+  </article>
+
+  {related.length > 0 && (
+    <section class="section section--ruled">
+      <div class="container container--wide">
+        <SectionHead eyebrow="From the same trays" title={relatedHeading}>
+          <Fragment slot="aside">
+            <a class="link-quiet section__link" href={relatedHref}>
+              See them all <Icon name="arrow-right" />
+            </a>
+          </Fragment>
+        </SectionHead>
+        <TrayGrid>
+          {related.map((p) => (
+            <ProductCard product={p} collectionName={collectionName} rate={rate} />
+          ))}
+        </TrayGrid>
+      </div>
+    </section>
+  )}
+
+  <section class="section section--ruled">
+    <div class="container">
+      <Faq heading={faq.data.heading} items={faq.data.items} />
+    </div>
+  </section>
+
+  <script src="@/scripts/form.ts"></script>
+</BaseLayout>
+
+<style>
+  .product {
+    display: grid;
+    gap: var(--space-6);
+    padding-block: var(--space-4) var(--section-y);
+  }
+
+  .product__head {
+    min-inline-size: 0;
+  }
+
+  .product__title {
+    font-size: var(--t-h1);
+  }
+
+  .product__facts {
+    margin-block-start: var(--space-3);
+    color: var(--ink-700);
+  }
+
+  .product__media,
+  .product__info {
+    min-inline-size: 0;
+  }
+
+  .product__info {
+    display: grid;
+    gap: var(--space-6);
+    align-content: start;
+  }
+
+  .product__body {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .product__story {
+    color: var(--ink-700);
+  }
+
+  .price {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    background: var(--surface-2);
+  }
+
+  .price__line {
+    color: var(--ink-700);
+  }
+
+  .price__value {
+    display: grid;
+    gap: var(--space-1);
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--rule-2);
+  }
+
+  .price__label {
+    font-size: var(--t-eyebrow);
+    font-weight: 500;
+    letter-spacing: var(--track-eyebrow);
+    text-transform: uppercase;
+    color: var(--gold-700);
+  }
+
+  .price__figure {
+    font-family: var(--ff-display);
+    font-size: var(--t-h2);
+    font-weight: 500;
+    line-height: 1.1;
+  }
+
+  .reserve__title,
+  .care__title {
+    font-size: var(--t-h3);
+    margin-block-end: var(--space-2);
+  }
+
+  .reserve__list {
+    margin-block-start: var(--space-3);
+  }
+
+  .reserve__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-block-size: var(--tap);
+    padding-block: var(--space-3);
+    color: var(--ink-900);
+  }
+
+  .reserve__link > span {
+    display: grid;
+  }
+
+  .reserve__name {
+    font-weight: 500;
+  }
+
+  .reserve__emirate {
+    color: var(--ink-500);
+  }
+
+  .reserve__link .icon {
+    color: var(--plum-700);
+  }
+
+  .care {
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule-1);
+  }
+
+  .section__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    color: var(--plum-700);
+  }
+
+  @media (min-width: 64em) {
+    .product {
+      grid-template-columns: 7fr 5fr;
+      grid-template-areas:
+        'media head'
+        'media info';
+      grid-template-rows: auto 1fr;
+      column-gap: calc(var(--grid-gap) * 2);
+      row-gap: var(--space-5);
+    }
+
+    .product__head {
+      grid-area: head;
+    }
+
+    .product__media {
+      grid-area: media;
+    }
+
+    .product__info {
+      grid-area: info;
+    }
+
+    .product__info {
+      position: sticky;
+      inset-block-start: calc(var(--header-h) + var(--space-4));
+      align-self: start;
+    }
+  }
+</style>

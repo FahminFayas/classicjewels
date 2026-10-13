@@ -1,0 +1,159 @@
+---
+/**
+ * Store index: every open branch as a ruled row, the announced branches below, the visiting FAQ
+ * and the enquiry block. Every fact comes from src/data/site.ts.
+ */
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Hero from '@/components/sections/Hero.astro';
+import StoreCard from '@/components/sections/StoreCard.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { branches, emirates, flagship, openBranches } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getFaqGroup } from '@/lib/content';
+import { countWord } from '@/lib/format';
+import { routes } from '@/lib/routes';
+import { jewelryStoreSchema } from '@/lib/schema';
+import { whatsappVisit } from '@/lib/whatsapp';
+
+const faq = await getFaqGroup('stores');
+const soon = branches.filter((b) => b.status === 'opening-soon');
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const storeImage = new URL('/og/default.png', origin).toString();
+
+/** "Dubai, Sharjah and Abu Dhabi" */
+const listWords = (items: string[]) =>
+  items.length > 1
+    ? `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
+    : (items[0] ?? '');
+
+/** site.ts keeps owner reminders inline after "TODO"; only the sentence before them is public. */
+const publicNote = (note?: string) => note?.split('TODO')[0]?.trim() || 'Opening soon.';
+
+const count = countWord(openBranches.length);
+const description = `${count} Classic Jewels branches in ${listWords(emirates)}: ${listWords(
+  openBranches.map((b) => b.shortName),
+)}. Hours, directions and WhatsApp for each.`;
+
+/** The flagship's JewelryStore is already in every page head (BaseLayout); the rest go here. */
+const jsonLd = openBranches
+  .filter((b) => !b.isFlagship)
+  .map((b) => jewelryStoreSchema(b, storeImage));
+---
+
+<BaseLayout
+  title="Our Stores in Dubai, Sharjah and Abu Dhabi"
+  description={description}
+  jsonLd={jsonLd}
+>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Stores', href: routes.stores }]} />
+  </div>
+
+  <Hero
+    eyebrow="Stores"
+    title={`${count} branches across the UAE`}
+    display
+    lead="Gold Souq Extension in Deira, two malls in Sharjah and Madinat Zayed in Abu Dhabi, with more opening. Same gold rate, same promises, at every counter."
+  >
+    <Button href={whatsappVisit()} icon="whatsapp" external>
+      WhatsApp before you visit
+    </Button>
+    <Button href={routes.store(flagship.id)} variant="secondary" icon="map-pin">
+      The Deira flagship
+    </Button>
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead eyebrow="Open now" title="Where to find us.">
+        Each branch page lists the address, the hours as listed, and how to reach the counter.
+      </SectionHead>
+      <div class="rows">
+        {openBranches.map((b) => (
+          <StoreCard branch={b} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {soon.length > 0 && (
+    <section class="section section--ruled">
+      <div class="container">
+        <SectionHead eyebrow="Opening soon" title="More counters are on the way.">
+          Announced locations, with dates to follow once confirmed. Until then the nearest open
+          branch is a message away.
+        </SectionHead>
+        <ul class="rows" role="list">
+          {soon.map((b) => (
+            <li class="soon">
+              <div class="soon__text">
+                <p class="soon__emirate small">{b.emirate}</p>
+                <h3 class="soon__name">{b.name}</h3>
+                <p class="soon__venue">{b.venue}</p>
+              </div>
+              <p class="soon__note small">{publicNote(b.openingNote)}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <section class="section section--ruled">
+    <div class="container">
+      <Faq heading="Visiting the Deira flagship" items={faq.data.items} />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <EnquiryBlock
+        heading="Check before you set out"
+        text="WhatsApp is fastest during shop hours: confirm today’s timings, or ask us to have a piece ready at the counter nearest you."
+        whatsappUrl={whatsappVisit()}
+        whatsappLabel="WhatsApp before you visit"
+      />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .soon {
+    display: grid;
+    gap: var(--space-3);
+    padding-block: var(--space-5);
+  }
+
+  .soon__text {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .soon__emirate {
+    color: var(--gold-700);
+    letter-spacing: 0.04em;
+  }
+
+  .soon__name {
+    font-size: var(--t-h3);
+  }
+
+  .soon__venue {
+    color: var(--ink-700);
+  }
+
+  .soon__note {
+    color: var(--ink-500);
+  }
+
+  @media (min-width: 64em) {
+    .soon {
+      grid-template-columns: 7fr 5fr;
+      column-gap: calc(var(--grid-gap) * 2);
+      align-items: end;
+    }
+  }
+</style>

@@ -1,0 +1,14 @@
+# Netlify / Cloudflare Pages redirects from the previous site. Apache hosts use .htaccess instead.
+/index.html             /                 301
+/about-us.html          /about/           301
+/contact.html           /contact/         301
+/privacy-policy.html    /privacy-policy/  301
+/terms-conditions.html  /terms/           301
+/disclaimer.html        /disclaimer/      301
+/about-us               /about/           301
+/terms-conditions       /terms/           301
+/gallery                /collections/     301
+/news                   /journal/         301
+/blog                   /journal/         301
+/ar                     /                 302
+https://www.classicjewels.ae/*  https://classicjewels.ae/:splat  301!

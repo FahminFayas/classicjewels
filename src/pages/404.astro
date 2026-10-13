@@ -1,0 +1,88 @@
+---
+/**
+ * Not found. Design-spec §6.32: the only centred layout on the site. The C-ring glyph, one
+ * sentence, three links and a WhatsApp button. No redirect script; noindex.
+ */
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { routes } from '@/lib/routes';
+import { whatsappGeneral } from '@/lib/whatsapp';
+
+const links = [
+  { label: 'The jewellery', href: routes.jewellery },
+  { label: 'Today’s gold rate', href: routes.goldRate },
+  { label: 'Our branches', href: routes.stores },
+];
+
+const title = 'Page not found';
+const description =
+  'There is nothing at this address. The shops are open: see the jewellery, today’s gold rate in Dubai or the four branches, or message us on WhatsApp.';
+---
+
+<BaseLayout title={title} description={description} noindex>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Page not found', href: '/404/' }]} />
+  </div>
+
+  <section class="section lost">
+    <div class="container lost__inner">
+      <Icon name="c-ring" class="lost__glyph" size="4rem" />
+      <h1>Nothing at this address.</h1>
+      <p class="lead">The shops are still open. Try the pieces, today’s rate, or message us.</p>
+      <ul class="lost__links" role="list">
+        {links.map((l) => (
+          <li>
+            <a href={l.href}>
+              {l.label} <Icon name="arrow-right" />
+            </a>
+          </li>
+        ))}
+      </ul>
+      <Button href={whatsappGeneral()} icon="whatsapp" external>
+        WhatsApp the shop
+      </Button>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .lost {
+    padding-block: var(--space-9) var(--space-10);
+  }
+
+  .lost__inner {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-5);
+    max-inline-size: 40rem;
+    text-align: center;
+  }
+
+  .lost__glyph {
+    color: var(--gold-600);
+  }
+
+  .lost__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2) var(--space-6);
+  }
+
+  .lost__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-block-size: var(--tap);
+    font-weight: 500;
+    color: var(--plum-700);
+    text-decoration: none;
+  }
+
+  .lost__links a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+  }
+</style>

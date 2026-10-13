@@ -1,0 +1,66 @@
+---
+/**
+ * Fixed bottom bar on phones and tablets: WhatsApp, Call, Visit. The three ways the shop
+ * actually converts. Hidden from the desktop breakpoint, where the header carries the same links.
+ */
+import Icon from '@/components/ui/Icon.astro';
+import { site } from '@/data/site';
+import { routes } from '@/lib/routes';
+import { whatsappGeneral } from '@/lib/whatsapp';
+---
+
+<nav class="bar until-lg" aria-label="Quick contact" data-action-bar>
+  <a class="bar__item" href={whatsappGeneral()} target="_blank" rel="noopener">
+    <Icon name="whatsapp" />
+    <span>WhatsApp</span>
+  </a>
+  <a class="bar__item" href={`tel:${site.phone.landline.e164}`}>
+    <Icon name="phone" />
+    <span>Call</span>
+  </a>
+  <a class="bar__item" href={routes.stores}>
+    <Icon name="map-pin" />
+    <span>Stores</span>
+  </a>
+</nav>
+
+<style>
+  .bar {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: var(--z-bar);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    min-block-size: calc(var(--action-bar-h) + env(safe-area-inset-bottom));
+    padding-block-end: env(safe-area-inset-bottom);
+    background: var(--surface-1);
+    border-block-start: 1px solid var(--rule-1);
+  }
+
+  .bar[hidden] {
+    display: none;
+  }
+
+  .bar__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    min-block-size: var(--action-bar-h);
+    font-size: var(--t-caption);
+    font-weight: 500;
+    color: var(--plum-700);
+    text-decoration: none;
+  }
+
+  .bar__item + .bar__item {
+    border-inline-start: 1px solid var(--rule-1);
+  }
+
+  .bar__item .icon {
+    inline-size: 1.375rem;
+    block-size: 1.375rem;
+  }
+</style>

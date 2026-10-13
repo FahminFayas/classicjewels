@@ -1,0 +1,81 @@
+---
+/**
+ * Questions and answers as native <details> rows. No FAQPage JSON-LD on purpose: Google retired
+ * that rich result in May 2026, and the HTML is already fully indexable.
+ */
+import Icon from '@/components/ui/Icon.astro';
+
+export interface Props {
+  heading?: string;
+  items: { question: string; answer: string }[];
+  /** Heading level for the block title. */
+  as?: 'h2' | 'h3';
+  class?: string;
+}
+
+const { heading, items, as: Tag = 'h2', class: className } = Astro.props;
+---
+
+<div class:list={['faq', className]}>
+  {heading && <Tag class="faq__heading">{heading}</Tag>}
+  <div class="rows">
+    {items.map((item) => (
+      <details class="faq__item">
+        <summary class="faq__q">
+          <span>{item.question}</span>
+          <Icon name="plus" class="faq__glyph" />
+        </summary>
+        <div class="faq__a">
+          <p>{item.answer}</p>
+        </div>
+      </details>
+    ))}
+  </div>
+</div>
+
+<style>
+  .faq__heading {
+    margin-block-end: var(--space-6);
+  }
+
+  .faq__q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-block-size: var(--control-h);
+    padding-block: var(--space-4);
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 600;
+    line-height: 1.25;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .faq__q::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq__q:hover {
+    color: var(--plum-700);
+  }
+
+  .faq__glyph {
+    flex: none;
+    color: var(--gold-600);
+    transition: transform var(--dur-fast) var(--ease);
+  }
+
+  .faq__item[open] .faq__glyph {
+    transform: rotate(45deg);
+  }
+
+  .faq__a {
+    padding: var(--space-5);
+    margin-block-end: var(--space-4);
+    background: var(--surface-2);
+    max-inline-size: var(--prose);
+    color: var(--ink-700);
+  }
+</style>

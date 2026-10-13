@@ -1,0 +1,608 @@
+---
+/**
+ * Collection detail (design-spec §7.6). One page per entry in src/content/collections.
+ *
+ * The hero media is built locally rather than through <Hero media="plate">: the collection
+ * photographs are necklaces on busts against velvet (nine of twelve) or cut-outs on a pale
+ * lavender ground (three), not white-ground product shots, so a white plate would frame them as
+ * a dark square. Per §4 non-white photographs sit directly on the ivory at their own ratio.
+ */
+import { Picture } from 'astro:assets';
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import PlumBand from '@/components/sections/PlumBand.astro';
+import ProductCard from '@/components/sections/ProductCard.astro';
+import TrayGrid from '@/components/sections/TrayGrid.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import Icon from '@/components/ui/Icon.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { openBranches } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import {
+  getDesignCollections,
+  getFaqGroup,
+  getProductsByCollection,
+  type DesignCollection,
+} from '@/lib/content';
+import { countWord, formatKarat, karatToFineness } from '@/lib/format';
+import { getRates } from '@/lib/rates';
+import { routes } from '@/lib/routes';
+import { itemListSchema } from '@/lib/schema';
+import { whatsappForRange } from '@/lib/whatsapp';
+
+export async function getStaticPaths() {
+  const collections = await getDesignCollections();
+  return collections.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+interface Props {
+  entry: DesignCollection;
+}
+
+const { entry } = Astro.props;
+const { data } = entry;
+
+const [collections, products, faq, rates, { Content }] = await Promise.all([
+  getDesignCollections(),
+  getProductsByCollection(entry.id),
+  getFaqGroup('collections'),
+  getRates(),
+  render(entry),
+]);
+
+/** "Kolkata Collection" -> "Kolkata"; "Gemstone Jewellery" stays as the H1 but shortens for prose. */
+const h1 = data.name.replace(/ Collection$/i, '');
+const shortName = data.name.replace(/ (Collection|Jewellery)$/i, '');
+const karats = data.karats.map(formatKarat).join(' / ');
+const whatsapp = whatsappForRange(data.name);
+
+/**
+ * Literal descriptions of the photographs as supplied by the old site, keyed by collection id.
+ * The content files carry their own imageAlt; these take precedence where the file's text does
+ * not match what is in the frame. Unknown ids fall back to the content value.
+ */
+const literalAlt: Record<string, string> = {
+  antique: 'Gold choker with a fringe of small drops on a white display bust against purple velvet',
+  customised:
+    'Gold necklace with a teardrop pendant and a pink stone flower on a white bust against navy velvet',
+  diamonds: 'Yellow-gold crown ring set with a row of small diamonds, on a pale lavender ground',
+  gemstone:
+    'Fine gold chain with beaded clusters, pink stones and a round pendant on a white bust against purple velvet',
+  italian: 'Three-row gold disc collar necklace on a white bust against navy velvet',
+  kids: 'Gold pendant necklace with an eye-shaped charm and a teardrop bead, on a pale lavender ground',
+  kolkata:
+    'Gold choker of bar links and granulated bead clusters on a white bust against purple velvet',
+  kuwait:
+    'Three-row gold necklace with red stones and a flower pendant with tassels on a white bust against navy velvet',
+  rajkot: 'Tri-colour gold necklace of graduated textured scales on a teal bust against purple velvet',
+  singapore:
+    'Two long gold chains strung with amber-coloured beads, laid in a loop on a pale lavender ground',
+  temple:
+    'Gold long necklace with kundan-set plaques and a bell-shaped pendant with pearl drops on a white bust against navy velvet',
+  turkish: 'Triple-row gold necklace of small cushion links on a white bust against navy velvet',
+};
+const heroAlt = literalAlt[entry.id] ?? data.imageAlt;
+const heroWidths = [480, 600, 800].filter((w) => w <= data.image.width);
+if (heroWidths.length === 0) heroWidths.push(data.image.width);
+
+/** Three other collections, preferring those that share this collection's first karat. */
+const firstKarat = data.karats[0];
+const others = collections.filter((c) => c.id !== entry.id);
+const sameKarat = others.filter((c) => c.data.karats[0] === firstKarat);
+const related = [...sameKarat, ...others.filter((c) => !sameKarat.includes(c))].slice(0, 3);
+
+/** Wordmark PNGs for the related-collection stamps. */
+const wordmarks = import.meta.glob<{ default: ImageMetadata }>(
+  '@/assets/collections/wordmarks/*.png',
+  { eager: true },
+);
+const wordmarkFor = (id: string) =>
+  Object.entries(wordmarks).find(([path]) => path.endsWith(`/${id}.png`))?.[1].default;
+
+const steps = [
+  'We weigh the piece in front of you.',
+  'We apply the day’s rate per gram for its karat.',
+  'We quote the making charge for the work.',
+  'You leave with the hallmark on the piece and the weight, fineness and rate on the invoice.',
+];
+
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const jsonLd = [
+  itemListSchema(
+    products.map((p) => ({
+      name: p.data.name,
+      url: new URL(routes.product(p.data.category.id, p.id), origin).toString(),
+    })),
+    `${data.name} pieces`,
+  ),
+];
+---
+
+<BaseLayout title={data.title} description={data.description} jsonLd={jsonLd}>
+  <div class="container">
+    <Breadcrumbs
+      items={[
+        { name: 'Collections', href: routes.collections },
+        { name: h1, href: routes.collection(entry.id) },
+      ]}
+    />
+  </div>
+
+  <section class="chero">
+    <div class="container container--wide chero__grid">
+      <div class="chero__text">
+        <Eyebrow>Collection · {karats}</Eyebrow>
+        <h1 class="chero__title" set:text={h1} />
+        <p class="chero__lead lead" set:text={data.summary} />
+        <div class="chero__actions">
+          <Button href={whatsapp} icon="whatsapp" external>
+            Ask what is on the tray
+          </Button>
+          <Button href={routes.collections} variant="secondary">
+            All collections
+          </Button>
+        </div>
+      </div>
+      <figure class="chero__media">
+        <Picture
+          class="chero__img"
+          src={data.image}
+          alt={heroAlt}
+          formats={['avif', 'webp']}
+          widths={heroWidths}
+          sizes="(min-width: 64em) 58vw, 100vw"
+          fit="cover"
+          priority
+        />
+      </figure>
+    </div>
+  </section>
+
+  <section class="facts-wrap">
+    <div class="container">
+      <dl class="facts">
+        <div class="facts__cell">
+          <dt class="facts__label small">Karat</dt>
+          <dd class="facts__value tabular">{data.karats.map(formatKarat).join(' · ')}</dd>
+        </div>
+        <div class="facts__cell">
+          <dt class="facts__label small">Hallmark fineness</dt>
+          <dd class="facts__value tabular">{data.karats.map(karatToFineness).join(' · ')}</dd>
+        </div>
+        <div class="facts__cell">
+          <dt class="facts__label small">Origin</dt>
+          <dd class="facts__value">{data.origin}</dd>
+        </div>
+        <div class="facts__cell">
+          <dt class="facts__label small">Pieces listed</dt>
+          <dd class="facts__value tabular">
+            {products.length > 0 ? products.length : 'Ask in store'}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container container--wide">
+      <SectionHead
+        eyebrow="From the trays"
+        title={
+          products.length > 0
+            ? `${countWord(products.length)} ${shortName} ${products.length === 1 ? 'piece' : 'pieces'}, weighed and ready to quote.`
+            : `${shortName} pieces are on the trays, not yet on the site.`
+        }
+      >
+        <Fragment slot="aside">
+          <a class="link-quiet section__link" href={routes.jewellery}>
+            All jewellery <Icon name="arrow-right" />
+          </a>
+        </Fragment>
+      </SectionHead>
+      {products.length > 0 ? (
+        <TrayGrid>
+          {products.map((p) => (
+            <ProductCard product={p} collectionName={data.name} rate={rates.latest} />
+          ))}
+        </TrayGrid>
+      ) : (
+        <div class="empty">
+          <p class="empty__title">
+            The {shortName} trays hold more than the site does.
+          </p>
+          <p class="empty__text">
+            Message us and we will send photos of what is on the counter today, with the gross
+            weight of each piece, from whichever of our {countWord(openBranches.length).toLowerCase()}{' '}
+            branches has the collection in.
+          </p>
+          <Button href={whatsapp} icon="whatsapp" external>
+            Ask on WhatsApp
+          </Button>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <div class="prose">
+          <h2>{shortName} work: origin, technique, weight</h2>
+          <Content />
+        </div>
+        <div class="marks-wrap">
+          <h3 class="marks__title">What to look for on the tray</h3>
+          <ul class="marks rows" role="list">
+            {data.hallmarks.map((mark) => (
+              <li class="marks__row">
+                <Icon name="c-ring" class="marks__glyph" />
+                <span>{mark}</span>
+              </li>
+            ))}
+          </ul>
+          <p class="marks__karat small">
+            {data.karats.length === 1 ? 'Stamped' : 'Stamped per karat:'}{' '}
+            {data.karats.map((k) => `${karatToFineness(k)} for ${formatKarat(k)}`).join(', ')}.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <PlumBand>
+    <Eyebrow>At the counter</Eyebrow>
+    <h2 class="steps__title">Weighed, rated, hallmarked, invoiced.</h2>
+    <ol class="steps" role="list">
+      {steps.map((step, i) => (
+        <li class="steps__cell">
+          <span class="steps__no" aria-hidden="true">
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <p class="steps__text">{step}</p>
+        </li>
+      ))}
+    </ol>
+  </PlumBand>
+
+  {related.length > 0 && (
+    <section class="section">
+      <div class="container">
+        <SectionHead eyebrow="Also on the counter" title="Three collections to see beside it.">
+          <Fragment slot="aside">
+            <a class="link-quiet section__link" href={routes.collections}>
+              All collections <Icon name="arrow-right" />
+            </a>
+          </Fragment>
+        </SectionHead>
+        <ul class="related rows" role="list">
+          {related.map((c) => {
+            const mark = wordmarkFor(c.id);
+            return (
+              <li>
+                <a class="related__link" href={routes.collection(c.id)}>
+                  <span class="related__stamp">
+                    {mark ? (
+                      <Image
+                        src={mark}
+                        alt=""
+                        width={120}
+                        height={Math.round((mark.height / mark.width) * 120)}
+                        densities={[1, 2]}
+                      />
+                    ) : (
+                      <span class="related__stamp-text">{c.data.name}</span>
+                    )}
+                  </span>
+                  <span class="related__text">
+                    <span class="related__name">{c.data.name.replace(/ Collection$/i, '')}</span>
+                    <span class="related__meta small tabular">
+                      {c.data.karats.map(formatKarat).join(' · ')} · {c.data.origin}
+                    </span>
+                  </span>
+                  <Icon name="arrow-right" class="related__arrow" />
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <section class="section section--ruled">
+    <div class="container">
+      <Faq heading={faq.data.heading} items={faq.data.items} />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <EnquiryBlock
+        heading="Not on the tray today: we make to order."
+        text={`Name the ${shortName} piece you have in mind, or send a photo. We quote the karat, estimated weight and making charge in writing before any work begins.`}
+        whatsappUrl={whatsapp}
+        whatsappLabel={`Ask about ${shortName} pieces`}
+      />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .section__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    color: var(--plum-700);
+  }
+
+  /* ---- Hero: text 5 / photo 7, photo at its own ratio on the ivory ---- */
+  .chero {
+    padding-block: var(--space-6) var(--space-7);
+  }
+
+  .chero__grid {
+    display: grid;
+    gap: var(--space-6);
+    align-items: center;
+  }
+
+  .chero__text {
+    max-inline-size: 40rem;
+  }
+
+  .chero__lead {
+    margin-block-start: var(--space-5);
+  }
+
+  .chero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-block-start: var(--space-6);
+  }
+
+  .chero__media {
+    min-inline-size: 0;
+  }
+
+  .chero__img :global(img) {
+    inline-size: 100%;
+    block-size: auto;
+  }
+
+  /* ---- Facts strip: four ruled cells ---- */
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-block: 1px solid var(--rule-2);
+  }
+
+  .facts__cell {
+    display: grid;
+    gap: var(--space-1);
+    min-inline-size: 0;
+    padding: var(--space-4) var(--space-4) var(--space-4) 0;
+    border-block-end: 1px solid var(--rule-1);
+  }
+
+  .facts__cell:nth-child(2n) {
+    padding-inline-start: var(--space-4);
+    border-inline-start: 1px solid var(--rule-1);
+  }
+
+  .facts__cell:nth-last-child(-n + 2) {
+    border-block-end: 0;
+  }
+
+  .facts__value {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--ink-900);
+  }
+
+  /* ---- Empty tray ---- */
+  .empty {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+    max-inline-size: 44rem;
+    padding: var(--space-6);
+    background: var(--surface-0);
+    border: 1px solid var(--rule-1);
+  }
+
+  .empty__title {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .empty__text {
+    color: var(--ink-700);
+  }
+
+  /* ---- Hallmarks list ---- */
+  .marks-wrap {
+    min-inline-size: 0;
+  }
+
+  .marks__title {
+    margin-block-end: var(--space-4);
+  }
+
+  .marks__row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    min-block-size: var(--tap);
+    padding-block: var(--space-3);
+  }
+
+  .marks__glyph {
+    flex: none;
+    color: var(--gold-600);
+    transform: translateY(0.15em);
+  }
+
+  .marks__karat {
+    margin-block-start: var(--space-4);
+  }
+
+  /* ---- How buying works (plum) ---- */
+  .steps__title {
+    max-inline-size: 24ch;
+    margin-block-end: var(--space-6);
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--rule-on-plum);
+    border-block: 1px solid var(--rule-on-plum);
+  }
+
+  .steps__cell {
+    display: grid;
+    gap: var(--space-3);
+    align-content: start;
+    min-inline-size: 0;
+    padding: var(--space-5) var(--space-4) var(--space-5) 0;
+    background: var(--surface-plum);
+  }
+
+  .steps__cell:nth-child(2n) {
+    padding-inline-start: var(--space-4);
+  }
+
+  .steps__no {
+    font-family: var(--ff-display);
+    font-size: var(--t-h2);
+    font-variant-numeric: tabular-nums lining-nums;
+    line-height: 1;
+    color: var(--gold-300);
+  }
+
+  .steps__text {
+    color: var(--ink-on-plum);
+    max-inline-size: 28ch;
+  }
+
+  /* ---- Related collections ---- */
+  .related__link {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: var(--space-4);
+    align-items: center;
+    min-block-size: var(--tap);
+    padding-block: var(--space-3);
+    color: var(--ink-900);
+    text-decoration: none;
+  }
+
+  .related__stamp {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 8rem;
+    min-block-size: 3rem;
+    padding: var(--space-2);
+    background: var(--surface-0);
+    border: 1px solid var(--rule-1);
+  }
+
+  .related__stamp :global(img) {
+    max-inline-size: 6rem;
+    block-size: auto;
+  }
+
+  .related__stamp-text {
+    font-family: var(--ff-display);
+    font-size: var(--t-small);
+    color: var(--plum-700);
+    text-align: center;
+  }
+
+  .related__text {
+    display: grid;
+    gap: var(--space-1);
+    min-inline-size: 0;
+  }
+
+  .related__name {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .related__link:hover .related__name {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-700);
+    text-underline-offset: 0.15em;
+  }
+
+  .related__arrow {
+    color: var(--gold-600);
+  }
+
+  @media (min-width: 48em) {
+    .facts {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .facts__cell {
+      border-block-end: 0;
+      padding-inline-start: var(--space-4);
+      border-inline-start: 1px solid var(--rule-1);
+    }
+
+    .facts__cell:first-child {
+      padding-inline-start: 0;
+      border-inline-start: 0;
+    }
+
+    .steps {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .steps__cell,
+    .steps__cell:nth-child(2n) {
+      padding-inline: var(--space-4);
+    }
+
+    .steps__cell:first-child {
+      padding-inline-start: 0;
+    }
+  }
+
+  @media (min-width: 64em) {
+    .chero {
+      padding-block: var(--space-7) var(--space-8);
+    }
+
+    .chero__grid {
+      grid-template-columns: 5fr 7fr;
+      column-gap: calc(var(--grid-gap) * 2);
+    }
+
+    .related {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: var(--grid-gap);
+    }
+
+    .related > li {
+      border-block-end: 1px solid var(--rule-1);
+    }
+  }
+</style>

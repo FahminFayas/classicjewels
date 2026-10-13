@@ -1,0 +1,261 @@
+---
+/**
+ * Privacy policy. Design-spec §7.18: typographic hero, dated, prose with numbered H2s.
+ * Describes only what the site actually does: a contact form, WhatsApp, server logs, and Google
+ * Tag Manager that loads only when PUBLIC_GTM_ID is set (see components/seo/Analytics.astro).
+ * No enquiry block on legal pages.
+ */
+import Hero from '@/components/sections/Hero.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import { site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatDate } from '@/lib/format';
+import { routes } from '@/lib/routes';
+
+const updated = '2026-10-13';
+
+const sections = [
+  { id: 'who-we-are', title: 'Who we are' },
+  { id: 'what-we-collect', title: 'What we collect' },
+  { id: 'why', title: 'Why we use it' },
+  { id: 'retention', title: 'How long we keep it' },
+  { id: 'sharing', title: 'Who we share it with' },
+  { id: 'cookies', title: 'Cookies' },
+  { id: 'your-rights', title: 'Your rights' },
+  { id: 'third-party-links', title: 'Links to other sites' },
+  { id: 'changes', title: 'Changes to this policy' },
+];
+const no = (i: number) => String(i + 1).padStart(2, '0');
+
+const title = 'Privacy Policy';
+const description =
+  'What Classic Jewels & Diamonds collects when you message us or use this site, why, how long it is kept and how to have it corrected or deleted. Email us any question.';
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Privacy policy', href: routes.privacy }]} />
+  </div>
+
+  <Hero
+    eyebrow="Legal"
+    title="Privacy policy"
+    lead="How we handle the details you give us when you message, call or visit this site. In plain words, and short."
+  >
+    <p class="small">
+      <time datetime={updated}>Last updated {formatDate(updated)}</time>
+    </p>
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container legal">
+      <nav class="legal__nav" aria-label="On this page">
+        <p class="legal__nav-title small">On this page</p>
+        <ol class="legal__nav-list small" role="list">
+          {sections.map((s, i) => (
+            <li>
+              <a href={`#${s.id}`}>
+                <span class="tabular" aria-hidden="true">
+                  {no(i)}
+                </span>{' '}
+                {s.title}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      <div class="legal__body prose">
+        <h2 id="who-we-are">
+          <span class="legal__no" aria-hidden="true">01</span>Who we are
+        </h2>
+        <p>
+          {site.legalName}, registration number {site.registrationNumber}, is the jewellery division
+          of the {site.group.name}. Our registered office is {site.address.oneLine}. We decide how
+          the information described on this page is used, and we answer for it. Questions go to{' '}
+          <a href={`mailto:${site.email}`}>{site.email}</a>.
+        </p>
+
+        <h2 id="what-we-collect">
+          <span class="legal__no" aria-hidden="true">02</span>What we collect
+        </h2>
+        <p>We collect only what you give us and what any web server records.</p>
+        <ul>
+          <li>
+            <strong>The contact form.</strong> Whatever you type into it: usually your name, a phone
+            number or email address, your message and, if you give one, the reference of a piece.
+          </li>
+          <li>
+            <strong>WhatsApp.</strong> When you message our WhatsApp number we see your WhatsApp name
+            and number and what you send. The conversation sits on our phone and on WhatsApp’s own
+            servers, under Meta’s terms, not ours.
+          </li>
+          <li>
+            <strong>Calls.</strong> Your number if you call the counter and it is shown to us.
+          </li>
+          <li>
+            <strong>Analytics, only if switched on.</strong> The site can load Google Tag Manager,
+            which may run analytics or advertising tags. It loads only when the owner enables it. By
+            default it is off, nothing is measured and no analytics cookie is set.
+          </li>
+          <li>
+            <strong>Server logs.</strong> Our web host records the IP address, browser type, pages
+            requested and time of each request, as every web server does, for security and
+            fault-finding.
+          </li>
+          <li>
+            <strong>The gold rate.</strong> Pages load the day’s rate from our own server. Your
+            browser may keep that figure for a short while in its session storage so the page does
+            not ask again; it holds nothing about you.
+          </li>
+        </ul>
+
+        <h2 id="why">
+          <span class="legal__no" aria-hidden="true">03</span>Why we use it
+        </h2>
+        <ul>
+          <li>To answer your enquiry, send a quote or reserve a piece.</li>
+          <li>To arrange a visit to a branch or a custom order.</li>
+          <li>To keep the sales and invoice records UAE law requires us to keep.</li>
+          <li>To keep the site secure and find faults.</li>
+          <li>If analytics is enabled, to see which pages are used so we can improve them.</li>
+        </ul>
+
+        <h2 id="retention">
+          <span class="legal__no" aria-hidden="true">04</span>How long we keep it
+        </h2>
+        <p>
+          Enquiries by form, email or WhatsApp are kept for as long as it takes to answer them, and
+          for a reasonable period afterwards in case you come back about the same piece. Invoices
+          and sales records are kept for the period UAE tax and commercial law require. Server logs
+          are kept by the host on a rolling basis and then discarded.
+        </p>
+
+        <h2 id="sharing">
+          <span class="legal__no" aria-hidden="true">05</span>Who we share it with
+        </h2>
+        <p>
+          We do not sell personal information, and we do not pass it to anyone for their own
+          marketing. We share it only with the service providers that run the site and our
+          messaging: the web host, our email provider, WhatsApp (Meta) and, if analytics is
+          enabled, Google. We also disclose it where a UAE authority lawfully requires it.
+        </p>
+
+        <h2 id="cookies">
+          <span class="legal__no" aria-hidden="true">06</span>Cookies
+        </h2>
+        <p>
+          The site itself sets no cookies. There is no login, no basket and no tracking pixel of our
+          own. The one exception is Google Tag Manager, which is off by default: if the owner
+          switches it on, the tags inside it may set cookies for analytics or advertising, and this
+          section will be updated to say which.
+        </p>
+
+        <h2 id="your-rights">
+          <span class="legal__no" aria-hidden="true">07</span>Your rights
+        </h2>
+        <p>
+          You can ask what information we hold about you, ask for it to be corrected, or ask for it
+          to be deleted. Write to <a href={`mailto:${site.email}`}>{site.email}</a> or message the
+          shop on WhatsApp. We will need to confirm who you are before acting, and we may have to
+          keep invoice records that the law requires us to hold.
+        </p>
+
+        <h2 id="third-party-links">
+          <span class="legal__no" aria-hidden="true">08</span>Links to other sites
+        </h2>
+        <p>
+          The site links to Google Maps, WhatsApp, Instagram, TikTok, Facebook, X, Threads and the
+          Classic Group’s own site. Each has its own privacy policy, which applies once you are
+          there.
+        </p>
+
+        <h2 id="changes">
+          <span class="legal__no" aria-hidden="true">09</span>Changes to this policy
+        </h2>
+        <p>
+          We update this page when our practices change and show the date at the top. The version
+          on this page is the one that applies. See also our{' '}
+          <a href={routes.terms}>terms of use</a> and <a href={routes.disclaimer}>disclaimer</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Mirrors the typographic hero's 2 / 7 / 3 grid so the prose sits under the H1. */
+  .legal {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .legal__nav-title {
+    margin-block-end: var(--space-2);
+    font-weight: 500;
+    color: var(--ink-700);
+  }
+
+  .legal__nav-list {
+    display: grid;
+  }
+
+  .legal__nav-list a {
+    display: inline-flex;
+    gap: var(--space-2);
+    min-block-size: var(--tap);
+    align-items: center;
+    color: var(--ink-500);
+    text-decoration: none;
+  }
+
+  .legal__nav-list a:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+    text-decoration-color: var(--gold-600);
+  }
+
+  .legal__nav-list span {
+    color: var(--gold-600);
+  }
+
+  .legal__body {
+    min-inline-size: 0;
+  }
+
+  .legal__body > h2:first-child {
+    margin-block-start: 0;
+  }
+
+  .legal__no {
+    display: inline-block;
+    min-inline-size: 2.2ch;
+    margin-inline-end: var(--space-3);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-600);
+  }
+
+  .legal__body strong {
+    font-weight: 500;
+    color: var(--ink-900);
+  }
+
+  @media (min-width: 64em) {
+    .legal {
+      grid-template-columns: 2fr 7fr 3fr;
+      column-gap: calc(var(--grid-gap) * 2);
+    }
+
+    .legal__nav {
+      grid-column: 1;
+      position: sticky;
+      inset-block-start: calc(var(--header-h) + var(--space-4));
+      align-self: start;
+    }
+
+    .legal__body {
+      grid-column: 2;
+    }
+  }
+</style>

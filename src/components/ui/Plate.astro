@@ -1,0 +1,83 @@
+---
+/**
+ * A product photo on a square white plate. Product images are only ever shown through this
+ * component, so a grid of pieces always reads as one tray.
+ *
+ * Two treatments, chosen from the file type unless `bleed` is passed:
+ *  - Cut-outs (PNG, transparent or pale ground) are letter-boxed with padding, so the metal sits
+ *    on the white cell with no visible rectangle.
+ *  - Photographs (JPG) carry their own backdrop (the current shots are busts on velvet). They
+ *    fill the square edge to edge; a padded photo would read as a framed print inside a frame.
+ *    A future white-ground JPG also bleeds, which looks identical to padding on white.
+ */
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+export interface Props {
+  image: ImageMetadata;
+  alt: string;
+  widths?: number[];
+  sizes?: string;
+  priority?: boolean;
+  /** Inner padding for cut-outs, as a percentage of the cell. */
+  padding?: string;
+  /** Force edge-to-edge (true) or padded (false). Defaults to edge-to-edge for JPG photographs. */
+  bleed?: boolean;
+  class?: string;
+}
+
+const {
+  image,
+  alt,
+  widths = [320, 480, 640],
+  sizes = '(min-width: 64em) 25vw, (min-width: 40em) 33vw, 50vw',
+  priority = false,
+  padding = '8%',
+  bleed = image.format === 'jpg' || image.format === 'jpeg',
+  class: className,
+} = Astro.props;
+
+/** Never ask sharp to upscale: drop widths larger than the source. */
+const safeWidths = widths.filter((w) => w <= image.width);
+if (safeWidths.length === 0) safeWidths.push(image.width);
+---
+
+<div
+  class:list={['plate', bleed && 'plate--bleed', className]}
+  style={bleed ? undefined : `--plate-pad:${padding}`}
+>
+  <Picture
+    class="plate__img"
+    src={image}
+    alt={alt}
+    formats={['avif', 'webp']}
+    widths={safeWidths}
+    sizes={sizes}
+    fit={bleed ? 'cover' : 'contain'}
+    priority={priority}
+  />
+</div>
+
+<style>
+  .plate {
+    min-inline-size: 0;
+    aspect-ratio: 1;
+    padding: var(--plate-pad, 8%);
+    background: var(--surface-0);
+    overflow: hidden;
+  }
+
+  .plate--bleed {
+    padding: 0;
+  }
+
+  .plate :global(img) {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
+  }
+
+  .plate--bleed :global(img) {
+    object-fit: cover;
+  }
+</style>

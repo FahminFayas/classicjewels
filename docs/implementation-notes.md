@@ -1,0 +1,51 @@
+# Implementation notes
+
+What was built differs from `docs/design-spec.md` in a few deliberate places. This is the list, so nobody "fixes" the site back towards the spec by accident.
+
+## Scope changes after the research report
+
+The spec was written for a single shop. The brand research report (`docs/research/brand-usp-report.txt`, 13 October 2026) showed four open branches and two announced, a 4.9 Google rating, a group history in bullion trading, and a live Diwali campaign. Consequences:
+
+- `src/data/site.ts` holds a `branches` array; `/stores/` and `/stores/{branch}/` replace the spec's single `/visit/` page. The utility strip, footer, home page strip and JSON-LD (one `JewelryStore` per branch, `branchOf` the Organization) read from it.
+- A `ProofStrip` under the home hero shows the 22K rate, the Google rating, the exchange promise and the branch count, each linked to its evidence.
+- An `offers` content collection with start and end dates feeds a campaign slot on the home page and `/offers/`. Expired offers are not built.
+- The home H1 names the three emirates (search intent) instead of the spec's "Gold weighed in front of you" line, which survives as the second sentence.
+- The experience figure is the group's own (35 years) rather than the old site's 30. Both are flagged for the owner.
+
+## Deliberate deviations from the spec
+
+| Spec                                                           | Built                                                                                                           | Why                                                                                              |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Nine collections; Diamonds and Gemstone become material hubs   | The brand's twelve collections, all under `/collections/`; the Diamonds collection page is the diamond landing  | The company lists twelve; splitting them would invent an IA the brand does not use               |
+| `/promise/` index plus four sub-pages                          | One `/our-promise/` page with anchored sections                                                                 | Sub-pages need owner-approved terms; anchors keep every ledger row linkable today                |
+| `/gold-coins-and-bars/` top-level hub                          | `/jewellery/gold-coins-bars/` as a category                                                                     | One routing pattern for everything in the catalogue                                              |
+| No tag manager; first-party beacon                             | Google Tag Manager, loaded only when `PUBLIC_GTM_ID` is set, as a bundled module                                | The brief asks for GA4, Meta and TikTok pixels; the CSP stays free of inline scripts             |
+| `/contact/sent/`                                               | `/thank-you/`                                                                                                   | Matches the PHP endpoint's redirect; excluded from the sitemap and `noindex`                     |
+| Logo as inline SVG lockup                                      | The company's own PNG logo at 2x                                                                                | The real mark beats an approximation; swap for SVG when supplied                                 |
+| Product card as one anchor with a button inside                | Stretched name link plus a separate pre-filled WhatsApp link                                                    | Nested interactive content inside `<a>` is invalid HTML; the WhatsApp URL needs no JavaScript    |
+| Rate history from a cron job                                   | Same, via `scripts/snapshot-rate.mjs` and `.github/workflows/rates.yml`; the table appears after seven snapshots | Implemented as specified; the table simply waits for data                                        |
+| `lang="en-AE"`                                                 | `lang="en"`                                                                                                     | Broadest assistive-technology support; the locale is carried by `og:locale`                      |
+| Six promises with the chains' wording                          | Reworded as Classic-specific statements                                                                         | The old labels were identical to Malabar's promise pages (SEO research)                          |
+
+## Things the spec asks for that are not built yet
+
+- Arabic pages (`/ar/`): the CSS uses logical properties throughout, so a `dir="rtl"` build is a content job, not a layout job.
+- Gallery and News sections: no content exists. `/gallery` and `/news` redirect to collections and the journal.
+- Indicative prices on product pages (spec §5.4 Option B): the data model has `netWeightGrams`; the price line is ready to switch once the owner decides (launch checklist item 19).
+- Store photography: store pages are typographic until photos exist.
+- Per-branch phone numbers and hours for Sharjah and Abu Dhabi.
+
+## Imagery from the previous site
+
+Every photograph and logo on the site came from the previous classicjewels.ae (`npm run assets:fetch-legacy`). What the script does with them, and why:
+
+- **Product shots (`products/p01`–`p09.jpg`)** are 600 x 600 photographs of necklaces on white busts against purple, teal or navy velvet, not white-ground packshots. `<Plate>` therefore shows JPG photographs edge to edge (`bleed`) instead of padding them inside a white cell, which made them look like framed prints.
+- **Category cut-outs** are 800 x 318 strips on a pale lavender ground. Category tiles show them full-bleed in a 5:2 box (the same ratio). For the seven starter products that reuse them, the script trims the background and pads each piece to a centred square in its own ground colour (`{ square: true }` in the map), so they sit in the square product grid.
+- **Collection wordmarks** are small PNGs in mixed script styles. The Antique wordmark is misspelt "Anitique" in the artwork itself, so it is not imported; it is kept in `docs/rejected-assets/` for reference and the pages set "Antique" in type. The home page uses a typeset two-column index rather than the wordmarks, so the twelve collections read as one system.
+- **The logo** is the 250 px PNG from the previous header, shown at half size for 2x screens. Supply an SVG to replace it.
+
+## Known constraints
+
+- The product photographs from the previous site are 600 x 600 px. Grids render them at or below that size; the product page shows them on a white plate without upscaling.
+- The gold-rate feed has no CORS headers. The browser refresh only works same-origin; the baked value always stands.
+- `eslint-plugin-astro` declares Node 22.22+; it runs on 22.17 but the engines warning is expected.

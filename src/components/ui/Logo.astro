@@ -1,0 +1,42 @@
+---
+/**
+ * Brand lockup from the company's own logo files (src/assets/brand/). The plum-on-transparent
+ * version sits on ivory; the white version on plum. The source PNGs are 250 px wide, so they are
+ * shown at half size for a crisp 2x rendering. Replace with SVG when the owner supplies it.
+ */
+import { Image } from 'astro:assets';
+
+import logoDark from '@/assets/brand/logo-dark.png';
+import logoWhite from '@/assets/brand/logo-white.png';
+import { site } from '@/data/site';
+
+export interface Props {
+  /** `light` = white wordmark for plum surfaces. */
+  tone?: 'light' | 'dark';
+  class?: string;
+}
+
+const { tone = 'dark', class: className } = Astro.props;
+const src = tone === 'light' ? logoWhite : logoDark;
+const height = 33;
+const width = Math.round((src.width / src.height) * height);
+---
+
+<Image
+  class:list={['logo', className]}
+  src={src}
+  alt={site.name}
+  width={width}
+  height={height}
+  densities={[1, 2]}
+  loading="eager"
+  decoding="async"
+/>
+
+<style>
+  .logo {
+    display: block;
+    inline-size: auto;
+    block-size: 2.0625rem;
+  }
+</style>

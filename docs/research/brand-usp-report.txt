@@ -1,0 +1,1890 @@
+--- page 1 ---
+RESEARCH REPORT  ·  WEBSITE REDESIGN  ·  SECOND EDITION
+Classic Jewels
+& Diamonds
+Brand, USP and website research
+to guide the classicjewels.ae redesign
+Prepared for Fahmin Fayas, E-commerce Intern (8 Oct 2026 – 7 Feb 2027)
+Research date: 13 October 2026  ·  Public sources and a live site audit
+How to read this report
+Every factual claim carries a numbered source link, such as [2], and a status label. [Verified] means the page was
+opened and read on 8 or 13 October 2026 (the appendix gives the date). [Snippet] means the claim was seen only
+in search-engine result text. [Unverified] means no public source was found.
+The website audit in sections 9 and 10 was run on 13 October in a real browser: page code, server headers, and
+desktop and 375-pixel mobile views. No form was submitted and no message was sent. Competitor sites were
+opened for a feature check; their policies and offers still rest on 8 October snippets. Reviewers and staff are not
+named. Sections 12 to 16 are proposals, not company facts. This edition replaces the 8 October Shopify edition
+and assumes the current site is improved rather than moved to a new platform.
+Contents
+1  Executive summary
+10  Check of the 6 October site analysis
+2  Company profile and history
+11  Competitor websites and terms
+3  Stores and expansion
+12  USP assessment and website messaging
+4  Products and collections
+13  Redesign recommendations
+5  Pricing and gold-rate positioning
+14  Roadmap and measures
+6  Certification and assurances
+15  Automation ideas (later phase)
+7  Customer feedback
+16  Questions for the team
+8  Social media
+17  Still unverified
+9  Website audit, 13 October 2026
+A  Appendix: sources
+
+
+--- page 2 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 2
+1
+Executive summary
+Classic Jewels & Diamonds is a young retail brand with an older trading business behind it. It launched in 2024 as
+the jewellery division of Classic Group, whose first business, Classic Bullion, trades bullion [4] [Verified]. In under
+two years it has grown from one showroom in Deira’s Gold Souq Extension to four branches across Dubai,
+Sharjah and Abu Dhabi, with more announced [11][12][33] [Verified]. Customers rate the Deira store 4.9 out of 5
+across 680 Google reviews [6] [Verified].
+The website tells almost none of this story, and Google cannot see it. On 13 October every page carried a
+noindex tag, a site: search on Google returned no pages, and not one of the homepage’s category, collection or
+product tiles led anywhere [1][36] [Verified]. The audience is on Instagram, with 25K followers, and in the stores
+[10]. The redesign’s job is to turn that reach, and the gold-trade credibility, into pages people can find, browse and
+enquire from.
+The positioning conclusion from the first edition stands. Most of what the brand advertises as assurances is what
+every major UAE jeweller also offers. Its real edge, if the team confirms it, sits in the gold trade itself: value on
+exchange, competitive making charges and a trader’s credibility on gold. The redesigned site should lead with
+that and link every claim to proof.
+Five things to know
+Fix indexing before anything else. Every page has a noindex tag, and the homepage carries two conflicting
+robots tags; Google applies the stricter one [1][38]. A site: search returned nothing and a brand search does not
+show the site [36][37]. The fix takes minutes and needs no redesign.
+Visitors cannot see a single product. The homepage has 199 links to “#”, including every category, collection
+and product tile. There are no product pages, prices or per-piece enquiries [1]. An enquiry-led catalogue is the
+core of the redesign.
+The best feature is hidden. The live gold rate works, but it sits in a dropdown on desktop and inside the menu
+on mobile [1]. Both big chains give the rate its own page [41][43]; Classic should too, with a visible bar on every
+page.
+The trust badges are table stakes, and none has written terms. Lifetime maintenance, exchange value,
+certified diamonds and 916 hallmarking match the chains’ promises, and all six badges lead nowhere [1][24][27].
+Policy pages are launch-critical.
+Contact details disagree. The homepage shows hello@classicgroup.ae and the other five pages
+c1@classicgrp.ae. Google’s listing uses 050 551 5826 for calls and WhatsApp, while the website uses 050 566
+1416 [1][6]. Agree one set before the redesign, or leads will keep splitting.
+Changes from the 8 October edition
+ Purpose: from building a Shopify store to redesigning the current classicjewels.ae site (Bootstrap and PHP).
+ Refreshed on 13 October: Google rating and review topics, Instagram, gold rates, branches and the Diwali
+offer.
+ New: website audit (9), check of the 6 October site analysis (10), competitor website benchmark (11), redesign
+plan for the current site (13), roadmap and measures (14) and automation ideas (15).
+ Removed: Shopify-specific advice (metafields, apps, selling plans and Shopify locations).
+
+
+--- page 3 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 3
+2
+Company profile and history
+Item
+Detail
+Source
+Status
+Trading name
+Classic Jewels & Diamonds
+[3]
+[Verified]
+Launched
+2024
+[2][4]
+[Verified]
+Parent group
+Classic Group of Companies, with three divisions: Classic Bullion (its first),
+Classic Jewels & Diamonds (2024) and Classic Realty (2022)
+[4]
+[Verified]
+Group experience
+“Over 35 years” in the gold industry and “more than 16 years” in the UAE
+(company’s own claim)
+[4]
+[Verified]
+Jewellery site’s
+figure
+“Over 30 years of collective experience”, which conflicts with the group’s 35
+years
+[2]
+[Verified]
+Heritage
+Built “on the solid foundation of White Classic Gold & Diamonds”. Nothing
+public explains what White Classic was or when it operated.
+[5]
+[Verified] /
+[Unverified]
+Trade background
+Gold trading, scrap gold buying and refining
+[2]
+[Verified]
+Registered office
+Shop no 6, Multistorey Car Park Building, Maryam Plaza, Gold Souq
+Extension, Deira, Dubai
+[3]
+[Verified]
+Registration no.
+1921575
+[3]
+[Verified]
+Clients
+Middle East, Asia and Africa; corporate clients, retailers and individuals
+[2]
+[Verified]
+Positioning
+“Affordable luxury” with designs blending timeless elegance and current
+trends
+[2]
+[Verified]
+Two points matter for the redesign. First, the brand story is genuinely different from a typical souq retailer: it
+comes from bullion trading and refining, not from retail. Second, the story is told inconsistently. The two websites
+give different experience figures, and the White Classic link is mentioned but never explained. The redesigned
+About page needs one approved version.
+3
+Stores and expansion
+Location
+Status
+Source
+Status label
+Gold Souq Extension, Deira, Dubai
+(flagship)
+Open; Google lists 10 AM to 10:30 PM daily,
+with a Friday break from 12 to 2:30 PM
+[2][6]
+[Verified]
+Safari Mall, Sharjah
+Open
+[11][33]
+[Verified]
+Rolla Mall, Sharjah
+Open
+[11][14][33]
+[Verified]
+Madinat Zayed, Abu Dhabi
+Open
+[11][33]
+[Verified]
+Musaffah, Al Ain
+Advertised as “opening soon” on 23 September;
+not in the 12 October branch list. Unclear
+whether this is one site or two.
+[11][33]
+[Verified]
+Opposite Etihad Rail’s Mohamed bin
+Zayed City Station, Abu Dhabi
+Announced as “coming soon” on 16 July 2026;
+still pinned on 13 October
+[12]
+[Verified]
+The website still describes Deira as the only store, with “more locations to come”, and its Store menu lists only
+“Deira, Dubai - UAE” [1][2] [Verified]. It shows no opening hours. The Abu Dhabi announcement was posted jointly
+with a separate account, classicjewels.badazayed, which suggests some branches run their own Instagram [12]
+[Verified].
+
+
+--- page 4 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 4
+A listing site that summarises Google data says the Deira store accepts cheques, credit and debit cards and NFC
+mobile payments, has wheelchair-accessible entry and parking, and offers free Wi-Fi [7] [Verified]. These details
+belong on one page per branch.
+4
+Products and collections
+The brand sells 22K and 18K gold jewellery plus diamonds [2] [Verified]. The homepage lists categories for
+diamonds, uncut diamonds, gemstones, gold, and gold coins and bars (22K coin, 24K coin and PAMP bar). It also
+lists product types (necklaces, earrings, finger rings, pendants, bangles, bracelets, long chains and anklets) and
+occasions (wedding, anniversary, birthday and festivals) [1] [Verified]. None of these has a page yet: the 8 category
+tiles, 4 occasion tiles, 12 collection tiles and 9 “New Products” all link to “#” [1].
+Collections and how the company describes them
+Collection
+Company description (paraphrased from [5] unless noted)
+Kolkata
+Bengali artistry; intricate designs with a contemporary twist
+Rajkot
+Rajkot’s craft heritage; fine gold and gemstone settings
+Temple
+India’s spiritual and cultural heritage; religious motifs
+Kerala
+Listed in the website menu; no description published [1]
+Antique
+Classic charm with modern elegance, for lovers of vintage styles
+Turkish
+Designs drawing on Turkish heritage
+Italian
+Pieces inspired by Italian design
+Singapore
+Modern designs with a sophisticated, city aesthetic
+Kuwait
+Celebrates Kuwaiti culture and traditions
+Gemstone
+Colourful pieces set with gemstones
+Kids
+Playful yet elegant pieces for children
+Customised
+Designed to the customer’s taste and occasion
+Diamonds
+A selection of diamond jewellery for special occasions
+Customisation is supported by customer evidence: one reviewer describes a custom bracelet made quickly [8]
+[Snippet], and another praises fast length adjustments [6] [Verified]. Lightweight jewellery appears as a keyword in
+the Onam campaign [22] [Snippet], and a reviewer says they found lower-weight ornaments here after searching
+many shops [7] [Verified]. A third-party directory describes the range as 22K gold and diamond-accented pieces in
+traditional styles [9] [Snippet].
+Instagram product posts often end with “DM us for more details” [10] [Verified]. That shows where product
+questions go today: into direct messages, because the website has nothing to link to.
+5
+Pricing and gold-rate positioning
+Market context. A Dubai gold-price guide states that the gold content price is set daily by the Dubai Gold &
+Jewellery Group and is identical at every licensed UAE shop, so making charges are where shops compete [32]
+[Snippet]. The 13 October check supports this: Classic’s ticker and Joyalukkas’s UAE gold-rate page showed
+exactly the same 24K, 22K and 18K rates [1][43] [Verified].
+
+
+--- page 5 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 5
+Gold-rate ticker on classicjewels.ae
+Purity
+8 Oct 2026 (AED)
+13 Oct 2026 (AED)
+24K (999)
+498.00
+504.00
+22K (916)
+461.25
+466.75
+21K (875)
+442.25
+447.50
+18K (750)
+379.00
+383.50
+Source [1] [Verified]. The site does not state the unit; per gram is the usual convention, but confirm. The feed reports its own date
+(“Updated on: 2026-10-13”) and a “Subscription Valid” status, so it depends on a data subscription.
+Classic’s pricing signals. The About page positions the brand as affordable luxury [2] [Verified], and a homepage
+badge promises 0% deduction on gold exchange [1] [Verified]. Google’s review topics include “discounts” (30
+mentions) and “making charge” (9); reviews praise competitive rates and a transparent process when selling or
+exchanging gold, and several mention staff discounting making charges [6] [Verified]. That suggests in-store prices
+are negotiated (an inference). On the other side, one 2-star review complains of hidden extra fees [6] [Verified].
+Current promotion: Diwali offers, 10 September to 10 November 2026
+Offer
+Detail
+Gold-rate booking
+Pay 10% to lock in the day’s gold rate
+Making charges
+0% on selected items
+Old gold exchange
+100% value (23 September post; not repeated in the 12 October post)
+Diamonds
+65% discount
+Payment
+The 23 September creative carries a Tabby logo, which suggests instalment payments
+(inference; confirm)
+Sources [11][33] [Verified].
+What this means for the website. The ticker can do more than display a number. Combined with each piece’s
+weight and karat, it can show an indicative price (gold value at today’s rate, plus making charge, stones and
+VAT), which answers the hidden-fees complaint. Whether prices appear online at all is a decision for the team
+(question 2 in section 16).
+Unverified: how a price is built (rate source, making charge per gram or percentage, stones, VAT), and whether
+online prices would follow in-store rules [Unverified].
+6
+Certification and assurances
+The homepage shows six trust badges [1] [Verified]. None of them has published terms. The “0%” of the exchange
+badge is part of an image whose alt text reads “Classic Jewels”, so search engines and screen readers see only
+“On Gold Exchange” [1].
+Badge
+Written terms?
+Notes
+Tested & Certified Diamonds
+None found
+Certifying lab not named. The owner, replying to a review, refers to an
+official certificate given at purchase that states the metal [6].
+916 Hallmarked Jewellery
+None found
+Hallmarking body not named.
+Assured Lifetime Maintenance
+None found
+Identical wording to Malabar’s promise [24].
+0% Deduction on Gold Exchange
+None found
+Unknown whether standing or promotional, and whether it covers gold
+bought elsewhere.
+14-Day Return Policy
+None found
+Conditions unknown.
+
+
+--- page 6 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 6
+Badge
+Written terms?
+Notes
+Easy Exchange
+None found
+Conditions unknown.
+Evidence. On 13 October the footer links for Assurance, Warranty, Refunds, Shipping, Payments and Our Stores
+still pointed to “#”, next to template links such as Manufacturers, Special Products, Checkout and Discount. Only
+Privacy Policy, Terms & Conditions and Disclaimer are real pages [1] [Verified]. The Terms page covers website
+use only and never mentions returns, exchange, maintenance, certification or hallmarking [3] [Verified]. The Privacy
+Policy mentions cookies but not analytics or advertising tags [35] [Verified], so it needs updating when tracking is
+added.
+7
+Customer feedback
+Google rating, Deira store, as seen 13 October 2026
+Stars
+Reviews
+Share
+5
+640
+94.1%
+4
+28
+4.1%
+3
+5
+0.7%
+2
+2
+0.3%
+1
+5
+0.7%
+Total
+680
+Average 4.9
+Source [6] [Verified]. The 8 October snapshot showed 663 reviews and an earlier Yalah snapshot 474 [7] [Verified], so review volume
+is still growing quickly: 17 new reviews in five days.
+What reviews talk about (Google’s topic tags, 13 October)
+Topic
+Mentions
+Topic
+Mentions
+designs
+60
+gold items
+9
+cooperative staff
+32
+making charge
+9
+discounts
+30
+gold chains
+3
+gold purchase
+17
+gold collection
+3
+diamonds
+12
+diamond ring
+2
+Source [6] [Verified]. “Designs” rose from 55 to 60 mentions and “discounts” from 27 to 30 since 8 October.
+Positive themes
+Staff are praised again and again, often by name. Reviewers like the designs and the range, the discounts on
+making charges, quick alterations, and how smooth and transparent the gold selling and exchange process is.
+Hospitality comes up too, with one reviewer joking about how much of the chai they drank [6][7] [Verified].
+
+
+--- page 7 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 7
+Critical reviews and what the website can learn
+Issue
+Rating, age
+Owner’s response
+Lesson for the website
+Ring bought as “yellow gold” lost its
+colour after the buyer returned home
+1 star, 4
+months
+Says it was 18K white gold with a
+yellow colour finish, as stated on
+the certificate, and that surface
+finish can wear
+Show base metal and surface
+finish or plating as separate fields
+Stone setting broke repeatedly;
+reviewer says the requested yellow
+gold was only a coating; warranty
+dispute after a manager left
+1 star, 3
+weeks
+Says the matter is now resolved
+Publish warranty and repair terms;
+add care guidance
+Behaviour of one manager in front of
+customers
+1 star, 1 year
+Replied (content not reviewed)
+Set online service standards and
+response times
+Hidden extra fees; 1.5-hour wait for a
+ring repair
+2 stars, 1
+year
+Not reviewed
+Itemised price breakdown; clear
+repair timelines
+Tourist VAT refund refused because
+the item was mislabelled on the tax
+form
+3 stars, 10
+months
+Not reviewed
+Accurate product-type naming; a
+VAT refund guide
+Source [6] (Google Maps, Reviews, Sort, Lowest rating) [Verified], read on 8 October; ages as of that date.
+The owner replies to reviews, including negative ones, which is a good sign of responsiveness. The redesign can
+carry this onto the site: a review summary on the homepage and store pages, and product data that answers
+these complaints before they happen.
+8
+Social media
+Channel
+Handle
+Size
+Source
+Instagram
+@classicjewelsanddiamonds
+25K followers, 439 posts on 13 October (24.5K and
+430 on 8 October); bio “Handcrafted elegance in every
+piece”, Dubai, Sharjah, Abu Dhabi
+[10] [Verified]
+Facebook
+Classic Jewels & Diamonds
+295 followers (8 October)
+[21] [Verified]
+TikTok
+@classic_jewelz
+Linked from the website; no statistics found
+[1] [Unverified]
+X
+@classicjewels__
+Linked from the website; no statistics found
+[1] [Unverified]
+Threads
+@classicjewelsanddiamonds
+Linked from the website; not checked
+[1] [Unverified]
+Entertainment reels massively outperform product posts
+Post
+Type
+Engagement
+Source
+Reel, 22 Sep 2026
+Entertainment
+About 25K likes, 282 comments
+[15] [Snippet]
+Reel, 21 Sep 2026
+Entertainment
+2,260 likes
+[16] [Snippet]
+Reel, 8 Jul 2026
+Entertainment
+574 likes
+[17] [Snippet]
+Reel, 6 Sep 2026
+Staff feature
+305 likes
+[18] [Snippet]
+Post, 12 Oct 2026
+Diwali offer
+32 likes, no comments (13 October)
+[33] [Verified]
+Reel, 26 Jul 2026
+22K bangles
+66 likes
+[19] [Snippet]
+Reel, 1 Jul 2026
+Store
+2 likes
+[20] [Snippet]
+Post, 18 Jun 2026
+Product
+2 likes
+[14] [Snippet]
+Snippet counts are as recorded when the search engine crawled each page.
+
+
+--- page 8 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 8
+Campaigns. Story highlights include Happy Customers, Onam 2026, W Cup campaign, Special Days, Classy
+Bangles and Carnival 2K26 [10] [Verified]. Recent campaigns include the Onam “Classic Ponnonam” promotion of
+traditional Kerala jewellery [22] [Snippet], the Diwali offers [11][33] [Verified], and a Safari Mall draw where a
+purchase enters customers to win a Jaecoo J5 SUV [13] [Verified].
+AI-labelled content. Instagram labels some posts “AI content”, including the 23 September Diwali post and the
+car reel [11][13] [Verified]. That is fine for campaigns, but product pages should use real photography, especially
+since one complaint concerned colour.
+Implication. The brand already knows how to get reach. The website’s job is to turn that reach into product
+views: link-in-bio and story links should land on collection and offer pages, tagged so that visits from Instagram
+show up in analytics.
+9
+Website audit, 13 October 2026
+classicjewels.ae is a six-page brochure site (Home, About, Contact, Privacy, Terms and Disclaimer) built on a
+stock shop template called “Hiraola”, whose name appears 47 times in the homepage code, mostly in comments.
+It runs Bootstrap 4.1.3 (CSS) and 4.0.0 (JavaScript) from 2018 with jQuery 1.12.4 on an Apache server [1]
+[Verified]. The server reports that the homepage last changed on 9 October 2026 and the five inner pages on 11
+February 2025.
+What works and should be kept
+Asset
+Detail
+Live gold-rate feed
+24K, 22K, 21K and 18K from the site’s own gold-rates.php, dated each day (“Updated on:
+2026-10-13”)
+Brand look
+Plum and white palette, logo, hero slider (“Every jewel has a tale”) and six trust badges
+Contact shortcuts
+Floating call and WhatsApp buttons on every page; a Google Map embed on the Contact page [34]
+Responsive base
+Viewport tag set; no sideways scrolling on a 375-pixel screen
+Social links
+Instagram, Facebook, TikTok, X and Threads
+Page titles
+Inner pages already have distinct titles, for example “About | Classic Jewels & Diamonds” [2]
+Source [1] [Verified] unless marked.
+
+
+--- page 9 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 9
+Findings, most serious first
+#
+Area
+Finding on 13 October
+Fix in
+1
+Google
+indexing
+Every page has a noindex tag; the homepage also has a conflicting “INDEX,FOLLOW”
+tag, and Google applies the more restrictive rule [38]. Google’s site: search returned no
+pages, and a brand search showed Instagram, classicgrp.ae and directories but not this
+site [36][37]. No robots.txt or sitemap.xml (both 404).
+Phase 0
+2
+Catalogue
+199 links to “#” on the homepage, including all 39 category and 13 collection menu
+items and every tile. No product names, prices or detail pages; shop-style URLs return
+404.
+Phase 1
+3
+Enquiries
+One generic WhatsApp link (prefilled “Helo Classic”) and a call button. No per-piece
+enquiry, appointment or reserve-to-view. The contact form posts to assets/php/mail.php
+with no spam protection; it was not test-submitted [34]. The footer “Contact” link opens
+the homepage.
+Phase 0 to 1
+4
+Contact details
+Homepage email hello@classicgroup.ae; the five inner pages c1@classicgrp.ae.
+Website WhatsApp +971 50 566 1416 and landline +971 4 255 1288 (shown as “+971
+42 551 288”); Google’s listing uses 050 551 5826 for calls, WhatsApp and bookings [6].
+No opening hours; the Store menu lists Deira only.
+Phase 0
+5
+Measurement
+No Google Analytics, Tag Manager, Meta Pixel or TikTok pixel on any page.
+Phase 0
+6
+On-page SEO
+No H1 on any page; the homepage title is the brand name only; one meta description
+(tagline, address and phone numbers) on every page; no canonical, hreflang or
+structured data. Most of the 62 homepage images share generic alt text (22 “Classic
+Jewels & Diamonds”, 21 “Classic Jewellery”, 6 “Classic Jewels”); one says “Hiraola’s
+Product Image” and 10 have none. The social share image is 200 × 200 pixels.
+Phase 0 to 2
+7
+Gold rate
+The rate sits in a “Gold Rate” dropdown in the desktop top bar and inside the off-canvas
+menu on mobile; no rate is visible on load. Values read “Fetching...” until the script
+runs.
+Phase 1
+8
+Page weight
+Homepage: 88 requests and about 3.4 MB transferred (4.9 MB uncompressed), 2.5 MB
+of it images. None of the 62 images is lazy-loaded or WebP. The unminified style.css
+(964 KB; 306 KB compressed) and 18 separate vendor and plugin scripts load, while
+the template’s minified bundles sit commented out.
+Phase 2
+9
+Code and
+security
+jQuery 1.12.4 (2016) has a published cross-site scripting flaw (CVE-2020-11022) fixed
+in 3.5.0 [39]. No HSTS, X-Frame-Options, X-Content-Type-Options or
+Content-Security-Policy headers. Whether http redirects to https was not tested.
+Phase 0 to 2
+10
+Error pages
+Unknown URLs, including /robots.txt, /sitemap.xml and /ar, return 404 with a spinner
+page that loads sk-jspark_init.php from cdn.jsinit.directfwd.com over plain http. It looks
+like a domain-parking script added by the host or DNS set-up; it is not on the real
+pages.
+Phase 0
+11
+Mobile layout
+On a 375-pixel screen the homepage is about 6,000 pixels tall (7.4 screens); the 8
+category tiles stack one per row; the floating call and WhatsApp buttons cover the left
+edge of the badge text.
+Phase 2
+12
+Content
+Inner-page menus and footers still read “Anitique”, “Turkeysh” and “Warantee”. The
+homepage text was corrected, but image files keep the typos (annivesary.jpg,
+festivels.jpg, anitique.png). A stray “do.” ends an About paragraph [2]; the copyright
+says 2024; the meta keywords say “Duabi” five times. Template links remain
+(Manufacturers, Special Products, Checkout, Discount).
+Phase 0
+13
+Arabic and
+access
+The Arabic option links to nothing (javascript:void(0)) and /ar returns 404. No skip link,
+generic alt text and many “#” links; not tested with a screen reader.
+Phase 2 to 3
+Sources [1][2][34] [Verified] unless marked. Phases are defined in section 14.
+Overall, the 6 October rating of 4/10 holds. The brand look, the gold-rate feed and the contact shortcuts are worth
+keeping; almost everything behind them needs rebuilding.
+
+
+--- page 10 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 10
+10
+Check of the 6 October site analysis
+The notes in classicjewels-site-analysis.txt [45] were checked claim by claim on 13 October. The homepage
+changed on 9 October, so a difference there may reflect a change rather than an error; the inner pages have not
+changed since February 2025.
+Claim on 6 October
+Result, 13 October
+Note
+Conflicting robots tags on the homepage; “possibly
+invisible on Google”
+Confirmed, stronger
+Inner pages carry noindex only; the site: search
+returned nothing [36]
+Five pages plus a disclaimer; shop URLs return 404
+Confirmed
+/shop, /cart, /checkout and others return 404
+Stock Bootstrap and jQuery template (“Hiraola”);
+viewport tag present
+Confirmed
+47 mentions of “Hiraola” in the code; Bootstrap
+4.1.3 and 4.0.0
+Gold-rate widget from gold-rates.php works
+Confirmed
+Rates dated 13 October
+Badges, socials, WhatsApp, phone, email, map link,
+address and About facts
+Confirmed
+Google’s listing uses a different phone and
+WhatsApp number [6]
+204 links to “#”; product tiles without names, prices
+or pages
+Confirmed
+199 in the page source; 225 once the carousels
+clone their slides
+Mini cart is template text
+Not reproduced
+No mini-cart text in today’s homepage
+No per-piece enquiry, booking or catalogue
+download
+Confirmed
+Contact form posts to assets/php/mail.php with no
+reCAPTCHA
+Confirmed
+Not submitted
+Contact-page email differs from the footer’s
+Confirmed, wider
+All five inner pages use c1@classicgrp.ae; only the
+homepage uses hello@classicgroup.ae
+No Google Analytics, Meta Pixel, TikTok pixel or Tag
+Manager
+Confirmed
+Checked on all six pages
+No H1 on the homepage; meta description is the
+address and phone numbers
+Confirmed, wider
+No H1 on any page; the same description on every
+page
+Same title on all key pages
+Not reproduced
+Inner pages have distinct titles; only the homepage
+title is bare
+No sitemap.xml or robots.txt; no structured data
+Confirmed
+Both files 404; no JSON-LD or microdata
+Generic alt text on 22 images, one “Hiraola’s
+Product Image”; 200 × 200 share image
+Confirmed
+jQuery 1.12.4
+Confirmed
+About 25 script and CSS files
+Partly
+20 scripts and 11 stylesheets (31 files)
+style.css (964 KB) and style.min.css (895 KB) both
+loaded
+Not reproduced
+style.min.css is commented out on all six pages;
+only style.css loads
+plugins.min.js (387 KB) loaded
+Not reproduced
+On the server but commented out with
+vendor.min.js; 18 separate vendor and plugin files
+load instead
+A 499 KB new.png
+Not reproduced
+Only inside a commented-out newsletter pop-up
+257 KB About-page JPG and 50 to 110 KB category
+PNGs; no lazy-loading or WebP
+Confirmed
+The 257 KB image also loads on the homepage; 0
+of 62 images lazy-load
+No HSTS, X-Frame-Options,
+X-Content-Type-Options or CSP
+Confirmed
+
+
+--- page 11 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 11
+Claim on 6 October
+Result, 13 October
+Note
+http works alongside https; firewall returns 406 to
+scripted requests
+Not tested
+The test browser upgrades to https by itself
+404 page loads a script from cdn.jsinit.directfwd.com
+over http
+Confirmed
+The file is sk-jspark_init.php
+Typos: “Annivesary”, “Festivels”, “Anitique”, “Helo
+Classic”
+Partly
+Homepage text fixed (file names keep them); inner
+pages still show “Anitique”, “Turkeysh”,
+“Warantee”; “Helo Classic” remains
+Copyright 2024; “Fetching...” until the script loads
+Confirmed
+Arabic offered, /ar returns 404
+Confirmed
+The language toggle links nowhere
+Accessibility: generic alt text, no skip link, many “#”
+links
+Confirmed
+Quick win: add a map embed
+Already done
+The Contact page already embeds Google Maps
+[34]
+Verdict. Of 28 claims, 20 were confirmed (three of them more widely than stated), 2 were partly right, 5 could not
+be reproduced and 1 was not tested. One suggested quick win, a map embed, already exists. Three of the misses
+(style.min.css, plugins.min.js and page titles) were errors, because they also concern inner pages that have not
+changed since February 2025; the other two (the mini cart and new.png) may reflect the 9 October homepage
+change. The 4/10 rating, the priority order and the quick wins stand; correct the page-weight and title lines before
+the notes are shared outside the team.
+11
+Competitor websites and terms
+The comparison covers the two large UAE chains from the first edition, Malabar Gold & Diamonds and
+Joyalukkas. Their UAE websites were opened on 13 October; their policies and offers below still rest on 8
+October search snippets [Snippet].
+Website features, 13 October 2026
+Feature
+Classic
+Malabar UAE
+Joyalukkas UAE
+Indexable by
+Google
+No: noindex on every
+page [1]
+Yes [41]
+Yes [42]
+Homepage title
+Brand name only
+“Online Jewellery Shopping Store in
+UAE | Malabar Gold & Diamonds”
+“Joyalukkas Indian Jewellery Stores
+in UAE”
+Gold rate
+Dropdown in the header
+Header widget and a “Gold Rate
+Today” page [41]
+“Gold Price Today in UAE” page in
+the main menu [43]
+Products online
+None
+Online shop with cart and price filters
+[25][41]
+Collection pages; no cart seen on the
+homepage [42]
+Stores
+Deira only
+“Our Stores” list [41]
+Store locator and one page per store
+[28][42]
+Festive booking
+Instagram only [33]
+Homepage link to a Diwali booking
+page returned “404 Not Found”
+“Pre-book your jewellery at the lowest
+gold rate” page [42]
+WhatsApp
+Generic link
+Prefilled “Hi! I need assistance” [41]
+Prefilled “Hello” [42]
+Analytics and ad
+tags
+None
+GA4 and Tag Manager [41]
+GA4, Tag Manager, Meta Pixel and
+Microsoft Clarity [42]
+Structured data
+None
+Organization, WebSite
+FAQPage
+Arabic
+Toggle with no pages
+None found
+None found
+
+
+--- page 12 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 12
+What this shows. The chains’ UAE sites are within reach. Joyalukkas’s UAE homepage leads with stores,
+promotions and the gold rate rather than a cart, and neither chain offers Arabic. What both have and Classic lacks
+are the basics: indexable pages, a gold-rate page that can rank, store listings and analytics; Joyalukkas also has
+a live advance-booking page. All of these fit the current site without a platform change. Even the chains leave
+dead campaign links, so every offer page needs an owner and an end date.
+Assurances and offers (8 October snippets)
+Topic
+Classic
+Malabar Gold & Diamonds
+Joyalukkas
+Scale
+4 branches [33]
+450+ showrooms in 14 countries
+[23][24]
+190+ showrooms in 12 countries
+[31]
+Lifetime
+maintenance
+“Assured Lifetime
+Maintenance” badge [1]
+“Assured Lifetime Maintenance”
+across its showrooms [24]
+Not found
+Gold exchange
+“0% Deduction” badge;
+terms unknown [1]
+Full value without deductions on
+jewellery bought from Malabar [23]
+Standing policy applies deductions
+[27]; 0% deduction on gold from any
+jeweller during promotions, e.g. 15
+May to 14 Jun 2026 [29]
+Diamond
+certification
+“Tested & Certified”; lab not
+named [1]
+IGI-certified diamonds [26]
+“Certified diamonds” [28]
+Recent offers
+Diwali: 10% rate booking,
+0% making on selected
+items, 65% off diamonds
+[33]
+Not checked
+Making charges from 1.99% on
+chains and bangles; 0% deduction
+on old gold (to 9 Aug 2026) [30]
+The big chains already offer lifetime maintenance, certified diamonds, hallmarking and strong exchange terms,
+and they run frequent 0% deduction promotions. Classic’s badges therefore reassure customers but do not
+distinguish the brand. The gold-exchange terms are the exception worth checking: Malabar’s full-value promise
+covers only its own jewellery, and Joyalukkas’s 0% deduction on other jewellers’ gold is promotional. A standing
+0% deduction on any jeweller’s gold would be a genuine advantage.
+Not yet compared [Unverified]: the chains’ collection ranges and Google ratings, and the websites of smaller Gold
+Souq independents. In the same Google Maps search, two nearby independents showed Kanz Jewels at 5.0 from
+381 reviews and Tajvi Gold and Diamonds, also in Maryam Plaza, at 4.9 from 159 [44].
+12
+USP assessment and website messaging
+Table stakes: keep them visible, but they won’t set Classic apart
+Assurance
+Why it is table stakes
+Lifetime maintenance
+Malabar uses the same wording [24]
+Certified diamonds and 916 hallmark
+Both chains advertise certification [25][26][28]
+Easy exchange and returns
+Standard across the chains [25][27]
+Festive offers (0% making, exchange value, diamond
+discounts)
+Joyalukkas runs similar offers and an advance-booking page
+[29][30][42]
+
+
+--- page 13 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 13
+Potential differentiators, ranked by evidence
+Candidate USP
+Evidence
+Strength
+Confirm first
+1. Gold-trading and bullion
+parentage: credibility on gold
+value
+Group history [4]; reviews praising
+transparent, competitive exchange [6]
+Strong
+0% deduction terms: standing or
+promotional, and whose gold
+qualifies
+2. Competitive, negotiable making
+charges
+Review topics on discounts (30) and
+making charges (9) [6]; making charges
+are where UAE shops compete [32]
+Medium to
+strong
+Actual making-charge ranges;
+how discounts work online
+3. Service rated 4.9 across 680
+reviews within two years of launch
+Google [6]
+Strong
+Permission to display;
+competitor ratings only partly
+checked [44], so avoid
+comparative claims
+4. Breadth of regional styles plus
+customisation
+12+ collections [1][5]; “designs” is the
+top review topic (60); custom work in
+reviews [6][8]
+Medium
+Not yet compared with the
+chains’ ranges
+5. Lightweight 22K options
+Campaign keyword [22]; review [7]
+Emerging
+Piece weights in product data
+6. Growing multi-emirate footprint
+Branch lists and announcements
+[11][12][33]
+Medium
+Opening dates for new sites
+Proposed positioning, for discussion (not a company statement)
+Keep the existing line “Every jewel has a tale” as the brand voice, and support it with a value proposition built on
+the trade heritage, for example: A gold trader’s honesty on value, a jeweller’s eye for design.
+On the redesigned site, put a proof strip under the hero: today’s 22K rate, “4.9 on Google from 680 reviews”, the
+exchange policy (once its terms are confirmed) and the four branches. Each item should link to its evidence: the
+rating, the written policy, the store pages and the price breakdown on product pages.
+13
+Redesign recommendations
+Priorities: Now means fix on the live site this month, before any redesign; Launch-critical means the redesigned
+site should not go live without it; High belongs in the first release; Later can follow. Everything here fits the
+current Apache and PHP hosting and the existing template. Items that need the host’s help are marked.
+13.1 Fix now on the live site
+Fix
+Driven by
+Priority
+Remove the noindex tags from all six pages and keep one “index, follow”;
+verify the site in Google Search Console and request indexing
+Finding 1
+Now
+Add robots.txt and an XML sitemap, and submit the sitemap
+Finding 1
+Now
+Add Google Tag Manager with GA4, Meta Pixel and TikTok pixel; record
+WhatsApp, call and map clicks as events; update the Privacy Policy
+Finding 5
+Now
+Agree one email, phone and WhatsApp number and use them on the site, the
+Google profile and Instagram; change the WhatsApp text to “Hello Classic”;
+point the footer Contact link at the Contact page
+Finding 4
+Now
+Correct the inner-page typos, the stray “do.” and the copyright year; remove
+dead template links
+Finding 12
+Now
+Replace the parking 404 page with a plain branded 404 page
+Finding 10
+Now (host)
+Add security headers and a permanent http-to-https redirect in .htaccess
+Finding 9
+Now (host)
+
+
+--- page 14 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 14
+13.2 Proposed site structure
+Page
+Purpose
+Notes
+Home
+Who Classic is, proof, today’s rate, collections,
+stores
+One H1; no “#” links
+Gold rate today (/gold-rate)
+Live 24K, 22K, 21K and 18K rates with date
+and unit
+A page that can rank, as both chains have;
+link to rate booking
+Collections (12) and
+categories (8)
+Browse by style and by type
+Intros adapted from the group site [5]; filters
+for karat, category and weight
+Product pages
+One page per piece
+Specs, photos, price or “price on request”,
+enquiry buttons
+Occasions (wedding, gifting)
+Curated edits
+Ready for campaigns
+Stores (one page per branch)
+Address, hours, map, phone, WhatsApp,
+photos
+JewelryStore structured data [40]
+Offers (for example Diwali
+2026)
+Landing pages for Instagram and ads
+Each with an owner and an end date
+Policies
+Returns, exchange, old gold, maintenance,
+warranty, certification, payments
+Linked from every badge
+About
+The Classic Group story
+One approved experience figure
+Contact and appointments
+Form, reserve-to-view, map
+Spam protection; a copy of each enquiry to a
+lead sheet
+Arabic (/ar/)
+Arabic versions of key pages
+Later, with hreflang tags
+13.3 Homepage
+Recommendation
+Driven by
+Priority
+A visible gold-rate bar on every page (not a dropdown), with date and unit,
+linking to the gold-rate page
+Finding 7; chains’ rate pages
+Launch-critical
+One H1 that says what and where, for example “Gold and diamond jewellery in
+Dubai, Sharjah and Abu Dhabi”
+Finding 6
+Launch-critical
+Every category, collection and occasion tile links to a real page
+Finding 2
+Launch-critical
+Hero with “Every jewel has a tale” plus a scheduled campaign slot (Diwali,
+Onam, wedding season)
+Tagline; campaign calendar
+High
+“Why Classic” proof strip: trade heritage, Google rating, exchange policy,
+lifetime maintenance, each linked
+USPs 1 to 3
+High
+Store strip showing the four branches and upcoming openings
+Expansion
+High
+Mobile: two-column category grid, fewer sliders, floating buttons that do not
+cover text
+Finding 11
+High
+Instagram reels linked to the products they feature
+Social reach
+Later
+
+
+--- page 15 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 15
+13.4 Collection and product pages
+Recommendation
+Driven by
+Priority
+Structured specs per piece: karat, base metal, colour and finish or plating,
+gross and net weight, stone type, weight and setting, certificate lab and
+number, hallmark
+Colour and coating
+complaints
+Launch-critical
+Decide the price display: an indicative price (weight × today’s rate + making
+charge + stones + VAT) or “price on request” with weight and karat
+Hidden-fees complaint; USP
+2
+Launch-critical
+“Ask about this piece” WhatsApp button pre-filled with the name, code and
+link; “Reserve to view in store” with a branch choice
+DM-led enquiries; four
+branches
+Launch-critical
+Unique title, H1, description and alt text per piece; Product and Breadcrumb
+structured data
+Finding 6
+High
+Trust-badge row under the enquiry buttons, each badge linking to its policy
+Six badges with no terms
+High
+Care instructions and a warranty summary
+Stone-setting complaint
+High
+Real photography with on-body and scale shots, plus short video
+AI-labelled creatives; colour
+complaint
+High
+“Book this rate with a 10% deposit” where offered
+Diwali rate-booking offer
+Later
+13.5 Trust, policies and content
+Recommendation
+Driven by
+Priority
+Publish policies for returns (14-day), exchange, old-gold exchange, lifetime
+maintenance, warranty and repairs, certification and hallmarking, payments,
+privacy and terms
+No published terms
+Launch-critical
+Footer with the registered office, registration number and one email domain
+Terms page; email
+inconsistency
+High
+About page telling the Classic Group story with one approved experience
+figure
+Conflicting 30 vs 35 years
+High
+Collection intros adapted from the group site’s descriptions
+Group collection page
+High
+Guides: how UAE gold pricing works, 22K vs 18K, tourist VAT refunds, caring
+for coloured finishes
+Pricing context; VAT
+complaint
+Later
+Display the Google rating, and quote reviews only with permission
+USP 3
+Later
+Arabic pages at /ar/ with hreflang tags, once the English pages are stable
+Unused language toggle
+Later
+
+
+--- page 16 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 16
+13.6 Technical foundation on the current stack
+Recommendation
+Driven by
+Priority
+Turn the six static pages into PHP templates with shared header and footer
+includes, so menus and contact details change in one place
+Pages that disagree
+Launch-critical
+Keep product data in one place (a MySQL table or a staff-edited Google
+Sheet) with a simple protected admin or import; generate pages, the sitemap
+and structured data from it
+Finding 2
+Launch-critical
+Contact and reservation forms with server-side validation, a honeypot or
+CAPTCHA, SMTP sending and a copy saved to a lead sheet; test delivery to
+the agreed inbox
+Finding 3
+Launch-critical
+Update jQuery to a current 3.x release (3.5.0 or later) [39]; align Bootstrap
+CSS and JavaScript on one version; drop unused plugins; load minified
+bundles
+Finding 9
+High
+Images in WebP with width and height set, lazy-loading below the fold and
+responsive sizes; aim for a homepage under 1.5 MB
+Finding 8
+High
+Monitor uptime and the gold-rate feed; confirm who pays for the feed
+subscription
+Feed status message
+High
+Run a link check before each release so the count of “#” links stays at zero
+Finding 2
+High
+14
+Roadmap and measures
+The phases below are a proposal for discussion. The dates assume product data and photography are ready on
+time, and they fit inside the internship, which ends on 7 February 2027.
+Phase
+When
+Scope
+Done when
+0. Fix and measure
+14 to 31 Oct 2026
+Section 13.1; access to Search Console
+and the Google profile
+Indexing requested; WhatsApp,
+call and map clicks recorded
+before the Diwali offer ends on 10
+November
+1. Catalogue and
+enquiry
+1 Nov to 15 Dec
+2026
+PHP templates, product data for the first
+two or three collections, collection and
+product pages, enquiry and reservation,
+gold-rate page, store pages, policies
+First collections live; enquiries
+tracked
+2. Redesign launch
+16 Dec 2026 to 20
+Jan 2027
+New homepage, remaining collections,
+image and speed work, structured data,
+accessibility fixes
+Homepage under 1.5 MB; zero “#”
+links
+3. Automation and
+Arabic
+21 Jan to 7 Feb
+2027
+Pilots from section 15; Arabic for the
+homepage, gold-rate and store pages
+Pilots running; handover notes
+written
+
+
+--- page 17 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 17
+Measures
+Measure
+Baseline, 13 Oct
+Proposed target
+Tool
+Pages in Google’s index
+0 [36]
+All public pages
+Search Console
+Brand search shows the site
+No [37]
+First organic result
+Google search
+Links to “#” on the homepage
+199 [1]
+0
+Link checker
+Product pages
+0
+First collections live by
+mid-December
+Site admin
+Homepage weight
+3.4 MB, 88 requests
+Under 1.5 MB
+Browser developer
+tools
+Enquiries from the site (WhatsApp,
+calls, forms)
+Not measured
+Baseline in Phase 0, then monthly
+growth
+GA4 events
+Visits from Instagram
+Not measured
+Tracked with tagged links
+GA4
+Google rating
+4.9 from 680 [6]
+Hold at 4.8 or above
+Google profile
+15
+Automation ideas (later phase)
+These ideas come from the 6 October site analysis [45]. They depend on the Phase 0 tracking and the Phase 1
+lead capture. Anything posted publicly or sent to customers should pass a human approval step, and marketing
+messages need customers’ consent.
+Idea
+What it does
+Needs
+Phase
+Lead capture to a sheet
+or CRM
+Website forms and WhatsApp enquiries land in one
+Google Sheet or CRM, with an instant alert to sales
+n8n, Google Sheets, form
+webhook
+1
+WhatsApp enquiry
+assistant
+Answers “gold rate today”, hours, locations and
+collections; captures name, budget and occasion;
+hands hot leads to staff
+WhatsApp Business API through
+a provider, n8n, approved
+answers
+3
+Daily gold-rate post
+Turns the existing gold-rate feed into a branded rate
+card for Instagram, Facebook, TikTok, X and Threads
+each morning
+n8n, image template, social
+accounts, approval step
+3
+Product content helper
+From a photo plus weight and karat, drafts titles,
+descriptions, alt text and English and Arabic captions
+for staff to approve
+AI model, product sheet
+2
+Review and follow-up
+flows
+After a purchase, asks for a Google review; birthday
+and anniversary reminders for customers who opt in
+CRM, consent records
+3
+Weekly owner report
+Pulls GA4, Search Console and social numbers into
+one summary
+n8n, API access
+3
+
+
+--- page 18 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 18
+16
+Questions for the team
+#
+Question
+Why it matters for the redesign
+1
+Is the 0% deduction on gold exchange a standing policy, and does it cover
+gold bought elsewhere?
+It may be the strongest USP and leads the
+proof strip
+2
+Should the site show prices? If so, how is a price built (rate source and time,
+making charge per gram or %, stones, VAT)?
+Product template and price display
+3
+Which lab certifies the diamonds, and who hallmarks the gold? Can certificate
+numbers be shown online?
+Product data and trust badges
+4
+What do lifetime maintenance, 14-day returns and easy exchange cover in
+writing?
+Policy pages
+5
+Is it 30 or 35 years, and what was White Classic Gold & Diamonds?
+About page
+6
+Which email, phone and WhatsApp number should every channel show:
+hello@classicgroup.ae or c1@classicgrp.ae, 050 566 1416 or 050 551 5826?
+Contact consistency and lead routing
+7
+Who hosts the site and controls the domain’s DNS, who can edit files on the
+server, and who set up the 404 page?
+Phase 0 fixes
+8
+Who pays for the gold-rate feed, and what happens if the subscription lapses?
+Gold-rate bar and page
+9
+Where does product data (weights, stones, certificates) live today, and who
+will keep it current on the site?
+Product data source and admin
+10
+Which collections launch first, and with how many pieces? Do coins and bars
+appear online?
+Phase 1 scope
+11
+Who supplies product photography, and can every piece be photographed for
+real?
+Product pages
+12
+When do Musaffah/Al Ain and MBZ City open, and does each branch have its
+own phone, WhatsApp or Instagram?
+Store pages
+13
+Is online payment (cards, Tabby) wanted later, or will the site stay enquiry-led?
+Whether to revisit the platform
+14
+Who owns Google Search Console, the Google Business Profile and the ad
+accounts?
+Phase 0 access
+15
+May we display the Google rating and quote reviews?
+Social proof
+17
+Still unverified
+No public source was found for the following [Unverified]: what White Classic Gold & Diamonds was; which lab
+certifies Classic’s diamonds and who hallmarks the gold; how prices are built; whether the six badges are
+standing promises or promotions; statistics for TikTok, X and Threads; and the competitors’ collection ranges and
+Google ratings.
+Not tested in this audit: whether http redirects to https, how the server’s firewall treats scripted requests, whether
+the contact form delivers, page load times, and Search Console data, which needs the owner’s access. Most of
+these are faster to answer internally than through further research.
+
+
+--- page 19 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 19
+A
+Appendix: sources
+All links were checked on 8 or 13 October 2026, as shown. Status reflects how each source was used in this report.
+#
+Source
+Link
+Status
+Used for
+1
+Classic Jewels &
+Diamonds homepage
+https://classicjewels.ae/
+[Verified]
+13 Oct
+Badges, gold-rate ticker,
+menus, page code and
+headers, page weight, 404
+pages
+2
+Classic Jewels &
+Diamonds About page
+https://classicjewels.ae/about-us
+[Verified]
+13 Oct
+Founding, heritage, karats,
+positioning, collections, typos
+3
+Classic Jewels &
+Diamonds Terms &
+Conditions
+https://classicjewels.ae/terms-conditions.html
+[Verified]
+13 Oct
+Registered office, registration
+number, absence of policy
+terms
+4
+Classic Group: Who we
+are
+https://classicgrp.ae/about.html
+[Verified]
+13 Oct
+Group history, divisions,
+experience figures
+5
+Classic Group: Classic
+Jewels & Diamonds page
+https://classicgrp.ae/classic-jewels-diamonds
+[Verified]
+8 Oct
+White Classic heritage,
+collection descriptions
+6
+Google Maps listing and
+reviews (Deira)
+https://maps.app.goo.gl/xs3n3W6aEczA2Tz67
+[Verified]
+13 Oct
+Rating, distribution, review
+topics, hours, phone and
+WhatsApp; critical reviews
+read 8 Oct
+7
+Yalah.ae listing (Google
+review summary)
+https://yalah.ae/jewelry-stores/classic-jewels-and-d
+iamonds-al-rigga
+[Verified]
+8 Oct
+Earlier rating snapshot,
+payment methods,
+accessibility, lightweight-gold
+review
+8
+Maptons listing
+https://ae.maptons.com/p/127610255
+[Snippet]
+8 Oct
+Custom bracelet review
+9
+Buy Gold Dubai directory
+https://buygolddubai.com/gold-shops/classic-jewels
+-and-diamonds/
+[Snippet]
+8 Oct
+Third-party product description
+10
+Instagram profile (main
+account)
+https://www.instagram.com/classicjewelsanddiamo
+nds/
+[Verified]
+13 Oct
+Followers, posts, bio, recent
+captions; story highlights 8 Oct
+11
+Instagram: Diwali offers
+post (23 Sep 2026)
+https://www.instagram.com/p/Ddof1lGMlZR/
+[Verified]
+8 Oct
+Branch list, Diwali offer terms,
+Tabby logo, upcoming
+Musaffah/Al Ain
+12
+Instagram: Abu Dhabi
+coming-soon post (16 Jul
+2026)
+https://www.instagram.com/p/Da2HMaysUCf/
+[Verified]
+13 Oct
+Store near Etihad Rail MBZ
+City Station; still pinned
+13
+Instagram: Safari Mall
+SUV giveaway reel
+https://www.instagram.com/reel/DdEAp7WMMpJ/
+[Verified]
+8 Oct
+Car giveaway campaign
+14
+Instagram: Rolla Mall
+product post (18 Jun
+2026)
+https://www.instagram.com/p/DZuT4FijKQN/
+[Snippet]
+8 Oct
+Rolla Mall address, low
+product-post engagement
+15
+Instagram reel (22 Sep
+2026)
+https://www.instagram.com/reel/DdlvxsXszRD/
+[Snippet]
+8 Oct
+Engagement
+16
+Instagram reel (21 Sep
+2026)
+https://www.instagram.com/reel/DdjPlrqMa0P/
+[Snippet]
+8 Oct
+Engagement
+17
+Instagram reel (8 Jul
+2026)
+https://www.instagram.com/reel/Dah6Z4AMith/
+[Snippet]
+8 Oct
+Engagement
+
+
+--- page 20 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 20
+#
+Source
+Link
+Status
+Used for
+18
+Instagram reel (6 Sep
+2026)
+https://www.instagram.com/reel/Dc8SE6Msq1z/
+[Snippet]
+8 Oct
+Engagement
+19
+Instagram reel (26 Jul
+2026)
+https://www.instagram.com/reel/DbP_UU4Mnct/
+[Snippet]
+8 Oct
+Engagement
+20
+Instagram reel (1 Jul
+2026)
+https://www.instagram.com/reel/DaQHUR6Mh_J/
+[Snippet]
+8 Oct
+Engagement
+21
+Facebook page (About)
+https://www.facebook.com/profile.php?id=6156756
+7975024&sk=about
+[Verified]
+8 Oct
+Follower count, page bio
+22
+Facebook page (Onam
+campaign text)
+https://www.facebook.com/61567567975024/
+[Snippet]
+8 Oct
+Classic Ponnonam campaign,
+lightweight-jewellery keyword
+23
+Malabar Gold &
+Diamonds: Jewellery
+Purchase Program UAE
+https://www.malabargoldanddiamonds.com/us/jpp-
+uae
+[Snippet]
+8 Oct
+Gold exchange terms, lifetime
+maintenance, showroom count
+24
+Malabar Promise:
+Assured Lifetime
+Maintenance
+https://www.malabargoldanddiamonds.com/in/dl/en
+/malabar-promise/assured-lifetime-maintenance.ht
+ml
+[Snippet]
+8 Oct
+Lifetime maintenance wording,
+showroom count
+25
+Malabar Gold &
+Diamonds UAE online
+gold jewellery
+https://www.malabargoldanddiamonds.com/ae/gold
+-jewellery.html
+[Verified]
+13 Oct
+UAE online store (price filters);
+its promises seen 8 Oct as
+snippets
+26
+Malabar Gold &
+Diamonds UAE online
+diamond jewellery
+https://malabar191.malabargoldanddiamonds.com/
+ae/diamond-jewellery.html
+[Snippet]
+8 Oct
+IGI certification, free shipping
+27
+Joyalukkas UAE Sales
+Return & Exchange
+policy
+https://www.joyalukkas.com/ae/sales-return-and-ex
+change-policy/
+[Snippet]
+8 Oct
+Standing buyback and
+exchange deductions
+28
+Joyalukkas Jewel of Joy,
+Dubai Gold District
+https://stores.joyalukkas.com/ae/city/dubai/dubai-g
+old-district
+[Snippet]
+8 Oct
+Flagship claim, karats,
+certified diamonds, store
+pages
+29
+News: Joyalukkas
+jewellery festival (May to
+Jun 2026)
+https://newspatrolling.com/turn-idle-gold-into-timele
+ss-elegance-joyalukkas-launches-its-biggest-jewell
+ery-festival-with-0-deduction-on-old-gold-and-40-of
+f-wastage-making-charges/
+[Snippet]
+8 Oct
+Promotional 0% deduction on
+old gold from any jeweller
+30
+Dubai Savers:
+Joyalukkas offers
+https://dubaisavers.com/deal/joyalukkas/
+[Snippet]
+8 Oct
+Summer 2026 offer terms
+31
+News: Joyalukkas ‘The
+Joy of Summer’
+campaign
+https://pardaisnewsdigital.com/?p=20434
+[Snippet]
+8 Oct
+Showroom count
+32
+GoldRates.ae: Dubai
+gold making charges
+guide
+https://goldrates.ae/dubai-gold-making-charges/
+[Snippet]
+8 Oct
+DGJG daily pricing; making
+charges as the point of
+competition
+33
+Instagram: Diwali post
+(12 Oct 2026)
+https://www.instagram.com/p/DeZSeWjDIRN/
+[Verified]
+13 Oct
+Current offer terms, four open
+branches, engagement
+34
+Classic Jewels &
+Diamonds Contact page
+https://classicjewels.ae/contact
+[Verified]
+13 Oct
+Contact form, email shown,
+map embed
+35
+Classic Jewels &
+Diamonds Privacy Policy
+https://classicjewels.ae/privacy-policy
+[Verified]
+13 Oct
+Cookie wording; no analytics
+or pixel wording
+36
+Google Search:
+site:classicjewels.ae
+https://www.google.com/search?q=site%3Aclassicj
+ewels.ae
+[Verified]
+13 Oct
+No indexed pages returned
+
+
+--- page 21 ---
+Classic Jewels & Diamonds  ·  Brand, USP and website research
+13 October 2026
+Compiled with Claude (AI) from public sources and a live site audit. Confirm key facts with the company before external use.
+Page 21
+#
+Source
+Link
+Status
+Used for
+37
+Google Search: ‘classic
+jewels and diamonds
+dubai’
+https://www.google.com/search?q=classic+jewels+
+and+diamonds+dubai
+[Verified]
+13 Oct
+Website absent from organic
+results
+38
+Google Search Central:
+robots meta tag rules
+https://developers.google.com/search/docs/crawlin
+g-indexing/robots-meta-tag
+[Verified]
+13 Oct
+Conflicting rules: the more
+restrictive one applies
+39
+NVD: CVE-2020-11022
+(jQuery)
+https://nvd.nist.gov/vuln/detail/CVE-2020-11022
+[Verified]
+13 Oct
+Cross-site scripting issue fixed
+in jQuery 3.5.0
+40
+Schema.org:
+JewelryStore
+https://schema.org/JewelryStore
+[Verified]
+13 Oct
+Structured-data type for store
+pages
+41
+Malabar Gold &
+Diamonds UAE website
+https://www.malabargoldanddiamonds.com/ae/
+[Verified]
+13 Oct
+Feature check: title, indexing,
+cart, stores, gold-rate page,
+tags, dead links
+42
+Joyalukkas UAE website
+https://www.joyalukkas.com/ae/
+[Verified]
+13 Oct
+Feature check: title, H1,
+indexing, store locator,
+advance booking, tags
+43
+Joyalukkas UAE gold
+rate page
+https://www.joyalukkas.com/ae/goldrate
+[Verified]
+13 Oct
+13 Oct rates matching
+Classic's ticker
+44
+Google Maps search,
+Gold Souq Extension
+https://www.google.com/maps/search/Classic+Jew
+els+%26+Diamonds+Gold+Souq+Extension+Deira
++Dubai
+[Verified]
+13 Oct
+Ratings of two nearby
+independents
+45
+Site analysis notes, 6 Oct
+2026 (classicjewels-site-
+analysis.txt)
+Supplied file (not public)
+[Internal]
+13 Oct
+Claims checked in section 10;
+automation ideas

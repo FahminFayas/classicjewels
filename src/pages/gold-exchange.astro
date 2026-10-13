@@ -1,0 +1,222 @@
+---
+/**
+ * Gold exchange. docs/design-spec.md §7.14 adapted to the four-branch brand: typographic hero,
+ * the four-step ledger (built here as ruled rows), the terms beside the group's reason for
+ * offering them, the rate band, the exchange FAQ and the enquiry block. The test method and the
+ * cash-sale terms are deliberately left unspecified until the owner confirms them.
+ */
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Faq from '@/components/sections/Faq.astro';
+import Hero from '@/components/sections/Hero.astro';
+import RateBoard from '@/components/sections/RateBoard.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { openBranches, site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getFaqGroup } from '@/lib/content';
+import { countWord } from '@/lib/format';
+import { getRates } from '@/lib/rates';
+import { routes } from '@/lib/routes';
+import { whatsappExchange } from '@/lib/whatsapp';
+
+const [faq, rates] = await Promise.all([getFaqGroup('gold-exchange'), getRates()]);
+const years = site.group.yearsInGold;
+const branchCount = countWord(openBranches.length).toLowerCase();
+
+const steps = [
+  {
+    title: 'Bring it',
+    detail: `Any karat, any condition, with or without a receipt, to any of our ${branchCount} branches.`,
+  },
+  {
+    title: 'We test it',
+    detail:
+      'At the counter, in front of you, before anything is weighed. The test gives the karat of each piece.',
+  },
+  {
+    title: 'We weigh it',
+    detail:
+      'On the certified scale. Stones and non-gold parts are set aside and excluded from the gold weight.',
+  },
+  {
+    title: 'We credit it',
+    detail:
+      'Full gold weight × the day’s rate for its karat, against any new piece. No deduction for wear, design or making.',
+  },
+];
+
+const terms = [
+  'The credit goes against a new piece, from any branch.',
+  'Making charges and VAT apply to the new piece, as on any purchase.',
+  'Terms for a cash sale differ from exchange; ask before you come.',
+  'Bring your Emirates ID or passport with the gold.',
+];
+---
+
+<BaseLayout
+  title="Exchange Old Gold in Dubai at 0% Deduction"
+  description="Any gold jewellery, any branch: tested and weighed in front of you, credited at the day’s rate with 0% deduction against a new piece. Ask on WhatsApp."
+>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Gold exchange', href: routes.goldExchange }]} />
+  </div>
+
+  <Hero
+    eyebrow="Old gold"
+    title="Exchange old gold at 0% deduction"
+    lead="Bring any gold jewellery to any branch. We test and weigh it in front of you and credit its full gold weight at the day’s rate against a new piece."
+  >
+    <Button href={whatsappExchange()} icon="whatsapp" external>
+      Ask about exchange
+    </Button>
+    <Button href={routes.goldRate} variant="secondary">
+      Today’s rate
+    </Button>
+    <Fragment slot="note">Bring old gold. Leave with its full weight.</Fragment>
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <div class="intro">
+          <Eyebrow>At the counter</Eyebrow>
+          <h2>Four steps. Nothing leaves your sight.</h2>
+          <p class="lead">
+            Testing and weighing happen on the counter in front of you, and the credit is worked out
+            from the figures you have just watched.
+          </p>
+        </div>
+        <ol class="steps rows" role="list">
+          {steps.map((step, i) => (
+            <li class="step">
+              <span class="step__no" aria-hidden="true">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <div class="step__text">
+                <h3 class="step__title">{step.title}</h3>
+                <p class="step__detail">{step.detail}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <div class="terms">
+          <h2>The terms</h2>
+          <ul class="terms__list rows" role="list">
+            {terms.map((term) => (
+              <li class="terms__item">{term}</li>
+            ))}
+          </ul>
+          <a class="link-quiet terms__link" href={`${routes.promise}#gold-exchange`}>
+            Our six promises, in writing <Icon name="arrow-right" />
+          </a>
+        </div>
+        <div class="why prose">
+          <h2>Why we can do this</h2>
+          <p class="lead">
+            The Classic Group began in bullion trading and has bought and refined scrap gold in Dubai
+            for over {years} years. Classic Jewels &amp; Diamonds is its jewellery house, opened in{' '}
+            {site.founded.brandYear}.
+          </p>
+          <p>
+            Old gold taken in exchange goes to the refinery, where it becomes new gold at its true
+            fineness. Its design, its wear and its age change nothing about what it is worth there,
+            so there is no reason to discount it. We credit the weight the scale shows, at the day’s
+            rate for the karat the test shows.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <RateBoard
+    variant="band"
+    rate={rates.latest}
+    stale={rates.stale}
+    history={rates.history}
+    id="rate"
+  />
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="split">
+        <Faq heading={faq.data.heading} items={faq.data.items} />
+        <EnquiryBlock
+          heading="Ask about your old gold"
+          text="Send a photo of the pieces on WhatsApp and we will tell you what to bring. Calls go straight to the counter."
+          whatsappUrl={whatsappExchange()}
+          whatsappLabel="Ask about exchange on WhatsApp"
+        />
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .intro > * + * {
+    margin-block-start: var(--space-4);
+  }
+
+  .intro h2 {
+    margin-block-start: 0;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-4);
+    align-items: start;
+    padding-block: var(--space-5);
+  }
+
+  .step__no {
+    font-family: var(--ff-display);
+    font-size: var(--t-h2);
+    font-weight: 400;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-600);
+    min-inline-size: 2.2ch;
+  }
+
+  .step__text {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .step__detail {
+    max-inline-size: 40rem;
+    color: var(--ink-700);
+  }
+
+  .terms h2 {
+    margin-block-end: var(--space-5);
+  }
+
+  .terms__item {
+    padding-block: var(--space-4);
+    color: var(--ink-700);
+  }
+
+  .terms__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: var(--tap);
+    margin-block-start: var(--space-4);
+    font-weight: 500;
+    color: var(--plum-700);
+  }
+
+  .why > h2 {
+    margin-block-start: 0;
+  }
+</style>

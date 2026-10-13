@@ -1,0 +1,31 @@
+name: Gold rate snapshot
+
+# Fetches the day's rate from the store feed and commits it to src/content/rates/.
+# The host's deploy hook (or the CI build on push) then rebuilds the site with fresh numbers.
+# Times are UTC: 05:20, 09:50 and 14:20 = 09:20, 13:50 and 18:20 in Dubai.
+on:
+  schedule:
+    - cron: '20 5 * * *'
+    - cron: '50 9 * * *'
+    - cron: '20 14 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: node scripts/snapshot-rate.mjs
+      - name: Commit if changed
+        run: |
+          git config user.name "rate-bot"
+          git config user.email "rate-bot@users.noreply.github.com"
+          git add src/content/rates
+          git diff --cached --quiet || git commit -m "chore(rates): snapshot $(date -u +%F)"
+          git push

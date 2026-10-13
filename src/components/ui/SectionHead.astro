@@ -1,0 +1,59 @@
+---
+/**
+ * Heading block that opens most sections: eyebrow, H2 (or H1), optional standfirst,
+ * and an optional link in the `aside` slot that sits at the end of the row on wide screens.
+ */
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+
+export interface Props {
+  eyebrow?: string;
+  title: string;
+  /** Heading level. Pages that use this for their main heading pass "h1". */
+  as?: 'h1' | 'h2' | 'h3';
+  /** Use the larger display size (home and hub H1s). */
+  display?: boolean;
+  class?: string;
+}
+
+const { eyebrow, title, as: Tag = 'h2', display = false, class: className } = Astro.props;
+---
+
+<div class:list={['head', className]}>
+  <div class="head__text">
+    {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+    <Tag class:list={['head__title', display && 'display']} set:text={title} />
+    {Astro.slots.has('default') && (
+      <div class="head__sub lead">
+        <slot />
+      </div>
+    )}
+  </div>
+  {Astro.slots.has('aside') && (
+    <div class="head__aside">
+      <slot name="aside" />
+    </div>
+  )}
+</div>
+
+<style>
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-4) var(--space-6);
+    margin-block-end: var(--space-7);
+  }
+
+  .head__text {
+    max-inline-size: 40rem;
+  }
+
+  .head__sub {
+    margin-block-start: var(--space-4);
+  }
+
+  .head__aside {
+    flex: none;
+  }
+</style>

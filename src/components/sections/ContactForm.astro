@@ -1,0 +1,213 @@
+---
+/**
+ * The one contact form on the site. It posts natively to PUBLIC_FORM_ENDPOINT (by default the PHP
+ * endpoint in public/api/contact.php, which redirects to /thank-you/); with src/scripts/form.ts it
+ * submits in place and shows the reply under the button. Spam defences match the endpoint: a
+ * honeypot named "website" and a render timestamp in "started_at".
+ */
+import { PUBLIC_FORM_ENDPOINT } from 'astro:env/client';
+
+import Button from '@/components/ui/Button.astro';
+import { openBranches } from '@/data/site';
+
+export interface Props {
+  /** Pre-fills the piece reference, e.g. when linked from a product page. */
+  reference?: string;
+  /** Pre-selects a branch by its id. */
+  branch?: string;
+  class?: string;
+}
+
+const { reference, branch, class: className } = Astro.props;
+
+const topics = [
+  'General enquiry',
+  'A specific piece',
+  'Bridal or wedding order',
+  'Custom design',
+  'Gold exchange',
+  'Coins and bars',
+  'Current offer',
+];
+
+/** Baked at build on a static site; the inline script below re-stamps it at page load. */
+const startedAt = Math.floor(Date.now() / 1000);
+---
+
+<form class:list={['form', className]} method="post" action={PUBLIC_FORM_ENDPOINT} data-enhance>
+  <div class="form__fields" data-form-fields>
+    <div class="form__row">
+      <div class="field">
+        <label class="field__label" for="cf-name">Name (required)</label>
+        <input
+          class="field__input"
+          id="cf-name"
+          name="name"
+          type="text"
+          required
+          autocomplete="name"
+          maxlength="120"
+        />
+      </div>
+      <div class="field">
+        <label class="field__label" for="cf-email">Email (required)</label>
+        <input
+          class="field__input"
+          id="cf-email"
+          name="email"
+          type="email"
+          required
+          autocomplete="email"
+          maxlength="200"
+        />
+      </div>
+    </div>
+
+    <div class="form__row">
+      <div class="field">
+        <label class="field__label" for="cf-phone">Phone</label>
+        <input
+          class="field__input"
+          id="cf-phone"
+          name="phone"
+          type="tel"
+          autocomplete="tel"
+          maxlength="40"
+          aria-describedby="cf-phone-hint"
+        />
+        <p class="field__hint" id="cf-phone-hint">Optional. Include the country code, e.g. +971.</p>
+      </div>
+      <div class="field">
+        <label class="field__label" for="cf-branch">Branch</label>
+        <select class="field__input" id="cf-branch" name="branch">
+          <option value="">Any branch</option>
+          {openBranches.map((b) => (
+            <option value={b.name} selected={b.id === branch}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+
+    <div class="form__row">
+      <div class="field">
+        <label class="field__label" for="cf-topic">Topic</label>
+        <select class="field__input" id="cf-topic" name="topic">
+          {topics.map((t) => <option value={t}>{t}</option>)}
+        </select>
+      </div>
+      <div class="field">
+        <label class="field__label" for="cf-reference">Piece reference</label>
+        <input
+          class="field__input"
+          id="cf-reference"
+          name="reference"
+          type="text"
+          value={reference}
+          maxlength="40"
+          autocomplete="off"
+          aria-describedby="cf-reference-hint"
+        />
+        <p class="field__hint" id="cf-reference-hint">Piece reference, e.g. CJ-NK-001</p>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="cf-message">Message (required)</label>
+      <textarea class="field__input" id="cf-message" name="message" rows="6" required maxlength="4000"
+      ></textarea>
+    </div>
+
+    <div class="form__trap sr-only" aria-hidden="true">
+      <label for="cf-website">Website</label>
+      <input
+        id="cf-website"
+        name="website"
+        type="text"
+        tabindex="-1"
+        autocomplete="off"
+        aria-hidden="true"
+      />
+    </div>
+    <input type="hidden" name="started_at" value={startedAt} />
+
+    <p class="form__privacy small">We use your details only to reply.</p>
+    <div class="form__actions">
+      <Button type="submit" iconEnd="arrow-right">Send message</Button>
+    </div>
+  </div>
+  <p class="form__status" data-form-status hidden aria-live="polite"></p>
+</form>
+
+<script>
+  // On a static build the hidden timestamp is the build time, which would disable the endpoint's
+  // minimum-fill-time check. Stamp it with the page load time instead.
+  const stamp = document.querySelector<HTMLInputElement>(
+    'form[data-enhance] input[name="started_at"]',
+  );
+  if (stamp) stamp.value = String(Math.floor(Date.now() / 1000));
+</script>
+<script src="@/scripts/form.ts"></script>
+
+<style>
+  .form {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .form__fields {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .form__fields[hidden] {
+    display: none;
+  }
+
+  .form__row {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  select.field__input {
+    padding-inline-end: var(--space-6);
+  }
+
+  .form__privacy {
+    color: var(--ink-500);
+  }
+
+  .form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .form__status {
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--rule-2);
+    background: var(--surface-2);
+    color: var(--ink-900);
+  }
+
+  .form__status[hidden] {
+    display: none;
+  }
+
+  .form__status[data-tone='ok'] {
+    border-color: var(--ok);
+    color: var(--ok);
+  }
+
+  .form__status[data-tone='err'] {
+    border-color: var(--err);
+    color: var(--err);
+  }
+
+  @media (min-width: 40em) {
+    .form__row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

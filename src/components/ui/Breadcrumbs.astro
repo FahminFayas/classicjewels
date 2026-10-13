@@ -1,0 +1,78 @@
+---
+/**
+ * Breadcrumb trail. The last item is the current page (plain text, aria-current).
+ * Emits the matching BreadcrumbList JSON-LD so the HTML and the structured data never drift.
+ */
+import JsonLd from '@/components/seo/JsonLd.astro';
+import { breadcrumbSchema } from '@/lib/schema';
+import type { BreadcrumbItem } from '@/lib/seo';
+import { routes } from '@/lib/routes';
+
+export interface Props {
+  /** Items after Home, in order; the last one is the current page. */
+  items: BreadcrumbItem[];
+  class?: string;
+}
+
+const { items, class: className } = Astro.props;
+const all: BreadcrumbItem[] = [{ name: 'Home', href: routes.home }, ...items];
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+---
+
+<nav class:list={['crumbs small', className]} aria-label="Breadcrumb">
+  <ol class="crumbs__list" role="list">
+    {all.map((item, i) => {
+      const last = i === all.length - 1;
+      return (
+        <li class="crumbs__item">
+          {last ? (
+            <span aria-current="page">{item.name}</span>
+          ) : (
+            <a class="link-quiet" href={item.href}>
+              {item.name}
+            </a>
+          )}
+          {!last && (
+            <span class="crumbs__sep" aria-hidden="true">
+              /
+            </span>
+          )}
+        </li>
+      );
+    })}
+  </ol>
+</nav>
+<JsonLd data={breadcrumbSchema(all, origin)} />
+
+<style>
+  .crumbs {
+    padding-block: var(--space-4);
+  }
+
+  .crumbs__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .crumbs__item {
+    display: inline-flex;
+    gap: var(--space-2);
+  }
+
+  .crumbs a {
+    color: var(--ink-500);
+  }
+
+  .crumbs a:hover {
+    color: var(--link-hover);
+  }
+
+  .crumbs__sep {
+    color: var(--ink-300);
+  }
+
+  [aria-current='page'] {
+    color: var(--ink-700);
+  }
+</style>

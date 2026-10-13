@@ -1,0 +1,99 @@
+---
+/**
+ * Journal index (design-spec §7.16): buying guides and rate notes, newest first.
+ * Cards come from the `journal` collection through getArticles(); the ItemList JSON-LD mirrors
+ * the grid so search engines see the same order a reader does.
+ */
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Hero from '@/components/sections/Hero.astro';
+import JournalCard from '@/components/sections/JournalCard.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import { site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getArticles } from '@/lib/content';
+import { routes } from '@/lib/routes';
+import { itemListSchema } from '@/lib/schema';
+import { whatsappUrl } from '@/lib/whatsapp';
+
+const articles = await getArticles();
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+
+const jsonLd = [
+  itemListSchema(
+    articles.map((a) => ({
+      name: a.data.headline ?? a.data.title,
+      url: new URL(routes.article(a.id), origin).toString(),
+    })),
+    'Journal articles',
+  ),
+];
+
+const enquiry = whatsappUrl(`${site.whatsapp.greeting} I have a question about buying gold.`);
+---
+
+<BaseLayout
+  title="Journal: Dubai Gold Rates, Hallmarks & Buying Guides"
+  description="Buying guides and rate notes from the counter: what the 916 and 750 stamps mean, how making charges and 5% VAT are added, which karat to choose. Ask us on WhatsApp."
+  jsonLd={jsonLd}
+>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'Journal', href: routes.journal }]} />
+  </div>
+
+  <Hero eyebrow="Journal" title="Journal" lead="Buying guides and rate notes from the counter." />
+
+  <section class="section section--ruled">
+    <div class="container">
+      {articles.length > 0 ? (
+        <Fragment>
+          <p class="articles__meta small">
+            {articles.length} {articles.length === 1 ? 'article' : 'articles'}, newest first.
+          </p>
+          <div class="articles">
+            {articles.map((a) => (
+              <JournalCard article={a} />
+            ))}
+          </div>
+        </Fragment>
+      ) : (
+        <p class="lead">
+          No articles yet. Today’s rate is on the <a href={routes.goldRate}>gold rate page</a>.
+        </p>
+      )}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <EnquiryBlock
+        heading="Ask the counter what the journal has not covered."
+        text="Send the question on WhatsApp, with a photo if you have one. We reply with figures: today’s rate, the weight, the making charge."
+        whatsappUrl={enquiry}
+        whatsappLabel="Ask on WhatsApp"
+      />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .articles__meta {
+    margin-block-end: var(--space-5);
+  }
+
+  /* Three-column ruled grid: each card opens with a hairline, so rows read as a ledger. */
+  .articles {
+    display: grid;
+    gap: var(--space-7) var(--grid-gap);
+  }
+
+  .articles > :global(.journal-card) {
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--rule-1);
+  }
+
+  @media (min-width: 40em) {
+    .articles {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>

@@ -1,0 +1,86 @@
+---
+/**
+ * Article card: 3:2 cover, date and reading time, title, two-line standfirst.
+ */
+import { Picture } from 'astro:assets';
+
+import type { Article } from '@/lib/content';
+import { formatDate } from '@/lib/format';
+import { routes } from '@/lib/routes';
+
+export interface Props {
+  article: Article;
+  class?: string;
+}
+
+const { article, class: className } = Astro.props;
+const { data } = article;
+const words = (article.body ?? '').split(/\s+/).filter(Boolean).length;
+const minutes = Math.max(1, Math.round(words / 200));
+const widths = [480, 800, 1200].filter((w) => w <= data.cover.width);
+if (widths.length === 0) widths.push(data.cover.width);
+---
+
+<a class:list={['journal-card', className]} href={routes.article(article.id)}>
+  <span class="journal-card__media">
+    <Picture
+      src={data.cover}
+      alt=""
+      formats={['avif', 'webp']}
+      widths={widths}
+      sizes="(min-width: 64em) 33vw, 100vw"
+      fit="cover"
+    />
+  </span>
+  <span class="journal-card__meta small">
+    <time datetime={data.pubDate.toISOString().slice(0, 10)}>{formatDate(data.pubDate)}</time>
+    <span aria-hidden="true"> · </span>
+    {minutes} min read
+  </span>
+  <span class="journal-card__title">{data.headline ?? data.title}</span>
+  <span class="journal-card__standfirst">{data.description}</span>
+</a>
+
+<style>
+  .journal-card {
+    display: grid;
+    min-inline-size: 0;
+    gap: var(--space-2);
+    align-content: start;
+    color: var(--ink-900);
+    text-decoration: none;
+  }
+
+  .journal-card__media {
+    min-inline-size: 0;
+  }
+
+  .journal-card__media :global(img) {
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    margin-block-end: var(--space-2);
+  }
+
+  .journal-card__title {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .journal-card:hover .journal-card__title {
+    text-decoration: underline;
+    text-decoration-color: var(--gold-700);
+    text-underline-offset: 0.15em;
+  }
+
+  .journal-card__standfirst {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    color: var(--ink-700);
+  }
+</style>

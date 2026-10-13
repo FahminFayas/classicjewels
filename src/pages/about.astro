@@ -1,0 +1,451 @@
+---
+/**
+ * About. Design-spec §7.9, adapted for a four-branch brand: the group, the branches, what is on
+ * the trays, how a piece is sold, the public rating and the written terms. No staff section.
+ * Every number comes from src/data/site.ts or the content collections.
+ */
+import { Picture } from 'astro:assets';
+
+import ringsImage from '@/assets/story/about-2.jpg';
+import heroImage from '@/assets/story/about-3.jpg';
+import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
+import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import Hero from '@/components/sections/Hero.astro';
+import StoreCard from '@/components/sections/StoreCard.astro';
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { branches, emirates, flagship, openBranches, site } from '@/data/site';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getDesignCollections, getNavCategories } from '@/lib/content';
+import { countWord, formatDate } from '@/lib/format';
+import { routes } from '@/lib/routes';
+import { jewelryStoreSchema } from '@/lib/schema';
+import { whatsappGeneral } from '@/lib/whatsapp';
+
+const [collections, categories] = await Promise.all([getDesignCollections(), getNavCategories()]);
+
+/** "a, b and c" */
+const listWords = (items: string[]) =>
+  items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`;
+
+const years = site.group.yearsInGold;
+const brandYear = site.founded.brandYear;
+const branchWord = countWord(openBranches.length).toLowerCase();
+const emirateList = listWords(emirates);
+
+/** The branches that followed the flagship, grouped by emirate: "Safari Mall and Rolla Mall in Sharjah and …". */
+const venuesByEmirate = new Map<string, string[]>();
+for (const b of openBranches.filter((b) => !b.isFlagship)) {
+  venuesByEmirate.set(b.emirate, [...(venuesByEmirate.get(b.emirate) ?? []), b.venue]);
+}
+const expansion = listWords(
+  [...venuesByEmirate].map(([emirate, venues]) => `${listWords(venues)} in ${emirate}`),
+);
+const soon = branches.filter((b) => b.status === 'opening-soon');
+
+const pieceNames = categories
+  .filter((c) => c.id !== 'gold-coins-bars')
+  .map((c) => (c.data.shortName ?? c.data.name).toLowerCase());
+const collectionNames = collections.map((c) => c.data.name.replace(/ Collection$/i, ''));
+
+const steps = [
+  { title: 'We weigh the piece in front of you.', text: 'The gross weight is read off the scale before anything else is discussed.' },
+  { title: 'We apply the day’s rate per gram for its karat.', text: 'The same rate is posted on the board in the shop and on this site, in AED per gram.' },
+  { title: 'We quote the making charge for the work.', text: 'Per piece, for the work in that piece. Then 5% VAT is added on the invoice.' },
+  { title: 'You leave with the hallmark on the piece and the facts on the invoice.', text: 'Weight, fineness, rate, making charge and VAT are itemised, so you can compare shops line by line.' },
+];
+
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const storeImage = new URL('/og/default.png', origin).toString();
+const jsonLd = openBranches.filter((b) => !b.isFlagship).map((b) => jewelryStoreSchema(b, storeImage));
+
+const title = 'About Classic Jewels & Diamonds, Classic Group, Dubai';
+const description = `The Classic Group has traded and refined gold in Dubai for over ${years} years; its jewellery house opened in ${brandYear} and has ${branchWord} UAE branches. Visit or WhatsApp us.`;
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <div class="container">
+    <Breadcrumbs items={[{ name: 'About', href: routes.about }]} />
+  </div>
+
+  <Hero
+    eyebrow="Classic Group · Dubai"
+    title="About Classic Jewels & Diamonds"
+    lead={`The jewellery house of the Classic Group: bullion traders and refiners in Dubai for over ${years} years, jewellers since ${brandYear}, now in ${branchWord} branches across ${emirateList}.`}
+    media="image"
+    image={heroImage}
+    imageAlt="Oval diamond pendant and matching earrings on a mint box"
+  >
+    <Button href={routes.stores} iconEnd="arrow-right">
+      Find a branch
+    </Button>
+    <Button href={whatsappGeneral()} variant="secondary" icon="whatsapp" external>
+      WhatsApp the shop
+    </Button>
+  </Hero>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="story">
+        <div class="story__body prose">
+          <h2>Gold traders first</h2>
+          <p>
+            The Classic Group began with Classic Bullion. Its trade is {site.group.trade}, and it
+            has done that work in Dubai for over {years} years. Jewellery came later: in {brandYear}
+            the group opened Classic Jewels &amp; Diamonds to sell the metal it already traded,
+            tested and refined, at the weight and karat it was used to standing behind.
+          </p>
+          <p>The group today has {countWord(site.group.divisions.length).toLowerCase()} divisions.</p>
+          <ol class="divisions rows" role="list">
+            {site.group.divisions.map((d, i) => (
+              <li class="divisions__row">
+                <span class="divisions__no" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span class="divisions__text">
+                  <span class="divisions__name">{d.name}</span>
+                  <span class="divisions__note small">{d.note}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+          <p class="small">
+            <a href={site.group.url} target="_blank" rel="noopener">
+              {site.group.name} <Icon name="external" />
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="story">
+        <aside class="story__note note">
+          <Icon name="c-ring" class="story__glyph" size="0.75rem" />
+          <span>Where elegance meets eternity.</span>
+        </aside>
+        <div class="story__body prose">
+          <h2>From one shop to {branchWord}</h2>
+          <p>
+            The first shop opened in {brandYear} at {flagship.venue}, Deira: Shop No. 6, inside the
+            multistorey car-park building behind RAK Bank. Since then {expansion} have followed, so
+            there are now {branchWord} branches across {emirateList}.
+          </p>
+          {soon.length > 0 && (
+            <p>
+              {countWord(soon.length)} more {soon.length === 1 ? 'is' : 'are'} announced:{' '}
+              {soon.map((b) => b.name).join('; ')}.
+            </p>
+          )}
+          <p>
+            The written terms on this site apply at every branch. Hours, directions and parking for
+            each one are on the <a href={routes.stores}>stores page</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="story">
+        <aside class="story__note note">
+          <Icon name="c-ring" class="story__glyph" size="0.75rem" />
+          <span>A treasure as unique as you.</span>
+        </aside>
+        <div class="story__body prose">
+          <h2>What is on the trays</h2>
+          <p>
+            {listWords(pieceNames).replace(/^./, (c) => c.toUpperCase())} in 22K and 18K gold, every
+            piece hallmarked and listed with its karat. <a href={routes.diamonds}>Diamond pieces</a>{' '}
+            are set in 18K and tested in front of you.{' '}
+            <a href={routes.goldCoinsBars}>Coins and bars</a> in 22K and 24K are priced near the rate
+            with no making charge.
+          </p>
+          <p>
+            The jewellery is arranged in{' '}
+            <a href={routes.collections}>
+              {countWord(collections.length).toLowerCase()} collections
+            </a>
+            , named for the place whose goldsmiths set the style, for a tradition, or for who will
+            wear it: {listWords(collectionNames)}. Each collection page states the karats it is made
+            in.
+          </p>
+          <p class="small">
+            <a href={routes.jewellery}>All jewellery, by the gram</a>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <figure class="rings">
+        <Picture
+          src={ringsImage}
+          alt="Five diamond rings standing in a row on a pale grey surface, four in white gold and one in yellow gold"
+          formats={['avif', 'webp']}
+          widths={[640, 960, 1280, 1920]}
+          sizes="(min-width: 80em) 75rem, 100vw"
+          fit="cover"
+        />
+        <figcaption class="caption">
+          Five diamond rings from the trays: two cluster rings with pierced shoulders, two
+          solitaires and a stone-set band, in white and yellow 18K gold.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="story">
+        <div class="story__body prose">
+          <h2>How we sell</h2>
+          <p>
+            A sale at any of our counters has the same four steps, whatever the piece or the
+            branch.
+          </p>
+          <ol class="steps rows" role="list">
+            {steps.map((s, i) => (
+              <li class="steps__row">
+                <span class="steps__no" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span class="steps__text">
+                  <span class="steps__title">{s.title}</span>
+                  <span class="steps__detail">{s.text}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+          <p class="small">
+            <a href={routes.goldRate}>Today’s rate and how a price is worked out</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <div class="story">
+        <div class="story__body prose">
+          <h2>What customers say</h2>
+          <p class="rating">
+            <span class="rating__score tabular">{site.reviews.rating}</span>
+            <span class="rating__text">
+              out of 5 on Google, from {site.reviews.count.toLocaleString('en-GB')} reviews of the{' '}
+              {flagship.name} branch, as of{' '}
+              <time datetime={site.reviews.asOf}>{formatDate(site.reviews.asOf)}</time>.
+            </span>
+          </p>
+          <p>
+            We do not reprint reviews here. Read them where they were written, and add your own
+            after you visit.
+          </p>
+          <p class="small">
+            <a href={site.reviews.url} target="_blank" rel="noopener">
+              Read the reviews on Google <Icon name="external" />
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead eyebrow="In writing" title="Our terms.">
+        <Fragment slot="aside">
+          <a class="link-quiet section__link" href={routes.promise}>
+            Read the conditions <Icon name="arrow-right" />
+          </a>
+        </Fragment>
+      </SectionHead>
+      <AssuranceLedger />
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <SectionHead
+        eyebrow="Stores"
+        title={`${countWord(openBranches.length)} branches across the UAE.`}
+      >
+        <Fragment slot="aside">
+          <a class="link-quiet section__link" href={routes.stores}>
+            Hours and directions <Icon name="arrow-right" />
+          </a>
+        </Fragment>
+      </SectionHead>
+      <div class="stores rows">
+        {openBranches.map((b) => (
+          <StoreCard branch={b} compact />
+        ))}
+      </div>
+      {soon.length > 0 && (
+        <p class="small stores__soon">Opening soon: {soon.map((b) => b.name).join('; ')}.</p>
+      )}
+    </div>
+  </section>
+
+  <section class="section section--ruled">
+    <div class="container">
+      <EnquiryBlock
+        heading="Ask us anything about the group or the shops"
+        text="WhatsApp is fastest during shop hours. Calls go to the Deira counter."
+      />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .section__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    color: var(--plum-700);
+  }
+
+  /* 2 / 7 / 3 text block with the margin note in the inline-start gutter (spec §3). */
+  .story {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .story__body {
+    min-inline-size: 0;
+  }
+
+  .story__note {
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
+    max-inline-size: 18rem;
+  }
+
+  .story__glyph {
+    flex: none;
+    color: var(--gold-600);
+    transform: translateY(0.05em);
+  }
+
+  .divisions__row,
+  .steps__row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-4);
+    align-items: baseline;
+    padding-block: var(--space-4);
+  }
+
+  .prose .divisions,
+  .prose .steps {
+    padding-inline-start: 0;
+  }
+
+  .prose .divisions li + li,
+  .prose .steps li + li {
+    margin-block-start: 0;
+  }
+
+  .divisions__no,
+  .steps__no {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-variant-numeric: tabular-nums;
+    color: var(--gold-600);
+    min-inline-size: 2.2ch;
+  }
+
+  .divisions__text,
+  .steps__text {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .divisions__name,
+  .steps__title {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .divisions__note {
+    color: var(--ink-700);
+  }
+
+  .divisions__note::first-letter {
+    text-transform: uppercase;
+  }
+
+  .steps__detail {
+    color: var(--ink-700);
+  }
+
+  .rings {
+    margin-block-start: var(--space-7);
+    min-inline-size: 0;
+  }
+
+  .rings :global(img) {
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 4 / 1;
+    object-fit: cover;
+  }
+
+  .rings figcaption {
+    margin-block-start: var(--space-3);
+    max-inline-size: 48rem;
+  }
+
+  .rating {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-4);
+    padding-block: var(--space-4);
+    border-block: 1px solid var(--rule-1);
+  }
+
+  .rating__score {
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral-xl);
+    font-weight: 500;
+    line-height: 1;
+    color: var(--ink-900);
+  }
+
+  .rating__text {
+    max-inline-size: 34rem;
+    color: var(--ink-700);
+  }
+
+  .stores__soon {
+    margin-block-start: var(--space-4);
+  }
+
+  @media (min-width: 64em) {
+    .story {
+      grid-template-columns: 2fr 7fr 3fr;
+      column-gap: calc(var(--grid-gap) * 2);
+    }
+
+    .story__note {
+      grid-column: 1;
+      grid-row: 1;
+      align-self: start;
+      padding-block-start: var(--space-2);
+    }
+
+    .story__body {
+      grid-column: 2;
+    }
+  }
+</style>
