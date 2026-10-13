@@ -14,10 +14,10 @@ import Faq from '@/components/sections/Faq.astro';
 import Hero from '@/components/sections/Hero.astro';
 import RateBoard from '@/components/sections/RateBoard.astro';
 import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
-import { openBranches, site } from '@/data/site';
+import { site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getActiveOffers, getFaqGroup, type Offer } from '@/lib/content';
-import { countWord, formatAed, formatDate } from '@/lib/format';
+import { formatAed, formatDate } from '@/lib/format';
 import { KARAT_META, KARATS, type Karat } from '@/lib/gold-rate';
 import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
@@ -30,7 +30,6 @@ const [faq, offers, { latest, history, stale }] = await Promise.all([
   getRates(),
 ]);
 
-const branchCount = countWord(openBranches.length).toLowerCase();
 const updated = latest ? formatDate(latest.date) : null;
 
 /*
@@ -104,9 +103,9 @@ const jsonLd: WithContext<Dataset>[] = latest
 
 /* The posting date sits under the lead, with rate.ts hooks, so it changes with the board. */
 const lead = latest
-  ? `AED per gram for 24K, 22K, 21K, 18K and 14K, as posted on the boards in our ${branchCount} branches.`
-  : `AED per gram for 24K, 22K, 21K, 18K and 14K, as posted on the boards in our ${branchCount} branches. Call ${site.phone.landline.display} for today’s figure.`;
-const description = `Today’s gold rate in Dubai, AED per gram for 24K, 22K, 21K, 18K and 14K, as posted in our ${branchCount} branches, with a worked pricing example.`;
+  ? `AED per gram for 24K, 22K, 21K, 18K and 14K, as posted on the boards in our branches.`
+  : `AED per gram for 24K, 22K, 21K, 18K and 14K, as posted on the boards in our branches. Call ${site.phone.landline.display} for today’s figure.`;
+const description = `Today’s gold rate in Dubai, AED per gram for 24K, 22K, 21K, 18K and 14K, as posted in our branches, with a worked pricing example.`;
 ---
 
 <BaseLayout

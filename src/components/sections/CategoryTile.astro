@@ -18,28 +18,28 @@ export interface Props {
 const { category, count, class: className } = Astro.props;
 const { data } = category;
 const image = data.image;
-const widths = image ? [...new Set([...[400, 800].filter((w) => w < image.width), image.width])] : [];
+const widths = image
+  ? [...new Set([...[400, 800].filter((w) => w < image.width), image.width])]
+  : [];
 const label = data.shortName ?? data.name;
 ---
 
 <a class:list={['tile', className]} href={routes.category(category.id)}>
   <span class:list={['tile__media', !image && 'tile__media--type']}>
-    {
-      image ? (
-        <Picture
-          src={image}
-          alt=""
-          formats={['avif', 'webp']}
-          widths={widths}
-          sizes="(min-width: 64em) 25vw, 50vw"
-          fit="cover"
-        />
-      ) : (
-        <span class="tile__type" aria-hidden="true">
-          {label}
-        </span>
-      )
-    }
+    {image ? (
+      <Picture
+        src={image}
+        alt=""
+        formats={['avif', 'webp']}
+        widths={widths}
+        sizes="(min-width: 64em) 25vw, 50vw"
+        fit="cover"
+      />
+    ) : (
+      <span class="tile__type" aria-hidden="true">
+        {label}
+      </span>
+    )}
   </span>
   <span class="tile__text">
     <span class="tile__name">{label}</span>

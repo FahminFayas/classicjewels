@@ -136,7 +136,9 @@ for (const file of files.sort()) {
     }
   }
 
-  for (const [, json] of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)) {
+  for (const [, json] of html.matchAll(
+    /<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi,
+  )) {
     try {
       JSON.parse(json);
     } catch (e) {
@@ -147,7 +149,10 @@ for (const file of files.sort()) {
   const text = visibleText(html);
   for (const re of BANNED) {
     const m = text.match(re);
-    if (m) problems.push(`banned phrase "${m[0]}" near "…${text.slice(Math.max(0, m.index - 40), m.index + 40)}…"`);
+    if (m)
+      problems.push(
+        `banned phrase "${m[0]}" near "…${text.slice(Math.max(0, m.index - 40), m.index + 40)}…"`,
+      );
   }
   if (text.includes('—')) {
     const i = text.indexOf('—');

@@ -57,7 +57,8 @@ function currentValue(karat: string): number | null {
 function apply(rate: GoldRate) {
   const date = currentDate();
   if (date && rate.date < date) return;
-  const changed = !date || rate.date > date || KARATS.some((k) => currentValue(k) !== rate.perGram[k]);
+  const changed =
+    !date || rate.date > date || KARATS.some((k) => currentValue(k) !== rate.perGram[k]);
   if (!changed) return;
 
   for (const k of KARATS) {
@@ -76,7 +77,9 @@ function apply(rate: GoldRate) {
     if (el instanceof HTMLTimeElement) el.dateTime = rate.date;
     const text = el.querySelector<HTMLElement>('[data-rate-date-text]') ?? el;
     text.textContent =
-      text.dataset.format === 'full' ? formatDate(rate.date) : formatDate(rate.date, { year: undefined });
+      text.dataset.format === 'full'
+        ? formatDate(rate.date)
+        : formatDate(rate.date, { year: undefined });
   }
   for (const el of document.querySelectorAll<HTMLElement>('[data-rate-board]')) {
     el.dataset.state = 'refreshed';

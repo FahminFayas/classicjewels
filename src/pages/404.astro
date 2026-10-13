@@ -6,9 +6,7 @@
  */
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
-import { openBranches } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { countWord } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { whatsappGeneral } from '@/lib/whatsapp';
 
@@ -19,7 +17,7 @@ const links = [
 ];
 
 const title = 'Page not found';
-const description = `There is nothing at this address. See the jewellery, today’s gold rate in Dubai or our ${countWord(openBranches.length).toLowerCase()} branches, or message us on WhatsApp.`;
+const description = `There is nothing at this address. See the jewellery, today’s gold rate in Dubai or our branches, or message us on WhatsApp.`;
 ---
 
 <BaseLayout title={title} description={description} noindex>

@@ -384,7 +384,8 @@ export const site = {
     {
       id: 'easy-exchange',
       title: 'Exchange for another design',
-      detail: 'Exchange a piece for a different design, credited at its gold value. Ask for the terms.',
+      detail:
+        'Exchange a piece for a different design, credited at its gold value. Ask for the terms.',
     },
   ] as Promise_[],
 

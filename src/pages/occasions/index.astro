@@ -9,10 +9,10 @@ import Hero from '@/components/sections/Hero.astro';
 import OccasionFeature from '@/components/sections/OccasionFeature.astro';
 import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
 import Button from '@/components/ui/Button.astro';
-import { emirates, openBranches } from '@/data/site';
+import { emirates } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getActiveOffers, getFaqGroup, getOccasions } from '@/lib/content';
-import { countWord, formatDate, listWords } from '@/lib/format';
+import { formatDate, listWords } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { itemListSchema } from '@/lib/schema';
 import { whatsappGeneral } from '@/lib/whatsapp';
@@ -24,7 +24,6 @@ const [occasions, faq, offers] = await Promise.all([
 ]);
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const offer = offers[0];
-const branchCount = countWord(openBranches.length).toLowerCase();
 const places = listWords(emirates);
 
 const jsonLd = [
@@ -88,7 +87,7 @@ const jsonLd = [
         <Faq heading={faq.data.heading} items={faq.data.items} />
         <EnquiryBlock
           compact
-          text={`Tell us the occasion, the date and a budget. We reply with a shortlist from the trays at all ${branchCount} branches.`}
+          text="Tell us the occasion, the date and a budget. We reply with a shortlist from the trays at our branches."
         />
       </div>
     </div>

@@ -13,7 +13,10 @@ export interface Props {
 
 const { rows, caption = 'Specification', class: className } = Astro.props;
 const present = rows
-  .map((r) => ({ label: r.label, value: r.value === null || r.value === undefined ? '' : String(r.value).trim() }))
+  .map((r) => ({
+    label: r.label,
+    value: r.value === null || r.value === undefined ? '' : String(r.value).trim(),
+  }))
   .filter((r) => r.value.length > 0);
 ---
 

@@ -34,87 +34,87 @@ const sorts = [
 ---
 
 {show && (
-<div class:list={['filters', className]} data-filters={gridId}>
-  <noscript>
-    <nav class="filters__nojs" aria-label="Browse by piece">
-      <p class="small">By piece:</p>
-      <ul class="filters__links" role="list">
-        {categories.map((c) => (
-          <li>
-            <a href={routes.category(c.id)}>{c.name}</a>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  </noscript>
+  <div class:list={['filters', className]} data-filters={gridId}>
+    <noscript>
+      <nav class="filters__nojs" aria-label="Browse by piece">
+        <p class="small">By piece:</p>
+        <ul class="filters__links" role="list">
+          {categories.map((c) => (
+            <li>
+              <a href={routes.category(c.id)}>{c.name}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </noscript>
 
-  <div class="filters__controls" data-filter-controls hidden>
-    <div class="filters__facets">
-      {karats.length > 1 && (
-        <div class="filters__group" role="group" aria-label="Karat">
-          <span class="filters__label small">Karat</span>
-          <span class="filters__chips">
-          {karats.map((k) => (
-            <button
-              type="button"
-              class="chip"
-              aria-pressed="false"
-              data-facet="karat"
-              data-value={String(k)}
-            >
-              {k}K
-            </button>
+    <div class="filters__controls" data-filter-controls hidden>
+      <div class="filters__facets">
+        {karats.length > 1 && (
+          <div class="filters__group" role="group" aria-label="Karat">
+            <span class="filters__label small">Karat</span>
+            <span class="filters__chips">
+              {karats.map((k) => (
+                <button
+                  type="button"
+                  class="chip"
+                  aria-pressed="false"
+                  data-facet="karat"
+                  data-value={String(k)}
+                >
+                  {k}K
+                </button>
+              ))}
+            </span>
+          </div>
+        )}
+        {collections.length > 1 && (
+          <div class="filters__group" role="group" aria-label="Collection">
+            <span class="filters__label small">Collection</span>
+            <span class="filters__chips">
+              {collections.map((c) => (
+                <button
+                  type="button"
+                  class="chip"
+                  aria-pressed="false"
+                  data-facet="collection"
+                  data-value={c.id}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </span>
+          </div>
+        )}
+      </div>
+      <label class="filters__sort">
+        <span class="filters__label small">Sort</span>
+        <select class="field__input filters__select" data-sort>
+          {sorts.map((s) => (
+            <option value={s.value}>{s.label}</option>
           ))}
-          </span>
-        </div>
-      )}
-      {collections.length > 1 && (
-        <div class="filters__group" role="group" aria-label="Collection">
-          <span class="filters__label small">Collection</span>
-          <span class="filters__chips">
-          {collections.map((c) => (
-            <button
-              type="button"
-              class="chip"
-              aria-pressed="false"
-              data-facet="collection"
-              data-value={c.id}
-            >
-              {c.name}
-            </button>
-          ))}
-          </span>
-        </div>
-      )}
+        </select>
+      </label>
+      <p class="filters__status small" aria-live="polite">
+        <span data-count>
+          {total} {total === 1 ? 'piece' : 'pieces'} shown
+        </span>
+        <span class="filters__sep" aria-hidden="true">
+          ·
+        </span>
+        <button type="button" class="filters__clear" data-clear hidden>
+          Clear
+        </button>
+      </p>
+      <p class="filters__empty" data-empty hidden>
+        No pieces match.{' '}
+        <a href={whatsappGeneral()} target="_blank" rel="noopener">
+          Ask us on WhatsApp
+        </a>
+        : we have more in the trays than online.
+      </p>
     </div>
-    <label class="filters__sort">
-      <span class="filters__label small">Sort</span>
-      <select class="field__input filters__select" data-sort>
-        {sorts.map((s) => (
-          <option value={s.value}>{s.label}</option>
-        ))}
-      </select>
-    </label>
-    <p class="filters__status small" aria-live="polite">
-      <span data-count>
-        {total} {total === 1 ? 'piece' : 'pieces'} shown
-      </span>
-      <span class="filters__sep" aria-hidden="true">
-        ·
-      </span>
-      <button type="button" class="filters__clear" data-clear hidden>
-        Clear
-      </button>
-    </p>
-    <p class="filters__empty" data-empty hidden>
-      No pieces match.{' '}
-      <a href={whatsappGeneral()} target="_blank" rel="noopener">
-        Ask us on WhatsApp
-      </a>
-      : we have more in the trays than online.
-    </p>
   </div>
-</div>
 )}
 <script src="@/scripts/filter.ts"></script>
 

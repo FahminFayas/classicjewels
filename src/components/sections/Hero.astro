@@ -25,6 +25,10 @@ export interface Props {
   media?: 'image' | 'plate' | 'banner' | 'none';
   /** Crop for media="image". */
   shape?: 'landscape' | 'portrait';
+  /** Flagship luxury layout mode for the brand opener. */
+  variant?: 'standard' | 'flagship';
+  /** Floating hallmark badge for flagship media */
+  badge?: string;
   image?: ImageMetadata;
   imageAlt?: string;
   /** Literal description shown under the photo. */
@@ -39,6 +43,8 @@ const {
   display = false,
   media = 'none',
   shape = 'landscape',
+  variant = 'standard',
+  badge,
   image,
   imageAlt = '',
   caption,
@@ -54,6 +60,7 @@ const widthsFor = (img: ImageMetadata, wanted: number[]) => [
 <section
   class:list={[
     'hero',
+    variant === 'flagship' && 'hero--flagship',
     hasMedia ? 'hero--media' : 'hero--text',
     hasMedia && `hero--${media}`,
     hasMedia && media === 'image' && `hero--${shape}`,
@@ -72,19 +79,29 @@ const widthsFor = (img: ImageMetadata, wanted: number[]) => [
       )}
     </div>
     {hasMedia && media === 'image' && (
-      <figure class="hero__media">
-        <Picture
-          class="hero__img"
-          src={image}
-          alt={imageAlt}
-          formats={['avif', 'webp']}
-          widths={widthsFor(image, [480, 768, 1024, 1488])}
-          sizes="(min-width: 64em) 58vw, 100vw"
-          fit="cover"
-          position={shape === 'portrait' ? 'top' : 'centre'}
-          priority
-        />
-        {caption && <figcaption class="caption hero__caption">{caption}</figcaption>}
+      <figure class:list={['hero__media', variant === 'flagship' && 'hero__media--flagship']}>
+        <div class="hero__frame">
+          <Picture
+            class="hero__img"
+            src={image}
+            alt={imageAlt}
+            formats={['avif', 'webp']}
+            widths={widthsFor(image, [480, 768, 1024, 1488])}
+            sizes="(min-width: 64em) 54vw, 100vw"
+            fit="cover"
+            position={shape === 'portrait' ? 'top' : 'centre'}
+            priority
+          />
+          {badge && (
+            <div class="hero__badge" aria-hidden="true">
+              <span class="hero__badge-dot" />
+              <span>{badge}</span>
+            </div>
+          )}
+        </div>
+        {caption && variant !== 'flagship' && (
+          <figcaption class="caption hero__caption">{caption}</figcaption>
+        )}
       </figure>
     )}
     {hasMedia && media === 'plate' && (
@@ -160,6 +177,13 @@ const widthsFor = (img: ImageMetadata, wanted: number[]) => [
     min-inline-size: 0;
   }
 
+  .hero__frame {
+    position: relative;
+    background: var(--surface-0);
+    border: 1px solid var(--rule-1);
+    overflow: hidden;
+  }
+
   /* <Picture class> lands on the <img>, so target it directly. */
   .hero__media :global(img.hero__img) {
     inline-size: 100%;
@@ -183,6 +207,77 @@ const widthsFor = (img: ImageMetadata, wanted: number[]) => [
 
   .hero__caption {
     margin-block-start: var(--space-3);
+  }
+
+  /* Floating luxury hallmark badge on flagship campaign photo */
+  .hero__badge {
+    position: absolute;
+    inset-block-end: var(--space-4);
+    inset-inline-start: var(--space-4);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--rule-1);
+    font-size: var(--t-caption);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-900);
+  }
+
+  .hero__badge-dot {
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    background: var(--gold-600);
+    border-radius: 50%;
+  }
+
+  /* Flagship Maison Hero variant */
+  .hero--flagship {
+    padding-block: var(--space-8) var(--space-8);
+  }
+
+  .hero--flagship .hero__text {
+    max-inline-size: 38rem;
+  }
+
+  .hero--flagship .hero__title {
+    font-size: var(--t-display);
+    line-height: 1.04;
+    letter-spacing: var(--track-display);
+    color: var(--ink-900);
+    max-inline-size: 20ch;
+  }
+
+  .hero--flagship .hero__lead {
+    font-size: var(--t-lead);
+    line-height: 1.55;
+    color: var(--ink-700);
+    margin-block-start: var(--space-5);
+    max-inline-size: 34rem;
+  }
+
+  .hero--flagship .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+    margin-block-start: var(--space-7);
+  }
+
+  .hero--flagship .hero__frame {
+    aspect-ratio: 4 / 5;
+    box-shadow: 0 0 0 1px var(--rule-1);
+  }
+
+  .hero--flagship .hero__frame :global(img.hero__img) {
+    inline-size: 100%;
+    block-size: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
   }
 
   /* Two flex items only (the ring and one text run), however much markup the slot holds. */
@@ -218,8 +313,14 @@ const widthsFor = (img: ImageMetadata, wanted: number[]) => [
       column-gap: calc(var(--grid-gap) * 2);
     }
 
+    .hero--flagship .hero__grid {
+      grid-template-columns: 6fr 6fr;
+      column-gap: calc(var(--grid-gap) * 2.5);
+      align-items: center;
+    }
+
     /* A tall portrait would push a vertically centred H1 below the fold. */
-    .hero--portrait .hero__grid {
+    .hero--portrait:not(.hero--flagship) .hero__grid {
       align-items: start;
     }
 
@@ -249,6 +350,10 @@ const widthsFor = (img: ImageMetadata, wanted: number[]) => [
     }
 
     .hero--portrait .hero__media :global(img.hero__img) {
+      max-block-size: calc(100svh - var(--header-h) - var(--space-9));
+    }
+
+    .hero--flagship .hero__frame {
       max-block-size: calc(100svh - var(--header-h) - var(--space-9));
     }
   }

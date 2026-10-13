@@ -30,14 +30,15 @@ const topics = [
   'Coins and bars',
   'Current offer',
 ];
-
 ---
 
 <form class:list={['form', className]} method="post" action={PUBLIC_FORM_ENDPOINT} data-enhance>
   <div class="form__fields" data-form-fields>
     <div class="form__row">
       <div class="field">
-        <label class="field__label" for="cf-name">Name (required)</label>
+        <label class="field__label" for="cf-name">
+          Name (required)
+        </label>
         <input
           class="field__input"
           id="cf-name"
@@ -49,7 +50,9 @@ const topics = [
         />
       </div>
       <div class="field">
-        <label class="field__label" for="cf-email">Email (required)</label>
+        <label class="field__label" for="cf-email">
+          Email (required)
+        </label>
         <input
           class="field__input"
           id="cf-email"
@@ -64,7 +67,9 @@ const topics = [
 
     <div class="form__row">
       <div class="field">
-        <label class="field__label" for="cf-phone">Phone</label>
+        <label class="field__label" for="cf-phone">
+          Phone
+        </label>
         <input
           class="field__input"
           id="cf-phone"
@@ -74,10 +79,14 @@ const topics = [
           maxlength="40"
           aria-describedby="cf-phone-hint"
         />
-        <p class="field__hint" id="cf-phone-hint">Optional. Include the country code, e.g. +971.</p>
+        <p class="field__hint" id="cf-phone-hint">
+          Optional. Include the country code, e.g. +971.
+        </p>
       </div>
       <div class="field">
-        <label class="field__label" for="cf-branch">Branch</label>
+        <label class="field__label" for="cf-branch">
+          Branch
+        </label>
         <select class="field__input" id="cf-branch" name="branch">
           <option value="">Any branch</option>
           {openBranches.map((b) => (
@@ -91,13 +100,19 @@ const topics = [
 
     <div class="form__row">
       <div class="field">
-        <label class="field__label" for="cf-topic">Topic</label>
+        <label class="field__label" for="cf-topic">
+          Topic
+        </label>
         <select class="field__input" id="cf-topic" name="topic">
-          {topics.map((t) => <option value={t}>{t}</option>)}
+          {topics.map((t) => (
+            <option value={t}>{t}</option>
+          ))}
         </select>
       </div>
       <div class="field">
-        <label class="field__label" for="cf-reference">Piece reference</label>
+        <label class="field__label" for="cf-reference">
+          Piece reference
+        </label>
         <input
           class="field__input"
           id="cf-reference"
@@ -108,13 +123,23 @@ const topics = [
           autocomplete="off"
           aria-describedby="cf-reference-hint"
         />
-        <p class="field__hint" id="cf-reference-hint">Piece reference, e.g. CJ-NK-001</p>
+        <p class="field__hint" id="cf-reference-hint">
+          Piece reference, e.g. CJ-NK-001
+        </p>
       </div>
     </div>
 
     <div class="field">
-      <label class="field__label" for="cf-message">Message (required)</label>
-      <textarea class="field__input" id="cf-message" name="message" rows="6" required maxlength="4000"
+      <label class="field__label" for="cf-message">
+        Message (required)
+      </label>
+      <textarea
+        class="field__input"
+        id="cf-message"
+        name="message"
+        rows="6"
+        required
+        maxlength="4000"
       ></textarea>
     </div>
 
@@ -133,7 +158,9 @@ const topics = [
 
     <p class="form__privacy small">We use your details only to reply.</p>
     <div class="form__actions">
-      <Button type="submit" iconEnd="arrow-right">Send message</Button>
+      <Button type="submit" iconEnd="arrow-right">
+        Send message
+      </Button>
     </div>
   </div>
   <!-- Rendered (empty) from the start so assistive technology registers the live region before

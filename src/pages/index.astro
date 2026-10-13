@@ -68,8 +68,6 @@ const collectionName = new Map(collections.map((c) => [c.id, c.data.name]));
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const storeImage = new URL('/og/default.png', origin).toString();
 const offer = offers[0];
-/** Branch and group facts come from site.ts, so a new branch or emirate updates every line. */
-const branchCount = countWord(openBranches.length);
 const places = listWords(emirates);
 const experience = site.group.experience;
 
@@ -88,24 +86,29 @@ const jsonLd = [
 <BaseLayout
   title="Gold Jewellers in Dubai, UAE"
   brandFirst
-  description={`22K and 18K hallmarked gold, tested diamonds and 24K coins from ${branchCount.toLowerCase()} branches in ${places}, weighed in front of you at today’s gold rate.`}
+  description={`22K and 18K hallmarked gold, tested diamonds and 24K coins from our branches in ${places}, weighed in front of you at today’s gold rate.`}
   jsonLd={jsonLd}
 >
   <Hero
-    eyebrow={`Gold & diamond jewellers · ${emirates.join(' · ')}`}
+    variant="flagship"
+    shape="portrait"
+    eyebrow={`Fine jewellery house · ${emirates.join(' · ')}`}
     title={`Gold and diamond jewellers in ${places}.`}
-    lead={`Weighed in front of you, priced at today’s rate. 22K and 18K hallmarked jewellery, tested diamonds and 24K coins and bars from the jewellery house of the Classic Group, ${experience}.`}
+    lead={`Weighed in front of you, priced at today’s Dubai rate. Pure 22K and 18K hallmarked jewellery, certified diamonds and investment bullion from the Classic Group.`}
     media="image"
+    badge="UAE Hallmarked · 916 & 750"
     image={heroImage}
     imageAlt="Two rose-gold diamond rings from the Diamonds collection on textured blue paper"
   >
     <Button href={whatsappGeneral()} icon="whatsapp" external>
-      WhatsApp the shop
+      WhatsApp the showroom
     </Button>
     <Button href="#rate" variant="secondary">
       Today’s gold rate
     </Button>
-    <Fragment slot="note">{site.slogan}.</Fragment>
+    <a href={routes.jewellery} class="hero__browse-link">
+      Explore jewellery trays <span aria-hidden="true">&rarr;</span>
+    </a>
   </Hero>
 
   <ProofStrip rate={rates.latest} />
@@ -301,7 +304,7 @@ const jsonLd = [
             The Classic Group began with Classic Bullion and has been {experience}. In{' '}
             {site.founded.brandYear} it opened Classic Jewels &amp; Diamonds at {flagship.name}, to
             sell what it knows best: honest weight, correct karat, diamonds tested in front of you.
-            It now has {branchCount.toLowerCase()} branches in {places}.
+            It now has branches across {places}.
           </p>
           <a class="link-quiet section__link" href={routes.about}>
             Our story <Icon name="arrow-right" />
@@ -323,7 +326,7 @@ const jsonLd = [
 
   <section class="section section--ruled">
     <div class="container">
-      <SectionHead eyebrow="Stores" title={`${branchCount} branches across the UAE.`}>
+      <SectionHead eyebrow="Stores" title="Our branches across the UAE.">
         <Fragment slot="aside">
           <a class="link-quiet section__link" href={routes.stores}>
             Hours and directions <Icon name="arrow-right" />
@@ -559,5 +562,26 @@ const jsonLd = [
       grid-template-columns: 7fr 5fr;
       column-gap: calc(var(--grid-gap) * 2);
     }
+  }
+
+  .hero__browse-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--t-small);
+    font-weight: 500;
+    color: var(--plum-700);
+    text-decoration: underline;
+    text-decoration-color: var(--rule-gold);
+    text-underline-offset: 0.25em;
+    min-block-size: var(--tap);
+    transition:
+      color var(--dur-fast) var(--ease),
+      text-decoration-color var(--dur-fast) var(--ease);
+  }
+
+  .hero__browse-link:hover {
+    color: var(--gold-700);
+    text-decoration-color: var(--gold-700);
   }
 </style>

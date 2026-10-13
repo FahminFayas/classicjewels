@@ -47,9 +47,15 @@ export function hoursSummary(branch: Branch): string {
   if (!hours || hours.weekly.length === 0) return 'Call ahead for today’s hours';
   const [first] = hours.weekly;
   const everyDay = hours.weekly.length === 1 && first && first.days.length === 7;
-  const base = everyDay && first
-    ? `${hhmm(first.opens)}–${hhmm(first.closes)} daily`
-    : hours.weekly.map((h) => `${h.days.map((d) => d.slice(0, 3)).join(', ')} ${hhmm(h.opens)}–${hhmm(h.closes)}`).join('; ');
+  const base =
+    everyDay && first
+      ? `${hhmm(first.opens)}–${hhmm(first.closes)} daily`
+      : hours.weekly
+          .map(
+            (h) =>
+              `${h.days.map((d) => d.slice(0, 3)).join(', ')} ${hhmm(h.opens)}–${hhmm(h.closes)}`,
+          )
+          .join('; ');
   const breaks = (hours.breaks ?? [])
     .map((b) => `${b.days.join(', ')} break ${hhmm(b.from)}–${hhmm(b.to)}`)
     .join('; ');

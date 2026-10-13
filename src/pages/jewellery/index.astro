@@ -15,7 +15,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
-import { emirates, openBranches } from '@/data/site';
+import { emirates } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getCategories, getDesignCollections, getFaqGroup, getProducts } from '@/lib/content';
 import { countWord, formatDate, listWords } from '@/lib/format';
@@ -49,7 +49,6 @@ const collectionsInTray = collections
   .map((c) => ({ id: c.id, name: shortCollection(c.data.name) }));
 const categoryLinks = categories.map((c) => ({ id: c.id, name: c.data.shortName ?? c.data.name }));
 
-const branchCount = countWord(openBranches.length).toLowerCase();
 const emirateList = listWords(emirates);
 
 /** Name only the facets the Filters block will actually offer (it renders nothing under three). */
@@ -76,7 +75,7 @@ const jsonLd = [
 
 <BaseLayout
   title="Gold & Diamond Jewellery in Dubai, Sharjah & Abu Dhabi"
-  description={`22K and 18K hallmarked gold, tested diamonds and 24K coins, each listed with its karat and hallmark. Priced at today’s Dubai rate at ${branchCount} branches.`}
+  description={`22K and 18K hallmarked gold, tested diamonds and 24K coins, each listed with its karat and hallmark. Priced at today’s Dubai rate across our branches.`}
   jsonLd={jsonLd}
 >
   <div class="container container--wide">
@@ -86,7 +85,7 @@ const jsonLd = [
   <Hero
     eyebrow="Jewellery"
     title="Gold and diamond jewellery, by the gram."
-    lead={`Every piece lists its karat and hallmark, and its gross weight once the store has confirmed it. Prices follow today’s Dubai rate plus a making charge quoted per piece, at ${branchCount} branches in ${emirateList}.`}
+    lead={`Every piece lists its karat and hallmark, and its gross weight once the store has confirmed it. Prices follow today’s Dubai rate plus a making charge quoted per piece, at our branches in ${emirateList}.`}
     display
   >
     <Button href={whatsappGeneral()} icon="whatsapp" external>

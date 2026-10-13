@@ -17,9 +17,8 @@ const { as: Tag = 'p', class: className } = Astro.props;
 
 <style>
   .eyebrow {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: var(--space-3);
     margin-block-end: var(--space-3);
     font-family: var(--ff-text);
     font-size: var(--t-eyebrow);
@@ -30,19 +29,7 @@ const { as: Tag = 'p', class: className } = Astro.props;
     color: var(--gold-700);
   }
 
-  .eyebrow::before {
-    content: '';
-    flex: none;
-    inline-size: 1.5rem;
-    block-size: 1px;
-    background: var(--rule-gold);
-  }
-
   :global([data-surface='plum']) .eyebrow {
     color: var(--gold-300);
-  }
-
-  :global([data-surface='plum']) .eyebrow::before {
-    background: var(--gold-300);
   }
 </style>
