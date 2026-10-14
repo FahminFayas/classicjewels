@@ -10,6 +10,7 @@ karat: 22
 images:
   - src: '../../assets/products/p03.jpg'
     alt: 'Antique-finish 22K gold bib necklace edged with pearl drops on a white bust'
+    ground: 'velvet'
 featured: true
 isNew: false
 order: 3

@@ -7,5 +7,6 @@
   "image": "../../assets/categories/necklaces.png",
   "imageAlt": "22K gold necklace set with matching earrings on a white background",
   "order": 1,
-  "inNav": true
+  "inNav": true,
+  "ground": "velvet"
 }

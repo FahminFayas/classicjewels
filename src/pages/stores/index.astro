@@ -45,7 +45,12 @@ const jsonLd = openBranches
   .map((b) => jewelryStoreSchema(b, storeImage));
 ---
 
-<BaseLayout title={`Our Stores in ${emirateList}`} description={description} jsonLd={jsonLd}>
+<BaseLayout
+  ground="ivory"
+  title={`Our Stores in ${emirateList}`}
+  description={description}
+  jsonLd={jsonLd}
+>
   <div class="container">
     <Breadcrumbs items={[{ name: 'Stores', href: routes.stores }]} />
   </div>

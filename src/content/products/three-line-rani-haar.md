@@ -10,6 +10,7 @@ karat: 22
 images:
   - src: '../../assets/products/p09.jpg'
     alt: 'Three-strand 22K gold rani haar with a peacock pendant on a white bust'
+    ground: 'velvet'
 featured: true
 isNew: false
 order: 9

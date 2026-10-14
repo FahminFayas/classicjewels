@@ -7,10 +7,17 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin
+  Speculation-Rules: "/speculation-rules.json"
   Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self' https://wa.me; frame-ancestors 'self'; img-src 'self' data: https://www.googletagmanager.com https://*.google-analytics.com https://*.google.com https://*.gstatic.com https://*.facebook.com; script-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://connect.facebook.net https://analytics.tiktok.com; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.facebook.com https://analytics.tiktok.com; frame-src https://www.google.com https://maps.google.com https://www.googletagmanager.com; object-src 'none'; upgrade-insecure-requests
 
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Prerender rules for Chromium (moderate eagerness: hover or pointer-down). Served as a file, not an
+# inline <script type="speculationrules">, which the CSP would block. docs/design-system-v2.md §3.8.
+/speculation-rules.json
+  Content-Type: application/speculationrules+json
+  Cache-Control: no-cache, must-revalidate
 
 /*.html
   Cache-Control: no-cache, must-revalidate

@@ -1,5 +1,6 @@
 ---
 name: 'Diamonds Collection'
+shortName: 'Diamonds'
 title: 'Diamond Jewellery Dubai – 18K Rings, Studs, Pendants'
 description: 'Diamond jewellery in Dubai: engagement rings, studs, pendants and tennis bracelets in 18K gold from Classic Jewels. Every stone tested in the shop.'
 origin: 'Diamonds set in 18K'
@@ -14,6 +15,7 @@ hallmarks:
 karats: [18]
 image: '../../assets/collections/diamonds.jpg'
 imageAlt: '18K white gold diamond cluster ring'
+imageGround: 'lilac'
 order: 12
 featured: true
 ---

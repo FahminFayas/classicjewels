@@ -1,9 +1,13 @@
 ---
 /**
- * The one layout every page uses. Owns the <head> (SEO, fonts, icons, analytics, site-wide
- * JSON-LD), the chrome (utility strip, header, footer, mobile action bar) and the two scripts.
- * Pages pass their SEO fields and render into the default slot; extra <head> tags (preloads,
- * page-specific JSON-LD) go in the `head` slot.
+ * The one layout every page uses (docs/design-system-v2.md §5.2). Owns the <head> (SEO, fonts,
+ * icons, theme colour, site-wide JSON-LD, analytics), the chrome (header, footer, phone action
+ * bar, icon sprite) and the site-wide scripts. Pages pass their SEO fields, the tone family of
+ * their first section (`ground`) and render into the default slot; extra <head> tags go in the
+ * `head` slot.
+ *
+ * `ground` decides the header tone, the theme colour and the overscroll ground. Cross-document
+ * view transitions are declared in base.css (@view-transition, reduced-motion aware).
  */
 import { Font } from 'astro:assets';
 import type { Thing, WithContext } from 'schema-dts';
@@ -12,7 +16,6 @@ import '@/styles/base.css';
 import Footer from '@/components/layout/Footer.astro';
 import MobileActionBar from '@/components/layout/MobileActionBar.astro';
 import SiteHeader from '@/components/layout/SiteHeader.astro';
-import UtilityStrip from '@/components/layout/UtilityStrip.astro';
 import Analytics from '@/components/seo/Analytics.astro';
 import JsonLd from '@/components/seo/JsonLd.astro';
 import Seo, { type Props as SeoProps } from '@/components/seo/Seo.astro';
@@ -20,16 +23,21 @@ import IconSprite from '@/components/ui/IconSprite.astro';
 import { flagship } from '@/data/site';
 import { getRates } from '@/lib/rates';
 import { jewelryStoreSchema, organizationSchema, websiteSchema } from '@/lib/schema';
+import { THEME_COLOR, type Ground } from '@/lib/tones';
 
 export interface Props extends SeoProps {
   /** Page-level JSON-LD entities (Product, Article, ItemList …). Breadcrumbs emit their own. */
   jsonLd?: WithContext<Thing>[];
   /** Extra class on <main> for page-specific layout hooks. */
   mainClass?: string;
+  /** Tone of the first section; decides the header tone, theme-color and overscroll ground. */
+  ground?: Ground;
+  /** Piece pages: switches the phone bar to "Ask about this piece". */
+  piece?: { name: string; sku: string; url: string };
 }
 
-const { jsonLd = [], mainClass, ...seo } = Astro.props;
-const { latest: rate, stale } = await getRates();
+const { jsonLd = [], mainClass, ground = 'stage', piece, ...seo } = Astro.props;
+const { latest: rate, stale, fetchedAt } = await getRates();
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const logoUrl = new URL('/icons/icon-512.png', origin).toString();
 const storeImage = new URL('/og/default.png', origin).toString();
@@ -41,12 +49,13 @@ const storeImage = new URL('/og/default.png', origin).toString();
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <Seo {...seo} />
-    <Font cssVariable="--font-display" preload />
-    <Font cssVariable="--font-text" preload />
+    {/* Only the Cormorant roman is preloaded; the italic and Plex load on demand (§4.4). */}
+    <Font cssVariable="--font-display" preload={[{ style: 'normal' }]} />
+    <Font cssVariable="--font-text" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#4B2849" />
+    <meta name="theme-color" content={THEME_COLOR[ground]} />
     <meta name="generator" content={Astro.generator} />
     <JsonLd data={websiteSchema()} />
     <JsonLd data={organizationSchema(logoUrl)} />
@@ -57,20 +66,21 @@ const storeImage = new URL('/og/default.png', origin).toString();
     <slot name="head" />
     <Analytics />
   </head>
-  <body>
+  <body data-ground={ground}>
     <a class="skip" href="#main">
       Skip to content
     </a>
-    <UtilityStrip rate={rate} stale={stale} />
-    <SiteHeader rate={rate} />
+    <SiteHeader tone={ground} rate={rate} stale={stale} fetchedAt={fetchedAt} />
     <main id="main" class={mainClass} tabindex="-1">
       <slot />
     </main>
     <Footer />
-    <MobileActionBar />
+    <MobileActionBar piece={piece} />
     <IconSprite />
     <script src="@/scripts/nav.ts"></script>
     <script src="@/scripts/rate.ts"></script>
+    <script src="@/scripts/karat.ts"></script>
+    <script src="@/scripts/motion.ts"></script>
   </body>
 </html>
 
@@ -81,15 +91,16 @@ const storeImage = new URL('/og/default.png', origin).toString();
     inset-inline-start: var(--space-2);
     z-index: var(--z-skip);
     padding: var(--space-3) var(--space-4);
-    background: var(--surface-0);
+    background: var(--surface-1);
     color: var(--plum-700);
-    font-weight: 500;
+    font-weight: var(--fw-text-strong);
     text-decoration: none;
-    transform: translateY(-200%);
+    translate: 0 -200%;
   }
 
   .skip:focus-visible {
-    transform: none;
+    translate: none;
+    outline-color: var(--focus);
   }
 
   main:focus {

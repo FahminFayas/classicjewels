@@ -1,12 +1,12 @@
 /*
- * Global styles: reset, document defaults, typography, links, buttons, forms, prose and a few
- * layout utilities shared by every page. Component-specific styles live in the components.
- * Logical properties throughout so a future /ar build is a `dir="rtl"` flip.
+ * Global styles v2: reset, tones, type, links, buttons, fields, layout tracks, the stage image,
+ * rails, sheets, rate figures, motion utilities, view transitions, focus and print.
+ * Spec: docs/design-system-v2.md §3. Logical properties throughout (a future /ar build is a
+ * dir="rtl" flip). Every animation sits inside prefers-reduced-motion: no-preference.
  */
 @import './tokens.css';
 
-/* ---------- Reset ---------- */
-/* Components set display:flex/grid freely; the hidden attribute must still win. */
+/* ============================== Reset ============================== */
 [hidden] {
   display: none !important;
 }
@@ -37,14 +37,20 @@ html {
 body {
   min-block-size: 100dvh;
   background: var(--surface-1);
-  color: var(--ink-900);
+  color: var(--ink-700);
   font-family: var(--ff-text);
   font-size: var(--t-body);
-  line-height: 1.6;
+  font-weight: var(--fw-text);
+  line-height: var(--lh-text);
   font-variant-numeric: lining-nums;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-wrap: break-word;
+}
+
+/* Pages that open on the stage paint the overscroll area dark too (BaseLayout sets it). */
+body[data-ground='stage'] {
+  background: var(--stage-0);
 }
 
 img,
@@ -55,7 +61,6 @@ video {
   max-inline-size: 100%;
 }
 
-/* Grid and flex items default to min-width:auto, which lets an image dictate the column width. */
 picture,
 figure {
   min-inline-size: 0;
@@ -103,239 +108,456 @@ table {
   inline-size: 100%;
 }
 
-:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 3px;
-}
-
-[data-surface='plum'] :focus-visible {
-  outline-color: var(--focus-on-plum);
-}
-
 ::selection {
   background: var(--plum-100);
   color: var(--ink-900);
 }
 
-/* ---------- Typography ---------- */
+/* ============================== Tones ============================== */
+/* Light grounds (also the document default, so components outside a Section still resolve). */
+:root,
+[data-tone='ivory'],
+[data-tone='parchment'],
+[data-tone='white'] {
+  --ground: var(--surface-1);
+  --fg: var(--ink-900);
+  --body: var(--ink-700);
+  --muted: var(--ink-500);
+  --accent: var(--plum-700);
+  --eyebrow: var(--gold-700);
+  --numeral: var(--plum-700);
+  --rule: var(--rule-1);
+  --rule-strong: var(--rule-2);
+  --link: var(--plum-700);
+  --link-hover: var(--gold-700);
+  --wipe: var(--bronze);
+  --focus-ring: var(--focus);
+  --btn-bg: var(--plum-700);
+  --btn-fg: var(--ink-on-plum);
+  --btn-bg-hover: var(--plum-900);
+  --btn-fg-hover: var(--ink-on-plum);
+  --btn-line: var(--plum-700);
+  --btn-line-fg: var(--plum-700);
+  --btn-wash: var(--plum-050);
+  --chip-line: var(--rule-input);
+  --chip-on-bg: var(--plum-700);
+  --chip-on-fg: var(--ink-on-plum);
+  --field-bg: var(--surface-0);
+  --field-line: var(--rule-input);
+  --ok-tone: var(--ok);
+  --err-tone: var(--err);
+}
+
+[data-tone='parchment'] {
+  --ground: var(--surface-2);
+}
+
+[data-tone='white'] {
+  --ground: var(--surface-0);
+  --field-bg: var(--surface-1);
+}
+
+/* The stage: velvet photographs live here. */
+[data-tone='stage'],
+[data-tone='stage-raised'] {
+  --ground: var(--stage-0);
+  --fg: var(--on-stage);
+  --body: var(--on-stage-body);
+  --muted: var(--on-stage-muted);
+  --accent: var(--champagne);
+  --eyebrow: var(--bronze);
+  --numeral: var(--champagne);
+  --rule: var(--rule-stage);
+  --rule-strong: var(--rule-stage-strong);
+  --link: var(--champagne);
+  --link-hover: var(--on-stage);
+  --wipe: var(--bronze);
+  --focus-ring: var(--focus-on-dark);
+  --btn-bg: var(--bronze);
+  --btn-fg: var(--stage-0);
+  --btn-bg-hover: var(--champagne);
+  --btn-fg-hover: var(--stage-0);
+  --btn-line: var(--rule-stage-strong);
+  --btn-line-fg: var(--on-stage);
+  --btn-wash: var(--wash-stage);
+  --chip-line: var(--rule-stage-strong);
+  --chip-on-bg: var(--champagne);
+  --chip-on-fg: var(--stage-0);
+  --field-bg: var(--stage-2);
+  --field-line: var(--rule-stage-strong);
+  --ok-tone: var(--ok-on-stage);
+  --err-tone: var(--err-on-stage);
+  color-scheme: dark;
+}
+
+[data-tone='stage-raised'] {
+  --ground: var(--stage-1);
+}
+
+/* Plum: where a visitor asks a person. data-surface="plum" is a compatibility alias (WP6 removes). */
+[data-tone='plum'],
+[data-tone='plum-deep'],
+[data-surface='plum'] {
+  --ground: var(--surface-plum);
+  --fg: var(--ink-on-plum);
+  --body: var(--ink-on-plum-muted);
+  --muted: var(--ink-on-plum-muted);
+  --accent: var(--champagne);
+  --eyebrow: var(--champagne);
+  --numeral: var(--champagne);
+  --rule: var(--rule-on-plum);
+  --rule-strong: var(--rule-on-plum-strong);
+  --link: var(--champagne);
+  --link-hover: var(--ink-on-plum);
+  --wipe: var(--champagne);
+  --focus-ring: var(--focus-on-dark);
+  --btn-bg: var(--bronze);
+  --btn-fg: var(--stage-0);
+  --btn-bg-hover: var(--champagne);
+  --btn-fg-hover: var(--stage-0);
+  --btn-line: var(--rule-on-plum-strong);
+  --btn-line-fg: var(--ink-on-plum);
+  --btn-wash: var(--wash-plum);
+  --chip-line: var(--rule-on-plum-strong);
+  --chip-on-bg: var(--champagne);
+  --chip-on-fg: var(--plum-900);
+  --field-bg: transparent;
+  --field-line: var(--rule-on-plum-strong);
+  --ok-tone: var(--ok-on-plum);
+  --err-tone: var(--err-on-plum);
+  color-scheme: dark;
+}
+
+[data-tone='plum-deep'] {
+  --ground: var(--surface-plum-deep);
+}
+
+[data-tone],
+[data-surface='plum'] {
+  background-color: var(--ground);
+  color: var(--body);
+}
+
+[data-tone^='stage'] ::selection,
+[data-tone^='plum'] ::selection {
+  background: var(--champagne);
+  color: var(--stage-0);
+}
+
+/* The bronze seam between a stage section and a plum section (rule 1). */
+.seam {
+  border-block-start: 1px solid var(--rule-gold);
+}
+
+/* ============================== Type ============================== */
 h1,
 h2,
 h3,
-h4 {
+.display,
+.h-band,
+.h-hero {
   font-family: var(--ff-display);
-  font-weight: 500;
-  color: var(--ink-900);
+  font-weight: var(--fw-display);
+  font-variant-numeric: normal;
+  color: var(--fg);
   text-wrap: balance;
   overflow-wrap: break-word;
-  word-break: normal;
 }
 
 h1 {
   font-size: var(--t-h1);
-  line-height: 1.12;
+  line-height: var(--lh-heading);
   letter-spacing: var(--track-h1);
 }
 
 h2 {
   font-size: var(--t-h2);
-  line-height: 1.18;
+  line-height: var(--lh-display);
   letter-spacing: var(--track-h2);
 }
 
 h3 {
   font-size: var(--t-h3);
-  font-weight: 600;
-  line-height: 1.28;
+  font-weight: var(--fw-display-small);
+  line-height: 1.2;
 }
 
 h4 {
   font-family: var(--ff-text);
   font-size: var(--t-title);
-  font-weight: 500;
+  font-weight: var(--fw-text-strong);
   line-height: 1.35;
+  color: var(--fg);
+}
+
+.display {
+  font-size: var(--t-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--track-display);
+}
+
+.h-band {
+  font-size: var(--t-band);
+  line-height: 1.12;
+  letter-spacing: var(--track-display);
+}
+
+.h-hero {
+  font-size: var(--t-hero);
+  line-height: 1.04;
+  letter-spacing: var(--track-display);
+}
+
+/* One accent phrase per heading: true italic, coloured by the tone. */
+:is(h1, h2, h3, .display, .h-band, .h-hero) em {
+  font-style: italic;
+  color: var(--accent);
 }
 
 p {
   text-wrap: pretty;
 }
 
-.display {
-  font-size: var(--t-display);
-  line-height: 1;
-  letter-spacing: var(--track-display);
+[data-tone^='stage'] p {
+  line-height: var(--lh-text-stage);
 }
 
 .lead {
   font-size: var(--t-lead);
-  line-height: 1.5;
-  color: var(--ink-700);
+  line-height: 1.55;
+  color: var(--body);
+  max-inline-size: var(--measure);
 }
 
 .small {
   font-size: var(--t-small);
   line-height: 1.5;
-  letter-spacing: 0.004em;
-  color: var(--ink-500);
+  color: var(--muted);
 }
 
 .caption {
   font-size: var(--t-caption);
   line-height: 1.45;
-  letter-spacing: 0.01em;
-  color: var(--ink-500);
-}
-
-.numeral {
-  font-size: var(--t-numeral);
-  font-weight: 500;
-  line-height: 1.2;
-  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--muted);
 }
 
 .note {
   font-family: var(--ff-display);
   font-size: var(--t-note);
-  font-weight: 400;
+  font-style: italic;
+  font-weight: var(--fw-display-small);
   line-height: 1.4;
-  color: var(--ink-500);
+  color: var(--muted);
 }
 
-/* ---------- Links ---------- */
+/* Every rate, weight, fineness and count. */
+.fig,
+.tabular {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--ff-text);
+  font-size: var(--t-eyebrow);
+  font-weight: var(--fw-text-strong);
+  line-height: 1.3;
+  letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase;
+  color: var(--eyebrow);
+}
+
+.eyebrow .ornament {
+  inline-size: 3rem;
+  block-size: 0.5rem;
+  flex: none;
+  color: var(--wipe);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+/* ============================== Links ============================== */
 a {
   color: var(--link);
   text-decoration: underline;
   text-decoration-thickness: 1px;
-  text-decoration-color: var(--rule-2);
-  text-underline-offset: 0.15em;
-  transition: color var(--dur-fast) var(--ease);
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.18em;
+  transition:
+    color var(--dur-quick) var(--ease-out),
+    text-decoration-color var(--dur-quick) var(--ease-out);
 }
 
 a:hover {
   color: var(--link-hover);
-  text-decoration-color: var(--gold-600);
+  text-decoration-color: currentColor;
 }
 
-[data-surface='plum'] a {
-  color: var(--ink-on-plum);
-  text-decoration-color: var(--rule-on-plum);
-}
-
-[data-surface='plum'] a:hover {
-  color: var(--gold-300);
-  text-decoration-color: var(--gold-300);
-}
-
-/* Links that are not prose: nav items, card titles. Underline only on hover. */
 .link-quiet {
   text-decoration: none;
 }
 
 .link-quiet:hover {
   text-decoration: underline;
-  text-decoration-color: var(--gold-600);
+  text-decoration-color: var(--wipe);
 }
 
-/* ---------- Buttons ---------- */
+/*
+ * The underline wipe: short, single-line links only (nav, "All jewellery", card actions,
+ * mega-panel names). Prose links keep the ordinary underline above.
+ */
+.link-wipe {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--tap-inline);
+  color: var(--link);
+  font-weight: var(--fw-text-strong);
+  text-decoration: none;
+}
+
+.link-wipe::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0.15em;
+  block-size: 1px;
+  background: var(--wipe);
+  scale: 0 1;
+  transform-origin: 0 50%;
+  transition: scale var(--dur-slow) var(--ease-lux);
+}
+
+[dir='rtl'] .link-wipe::after {
+  transform-origin: 100% 50%;
+}
+
+.link-wipe:is(:hover, :focus-visible)::after,
+.link-wipe[aria-current]::after {
+  scale: 1 1;
+}
+
+.link-wipe:hover {
+  color: var(--link-hover);
+}
+
+/* ============================== Buttons ============================== */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
   min-block-size: var(--control-h);
   padding-inline: var(--space-5);
-  padding-block: var(--space-2);
   border: 1px solid transparent;
   border-radius: var(--radius);
-  font-size: var(--t-title);
-  font-weight: 500;
-  line-height: 1.2;
-  text-decoration: none;
+  font-family: var(--ff-text);
+  font-size: 0.9375rem;
+  font-weight: var(--fw-text-strong);
+  line-height: 1.15;
+  letter-spacing: 0.01em;
   text-align: center;
+  text-decoration: none;
   white-space: nowrap;
   transition:
-    background-color var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease),
-    border-color var(--dur-fast) var(--ease);
+    background-color var(--dur-ui) var(--ease-out),
+    color var(--dur-ui) var(--ease-out),
+    border-color var(--dur-ui) var(--ease-out);
 }
 
-.btn:hover {
-  text-decoration: none;
+.btn .icon {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
 }
 
+/* Filled: plum on light grounds, bronze with stage ink on dark grounds (resolved by the tone). */
 .btn--primary {
-  background: var(--plum-700);
-  border-color: var(--plum-700);
-  color: var(--ink-on-plum);
+  background: var(--btn-bg);
+  border-color: var(--btn-bg);
+  color: var(--btn-fg);
 }
 
 .btn--primary:hover {
-  background: var(--plum-900);
-  border-color: var(--plum-900);
-  color: var(--ink-on-plum);
+  background: var(--btn-bg-hover);
+  border-color: var(--btn-bg-hover);
+  color: var(--btn-fg-hover);
+  text-decoration: none;
 }
 
-.btn--primary:active {
-  box-shadow: inset 0 0 0 1px var(--rule-gold);
-}
-
+/* Outlined. */
 .btn--secondary {
   background: transparent;
-  border-color: var(--plum-700);
-  color: var(--plum-700);
+  border-color: var(--btn-line);
+  color: var(--btn-line-fg);
 }
 
 .btn--secondary:hover {
-  background: var(--plum-050);
-  color: var(--plum-700);
+  background: var(--btn-wash);
+  color: var(--btn-line-fg);
+  text-decoration: none;
 }
 
+/* Text: the underline wipe at button height. */
 .btn--text {
+  position: relative;
   min-block-size: var(--tap);
   padding-inline: 0;
   color: var(--link);
 }
 
-.btn--text:hover {
-  text-decoration: underline;
-  text-decoration-color: var(--gold-600);
-  text-underline-offset: 0.2em;
+.btn--text::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0.7rem;
+  block-size: 1px;
+  background: var(--wipe);
+  scale: 0 1;
+  transform-origin: 0 50%;
+  transition: scale var(--dur-slow) var(--ease-lux);
 }
 
-[data-surface='plum'] .btn--primary {
-  background: var(--surface-1);
-  border-color: var(--surface-1);
-  color: var(--plum-700);
+.btn--text:is(:hover, :focus-visible)::after {
+  scale: 1 1;
 }
 
-[data-surface='plum'] .btn--primary:hover {
-  background: var(--gold-100);
-  border-color: var(--gold-100);
-  color: var(--plum-900);
+.btn--compact {
+  min-block-size: var(--tap);
+  padding-inline: var(--space-4);
+  font-size: var(--t-small);
 }
 
-[data-surface='plum'] .btn--secondary {
-  border-color: var(--gold-300);
-  color: var(--gold-300);
-}
-
-[data-surface='plum'] .btn--secondary:hover {
-  background: rgb(250 247 242 / 0.08);
-  color: var(--gold-100);
+.btn--block {
+  inline-size: 100%;
 }
 
 .btn[aria-disabled='true'],
 .btn:disabled {
-  background: var(--surface-2);
-  border-color: var(--surface-2);
-  color: var(--ink-300);
+  background: transparent;
+  border-color: var(--rule);
+  color: var(--muted);
   cursor: not-allowed;
 }
 
-.btn .icon {
-  flex: none;
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
-/* ---------- Forms ---------- */
+@media (max-width: 39.99em) {
+  .actions--pair > .btn {
+    flex: 1 1 0;
+    padding-inline: var(--space-3);
+  }
+}
+
+/* ============================== Fields and chips ============================== */
 .field {
   display: grid;
   align-content: start;
@@ -344,8 +566,18 @@ a:hover {
 
 .field__label {
   font-size: var(--t-small);
-  font-weight: 500;
-  color: var(--ink-700);
+  font-weight: var(--fw-text-strong);
+  color: var(--fg);
+}
+
+.field__hint {
+  font-size: var(--t-small);
+  color: var(--muted);
+}
+
+.field__error {
+  font-size: var(--t-small);
+  color: var(--err-tone);
 }
 
 .field__input {
@@ -353,10 +585,10 @@ a:hover {
   min-block-size: var(--control-h);
   padding-inline: var(--space-4);
   padding-block: var(--space-2);
-  background: var(--surface-0);
-  border: 1px solid var(--rule-input);
+  background: var(--field-bg);
+  border: 1px solid var(--field-line);
   border-radius: var(--radius);
-  color: var(--ink-900);
+  color: var(--fg);
 }
 
 textarea.field__input {
@@ -364,28 +596,591 @@ textarea.field__input {
   resize: vertical;
 }
 
+/* Underline-only fields: plum forms and the estimator (the store's personalisation style). */
+.field--line .field__input {
+  padding-inline: 0;
+  background: transparent;
+  border: 0;
+  border-block-end: 1px solid var(--field-line);
+}
+
 .field__input:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 0;
-  border-color: var(--focus);
+  border-color: var(--focus-ring);
 }
 
 .field__input[aria-invalid='true'] {
-  border-color: var(--err);
+  border-color: var(--err-tone);
 }
 
-.field__error {
-  font-size: var(--t-small);
-  color: var(--err);
+/* Segmented radio chips (karats, contact method). The input stays focusable and labelled. */
+.chips {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  border: 1px solid var(--chip-line);
 }
 
-.field__hint {
-  font-size: var(--t-small);
-  color: var(--ink-500);
+.chip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: var(--space-1);
+  min-block-size: var(--control-h);
+  padding: var(--space-2) var(--space-3);
+  color: var(--fg);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-quick) var(--ease-out),
+    color var(--dur-quick) var(--ease-out);
 }
 
-/* ---------- Icons (inline SVG sprite, see components/ui/Icon.astro) ---------- */
-/* Inline-block overrides the reset's `svg { display: block }`, so an icon sits in a line of text. */
+.chip + .chip {
+  border-inline-start: 1px solid var(--chip-line);
+}
+
+.chip input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.chip:has(input:checked) {
+  background: var(--chip-on-bg);
+  color: var(--chip-on-fg);
+}
+
+.chip:has(input:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  z-index: var(--z-raised);
+}
+
+/* ============================== Layout ============================== */
+/* The track: named lines for content (1280), wide (1536) and bleed (edge to edge). */
+.track {
+  display: grid;
+  grid-template-columns:
+    [bleed-start] minmax(var(--gutter), 1fr)
+    [wide-start] minmax(0, calc((var(--container-wide) - var(--container)) / 2))
+    [content-start] min(100% - 2 * var(--gutter), var(--container))
+    [content-end] minmax(0, calc((var(--container-wide) - var(--container)) / 2))
+    [wide-end] minmax(var(--gutter), 1fr) [bleed-end];
+}
+
+.track > * {
+  grid-column: content;
+  min-inline-size: 0;
+}
+
+.track[data-width='wide'] > *,
+.track > .wide {
+  grid-column: wide;
+}
+
+.track[data-width='narrow'] > * {
+  grid-column: content;
+  justify-self: center;
+  inline-size: min(100%, var(--container-narrow));
+}
+
+.track > .bleed {
+  grid-column: bleed;
+}
+
+/* Legacy containers stay for pages that have not migrated yet. */
+.container {
+  inline-size: 100%;
+  max-inline-size: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.container--wide {
+  max-inline-size: var(--container-wide);
+}
+
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--grid-gap);
+}
+
+@media (min-width: 40em) {
+  .grid-12 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64em) {
+  .grid-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+.split {
+  display: grid;
+  gap: var(--grid-gap);
+  align-items: start;
+}
+
+@media (min-width: 64em) {
+  .split {
+    grid-template-columns: 5fr 7fr;
+    column-gap: calc(var(--grid-gap) * 2);
+  }
+
+  .split--7-5 {
+    grid-template-columns: 7fr 5fr;
+  }
+
+  .split--even {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .split--5-6 {
+    grid-template-columns: 5fr 6fr;
+  }
+}
+
+/* Sections: Section.astro emits these. */
+.sec {
+  position: relative;
+}
+
+.sec--section {
+  padding-block: var(--section-y);
+}
+
+.sec--band {
+  padding-block: var(--band-y) calc(var(--band-y) * 0.8);
+}
+
+.sec--slim {
+  padding-block: var(--slim-y);
+}
+
+.sec--ruled {
+  border-block-start: 1px solid var(--rule);
+}
+
+/* Legacy section classes (WP6 removes). */
+.section {
+  padding-block: var(--section-y);
+}
+
+.section--ruled {
+  border-block-start: 1px solid var(--rule);
+}
+
+/* ============================== The stage image ============================== */
+/*
+ * StageImage.astro emits <figure class="stage-img" data-mask data-light style="--cap:420px">.
+ * Never drawn wider than --cap (≤ source width). overflow: clip, never hidden, so view()
+ * timelines keep working. The figure's box is fixed by aspect-ratio: CLS 0 before load.
+ */
+.stage-img {
+  position: relative;
+  inline-size: min(100%, var(--cap, var(--cap-velvet)));
+  aspect-ratio: var(--ar, 1);
+  margin: 0;
+  margin-inline: auto;
+  background: var(--stage, transparent);
+  overflow: clip;
+}
+
+.stage-img picture {
+  display: block;
+  block-size: 100%;
+}
+
+.stage-img img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  mask-image: var(--mask, none);
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+}
+
+.stage-img[data-mask='spot'] {
+  --mask: var(--mask-spot);
+}
+
+.stage-img[data-mask='pool'] {
+  --mask: var(--mask-pool);
+}
+
+.stage-img[data-mask='edge'] img {
+  mask-image: var(--mask-edge);
+  mask-composite: intersect;
+}
+
+/* ============================== Rails ============================== */
+/* Horizontal snap rails on phones (occasions, collection cards). Buttons come from motion.ts. */
+.rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: var(--rail-card, 74%);
+  gap: var(--grid-gap);
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline mandatory;
+  scroll-padding-inline: var(--gutter);
+  padding-inline: var(--gutter);
+  scrollbar-width: none;
+}
+
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+.rail > * {
+  scroll-snap-align: start;
+}
+
+.rail__progress {
+  position: relative;
+  block-size: 1px;
+  margin-inline: var(--gutter);
+  margin-block-start: var(--space-5);
+  background: var(--rule);
+}
+
+.rail__progress::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--wipe);
+  scale: 0.25 1;
+  transform-origin: 0 50%;
+}
+
+/* ============================== Top-layer sheets ============================== */
+/* Popovers and dialogs (mega panel, rate popover, drawer). Entry only; never on hero content. */
+.sheet {
+  transition:
+    opacity var(--dur-enter) var(--ease-out),
+    translate var(--dur-enter) var(--ease-out),
+    display var(--dur-enter) allow-discrete,
+    overlay var(--dur-enter) allow-discrete;
+}
+
+.sheet:not(:popover-open, [open]) {
+  opacity: 0;
+  translate: 0 -0.5rem;
+}
+
+@starting-style {
+  .sheet:is(:popover-open, [open]) {
+    opacity: 0;
+    translate: 0 -0.5rem;
+  }
+}
+
+.sheet--side:not(:popover-open, [open]) {
+  translate: 2rem 0;
+}
+
+@starting-style {
+  .sheet--side:is(:popover-open, [open]) {
+    translate: 2rem 0;
+  }
+}
+
+/* Only modal dialogs dim the page; popovers (mega panel, rate board) leave it lit. */
+dialog.sheet::backdrop {
+  background: var(--scrim-stage);
+}
+
+/* ============================== Rate figures ============================== */
+/*
+ * The karat follower: RateFigure karat="follow" prints one span per karat; the visitor's
+ * chosen karat (html[data-karat], set by karat.ts) decides which shows. 22K without JS.
+ */
+.kv {
+  display: none;
+}
+
+:root:not([data-karat]) .kv[data-k='22k'],
+:root[data-karat='24k'] .kv[data-k='24k'],
+:root[data-karat='22k'] .kv[data-k='22k'],
+:root[data-karat='21k'] .kv[data-k='21k'],
+:root[data-karat='18k'] .kv[data-k='18k'] {
+  display: inline;
+}
+
+/* The live marker: a square turned 45°, never a dot. Hollow when the rate is stale. */
+.marker {
+  display: inline-block;
+  inline-size: 0.4375rem;
+  block-size: 0.4375rem;
+  background: var(--bronze);
+  rotate: 45deg;
+  flex: none;
+}
+
+.marker[data-stale] {
+  background: transparent;
+  outline: 1px solid var(--bronze);
+  outline-offset: -1px;
+}
+
+/* The digit roll (rate.ts builds these only on a real change, never under reduced motion). */
+.roll-d {
+  position: relative;
+  display: inline-block;
+  overflow: clip;
+  vertical-align: top;
+  mask-image: var(--mask-digit);
+}
+
+.roll-d__ghost {
+  visibility: hidden;
+}
+
+.roll-d__reel {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  animation: roll-up var(--dur-roll) var(--ease-out) var(--delay, 0ms) both;
+}
+
+.roll-d__reel > span {
+  display: block;
+  block-size: 1lh;
+}
+
+.roll-d__reel[data-dir='down'] {
+  animation-name: roll-down;
+}
+
+@keyframes roll-up {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -50%;
+  }
+}
+
+@keyframes roll-down {
+  from {
+    translate: 0 -50%;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+/* The sheen: one champagne glint along the rate rule, 600 ms after load, and again on a change. */
+.sheen-rule {
+  position: relative;
+  block-size: 1px;
+  background: var(--rule-strong);
+  overflow: clip;
+}
+
+.sheen-rule::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 34%;
+  background: var(--champagne);
+  mask-image: var(--mask-sheen);
+  opacity: 0;
+  translate: -100% 0;
+}
+
+/* ============================== Scroll-driven and decorative motion ============================== */
+@media (prefers-reduced-motion: no-preference) {
+  .sheen-rule::after {
+    animation: sheen var(--dur-sheen) var(--ease-in-out) 600ms 1 both;
+  }
+
+  .sheen-rule[data-sheen='again']::after {
+    animation-name: sheen-again;
+    animation-delay: 0ms;
+  }
+
+  @supports (animation-timeline: view()) {
+    /* Section heads, cards, doors: rise 24 px. Never on first-viewport content. */
+    .reveal {
+      animation: reveal-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
+
+    /* The hero piece recedes as you leave it (exit only: LCP untouched). */
+    .recede {
+      animation: recede linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
+
+    /* A case light comes on: fully lit by a quarter of the way into view. Opacity only. */
+    .stage-img[data-light='scroll'] img {
+      animation: light-on linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 25%;
+    }
+
+    /* Hairlines that draw (route, styles line, stamp bars). Set transform-origin per use. */
+    .draw-x {
+      animation: grow-x linear both;
+      animation-timeline: view();
+      animation-range: entry 40% cover 40%;
+    }
+
+    .draw-y {
+      animation: grow-y linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 45%;
+    }
+
+    /* Rail progress hairline: the rail's own inline scroll. */
+    .rail-wrap {
+      timeline-scope: --rail;
+    }
+
+    .rail-wrap .rail {
+      scroll-timeline: --rail inline;
+    }
+
+    .rail-wrap .rail__progress::after {
+      animation: rail-progress linear both;
+      animation-timeline: --rail;
+    }
+  }
+
+  /* FAQ and hours accordions open smoothly where supported; elsewhere they snap. */
+  :root {
+    interpolate-size: allow-keywords;
+  }
+
+  details::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size var(--dur-ui) var(--ease-out),
+      content-visibility var(--dur-ui) allow-discrete;
+  }
+
+  details[open]::details-content {
+    block-size: auto;
+  }
+
+  /* Cross-document page transitions (Chrome 126+, Safari 18.2+). Names: hdr, bar, piece. */
+  @view-transition {
+    navigation: auto;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--dur-page);
+    animation-timing-function: var(--ease-out);
+  }
+
+  ::view-transition-group(piece) {
+    animation-duration: var(--dur-morph);
+    animation-timing-function: var(--ease-out);
+  }
+}
+
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    translate: 0 1.5rem;
+  }
+}
+
+@keyframes recede {
+  to {
+    scale: 0.94;
+    opacity: 0.35;
+  }
+}
+
+@keyframes light-on {
+  from {
+    opacity: 0.45;
+  }
+}
+
+@keyframes grow-x {
+  from {
+    scale: 0 1;
+  }
+}
+
+@keyframes grow-y {
+  from {
+    scale: 1 0;
+  }
+}
+
+/* Explicit end: the progress hairline's resting scale is 0.25, so it needs a stated "to". */
+@keyframes rail-progress {
+  from {
+    scale: 0.06 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+
+@keyframes sheen {
+  0% {
+    translate: -100% 0;
+    opacity: 0;
+  }
+  12%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    translate: 300% 0;
+    opacity: 0;
+  }
+}
+
+@keyframes sheen-again {
+  0% {
+    translate: -100% 0;
+    opacity: 0;
+  }
+  12%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    translate: 300% 0;
+    opacity: 0;
+  }
+}
+
+/* Images that load after motion.ts runs fade in over 600 ms (motion.ts sets the attribute). */
+img[data-fade='wait'] {
+  opacity: 0;
+}
+
+img[data-fade='in'] {
+  opacity: 1;
+  transition: opacity var(--dur-slow) var(--ease-lux);
+}
+
+/* ============================== Focus ============================== */
+:focus-visible {
+  outline: 2px solid var(--focus-ring, var(--focus));
+  outline-offset: 3px;
+}
+
+/* ============================== Icons ============================== */
 .icon {
   display: inline-block;
   flex: none;
@@ -399,85 +1194,31 @@ textarea.field__input {
   vertical-align: -0.25em;
 }
 
-/* ---------- Layout utilities ---------- */
-.container {
-  inline-size: 100%;
-  max-inline-size: var(--container);
-  margin-inline: auto;
-  padding-inline: var(--gutter);
-}
-
-.container--wide {
-  max-inline-size: var(--container-wide);
-}
-
-.section {
-  padding-block: var(--section-y);
-}
-
-/* Adjacent sections on the same surface are separated by a hairline, never a surface swap. */
-.section--ruled {
-  border-block-start: 1px solid var(--rule-1);
-}
-
-.grid {
-  display: grid;
-  gap: var(--grid-gap);
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-@media (min-width: 40em) {
-  .grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 64em) {
-  .grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-}
-
-/* Asymmetric split: text 5 / media 7 (or reversed with .split--reverse). Never 50/50. */
-.split {
-  display: grid;
-  gap: var(--grid-gap);
-  align-items: start;
-}
-
-@media (min-width: 64em) {
-  .split {
-    grid-template-columns: 5fr 7fr;
-    column-gap: calc(var(--grid-gap) * 2);
-  }
-
-  .split--reverse {
-    grid-template-columns: 7fr 5fr;
-  }
-
-  .split--reverse > :first-child {
-    order: 2;
-  }
-}
-
+/* ============================== Prose and lists ============================== */
 .prose {
   max-inline-size: var(--prose);
+  color: var(--body);
 }
 
 .prose > * + * {
   margin-block-start: var(--space-4);
 }
 
-.prose > h2 {
-  margin-block-start: var(--space-7);
-}
-
 .prose > :first-child {
   margin-block-start: 0;
 }
 
+.prose > h2 {
+  margin-block-start: var(--space-8);
+  font-size: var(--t-h3);
+  font-weight: var(--fw-display-small);
+}
+
 .prose > h3 {
   margin-block-start: var(--space-6);
+  font-family: var(--ff-text);
+  font-size: var(--t-title);
+  font-weight: var(--fw-text-strong);
 }
 
 .prose ul,
@@ -491,7 +1232,7 @@ textarea.field__input {
 
 .prose table {
   font-size: var(--t-small);
-  border-block: 1px solid var(--rule-2);
+  border-block: 1px solid var(--rule-strong);
 }
 
 .prose th,
@@ -499,20 +1240,16 @@ textarea.field__input {
   padding-block: var(--space-2);
   padding-inline: var(--space-3);
   text-align: start;
-  border-block-end: 1px solid var(--rule-1);
+  border-block-end: 1px solid var(--rule);
 }
 
 .prose th {
   background: var(--surface-2);
-  font-weight: 500;
+  font-weight: var(--fw-text-strong);
 }
 
 .prose td {
-  font-variant-numeric: tabular-nums lining-nums;
-}
-
-.prose img {
-  inline-size: 100%;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .prose blockquote {
@@ -520,10 +1257,27 @@ textarea.field__input {
   border-inline-start: 1px solid var(--rule-gold);
   font-family: var(--ff-display);
   font-size: var(--t-note);
-  color: var(--ink-700);
+  font-style: italic;
+  color: var(--body);
 }
 
-/* Visually hidden but available to assistive technology. */
+/* Hairline-divided rows used by ledgers, spec lists, FAQs and footers. */
+.rows > * {
+  border-block-start: 1px solid var(--rule);
+}
+
+.rows > :last-child {
+  border-block-end: 1px solid var(--rule);
+}
+
+/* Links in running lists (footer, breadcrumbs, quiet rows) get a 24 px target. */
+.list-links a {
+  display: inline-block;
+  min-block-size: var(--tap-inline);
+  padding-block: 0.125rem;
+}
+
+/* ============================== Utilities ============================== */
 .sr-only {
   position: absolute;
   inline-size: 1px;
@@ -531,30 +1285,30 @@ textarea.field__input {
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }
 
-.tabular {
-  font-variant-numeric: tabular-nums lining-nums;
+@media (max-width: 47.99em) {
+  .from-md {
+    display: none !important;
+  }
 }
 
-/* Hairline-divided list rows used by ledgers, FAQs and index lists. */
-.rows > * {
-  border-block-start: 1px solid var(--rule-1);
+@media (max-width: 63.99em) {
+  .from-lg {
+    display: none !important;
+  }
 }
 
-.rows > :last-child {
-  border-block-end: 1px solid var(--rule-1);
+@media (min-width: 64em) {
+  .until-lg {
+    display: none !important;
+  }
 }
 
-/*
- * Tray grid: 1 px rule between white cells, so pieces read as plates on a tray.
- * Each cell draws its own 1 px outline; with a 1 px gap, neighbouring outlines land on the same
- * pixel. Unlike a coloured grid background, an incomplete last row leaves the ivory page showing
- * instead of a block of rule colour.
- */
+/* Legacy tray (TrayGrid). WP6 removes it with the component. */
 .tray {
   display: grid;
   gap: 1px;
@@ -580,22 +1334,17 @@ textarea.field__input {
   }
 }
 
-/* Hide-at-breakpoint helpers (used sparingly: utility strip, header). */
-@media (max-width: 47.99em) {
-  .from-md {
-    display: none !important;
-  }
-}
-
-@media (max-width: 63.99em) {
-  .from-lg {
-    display: none !important;
-  }
-}
-
+/*
+ * Legacy layout helpers still used by pages and components that have not migrated to Section,
+ * PageHead and the new chrome. Not part of the v2 system: WP6 removes them with their last user.
+ */
 @media (min-width: 64em) {
-  .until-lg {
-    display: none !important;
+  .split--reverse {
+    grid-template-columns: 7fr 5fr;
+  }
+
+  .split--reverse > :first-child {
+    order: 2;
   }
 }
 
@@ -605,39 +1354,48 @@ textarea.field__input {
   }
 }
 
-/* ---------- Print ---------- */
-@media print {
-  body {
-    background: #fff;
-    color: #000;
-  }
-
-  [data-surface='plum'] {
-    background: #fff !important;
-    color: #000 !important;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-}
-
-/* Keeps an amount and its currency together: "AED 3,734.00" never breaks across lines. */
-.nowrap {
-  white-space: nowrap;
-}
-
-/* An enquiry block that opens its own ruled section needs no second rule above it. */
 .section--ruled > .container > .enquiry:first-child,
 .section--ruled > .container > :first-child > .enquiry:first-child {
   padding-block-start: 0;
   border-block-start: 0;
 }
 
-/* Stacked under a FAQ on narrow screens, the FAQ's last row already draws the rule. */
 @media (max-width: 63.99em) {
   .faq + .enquiry {
     border-block-start: 0;
     padding-block-start: var(--space-5);
+  }
+}
+
+/* ============================== Forced colours and print ============================== */
+@media (forced-colors: active) {
+  .btn,
+  .chip,
+  .chips {
+    border: 1px solid ButtonText;
+  }
+
+  .marker {
+    background: CanvasText;
+  }
+}
+
+@media print {
+  [data-tone],
+  [data-surface='plum'],
+  body,
+  body[data-ground='stage'] {
+    --fg: #000;
+    --body: #000;
+    --muted: #000;
+    --accent: #000;
+    --eyebrow: #000;
+    --numeral: #000;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .no-print {
+    display: none !important;
   }
 }

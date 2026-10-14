@@ -1,0 +1,13 @@
+{
+  "prerender": [
+    {
+      "where": {
+        "and": [
+          { "href_matches": "/*" },
+          { "not": { "href_matches": ["/api/*", "/thank-you/", "/*.php", "/*\\?:query"] } }
+        ]
+      },
+      "eagerness": "moderate"
+    }
+  ]
+}

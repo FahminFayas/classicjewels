@@ -25,4 +25,6 @@ pnpm-debug.log*
 
 # local tooling output
 lighthouse/
+# design audit screenshots (npm run audit:design)
+.shots/
 .eslintcache

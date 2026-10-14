@@ -1,5 +1,6 @@
 ---
 name: 'Gemstone Jewellery'
+shortName: 'Gemstone'
 title: 'Gemstone Jewellery Dubai – Ruby, Emerald & Sapphire'
 description: 'Ruby, emerald and sapphire jewellery set in 22K and 18K gold from Classic Jewels, Deira. Natural stones, certificates on request. Enquire on WhatsApp.'
 origin: 'Coloured stones set in gold'

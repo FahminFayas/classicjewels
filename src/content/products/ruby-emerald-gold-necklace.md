@@ -10,6 +10,8 @@ karat: 22
 images:
   - src: '../../assets/products/p06.jpg'
     alt: '22K gold necklace set with rubies and emeralds on a white bust'
+    ground: 'velvet'
+stage: '#1b1740'
 featured: true
 isNew: false
 order: 6

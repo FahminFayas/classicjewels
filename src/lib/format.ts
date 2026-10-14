@@ -38,6 +38,29 @@ export function formatDate(date: Date | string, opts: Intl.DateTimeFormatOptions
   });
 }
 
+const rateTime = new Intl.DateTimeFormat('en-GB', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+  timeZone: 'Asia/Dubai',
+});
+
+const rateDate = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'Asia/Dubai',
+});
+
+/** "2026-10-13T08:02:43Z" -> "12:02" (Dubai time, 24-hour): when a rate was fetched. */
+export function formatRateTime(iso: string | Date): string {
+  return rateTime.format(typeof iso === 'string' ? new Date(iso) : iso);
+}
+
+/** "2026-10-13T08:02:43Z" -> "13 October" (Dubai time, no year): the day a rate was fetched. */
+export function formatRateDate(iso: string | Date): string {
+  return rateDate.format(typeof iso === 'string' ? new Date(iso) : iso);
+}
+
 /** "gold-coins-bars" -> "Gold Coins Bars" (fallback for breadcrumb labels). */
 export function humanize(slug: string): string {
   return slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());

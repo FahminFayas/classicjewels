@@ -1,13 +1,15 @@
 ---
 name: 'Kuwait Collection'
+shortName: 'Kuwaiti'
 title: 'Kuwaiti Gold Jewellery Dubai – Gulf Bridal Sets'
 description: 'Kuwaiti and Gulf-style gold jewellery in Dubai: full bridal sets, wide bangles and tiered necklaces in 21K and 22K with bright finish and generous weight.'
 origin: 'Kuwaiti and Gulf styles'
 summary: 'Generous, bright Gulf bridal sets and wide bangles in 21K and 22K.'
 hallmarks: ['Wide bangles', 'Tiered necklaces', 'Bright high polish', 'Full bridal sets']
 karats: [22, 21]
-image: '../../assets/collections/kuwait.jpg'
-imageAlt: 'Three-strand 22K gold Gulf-style necklace'
+longitude: 48
+# No image: collections/kuwait.jpg is p09, the Antique Three-Line Rani Haar, not a Kuwaiti
+# piece. A typeset plate stands in until a Kuwaiti piece is photographed (owner ask 7).
 order: 11
 featured: false
 ---

@@ -1,5 +1,6 @@
 ---
 name: 'Customised Jewellery'
+shortName: 'Made to order'
 title: 'Custom Gold Jewellery Dubai – Made to Your Design'
 description: 'Custom-made gold and diamond jewellery in Dubai: bring a sketch or a photo and we make it in 22K or 18K, with the design approved before any gold is cast.'
 origin: 'Made to order'
@@ -8,7 +9,7 @@ hallmarks:
   ['Design approved before casting', 'Remodel old gold', 'Your stones or ours', 'Quoted in writing']
 karats: [22, 18]
 image: '../../assets/collections/customised.jpg'
-imageAlt: 'Jeweller’s bench with a custom gold ring in progress'
+imageAlt: 'Bespoke 22K gold bridal necklace on a white bust'
 order: 9
 featured: true
 ---

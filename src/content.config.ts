@@ -17,6 +17,13 @@ import { z } from 'astro/zod';
 
 const KARAT = z.union([z.literal(24), z.literal(22), z.literal(21), z.literal(18)]);
 
+/**
+ * What a photograph was shot on (docs/design-system-v2.md §1.2 rule 1). Velvet photographs are
+ * drawn on the dark stage through StageImage; studio cut-outs on their own lilac ground through
+ * Plate. A velvet photograph never sits on a light or plum ground.
+ */
+const GROUND = z.enum(['velvet', 'lilac']);
+
 const seoFields = {
   /** <title> without the brand suffix. Keep under 60 characters. */
   title: z.string().max(60),
@@ -40,28 +47,49 @@ const categories = defineCollection({
       order: z.number().int(),
       /** Shown in the main navigation. */
       inNav: z.boolean().default(true),
+      /** The ground of the category's photographs: velvet categories open on the stage. */
+      ground: GROUND.default('lilac'),
     }),
 });
 
 const collections = defineCollection({
   loader: glob({ base: './src/content/collections', pattern: '*.md' }),
   schema: ({ image }) =>
-    z.object({
-      name: z.string(),
-      ...seoFields,
-      /** Where the style comes from, e.g. "Kolkata, West Bengal". Shown as the eyebrow. */
-      origin: z.string(),
-      /** One sentence for cards and the collections index. */
-      summary: z.string().max(200),
-      /** Two to five short phrases that characterise the craft, shown as a spec list. */
-      hallmarks: z.array(z.string()).min(2).max(5),
-      /** Karats offered in this collection. */
-      karats: z.array(KARAT).min(1),
-      image: image(),
-      imageAlt: z.string(),
-      order: z.number().int(),
-      featured: z.boolean().default(false),
-    }),
+    z
+      .object({
+        name: z.string(),
+        /** The style's own name for cards, the mega panel and the styles line: "Kolkata". */
+        shortName: z.string(),
+        ...seoFields,
+        /** Where the style comes from, e.g. "Kolkata, West Bengal". Shown as the eyebrow. */
+        origin: z.string(),
+        /** One sentence for cards and the collections index. */
+        summary: z.string().max(200),
+        /** Two to five short phrases that characterise the craft, shown as a spec list. */
+        hallmarks: z.array(z.string()).min(2).max(5),
+        /** Karats offered in this collection. */
+        karats: z.array(KARAT).min(1),
+        /**
+         * Rounded longitude of the place the style comes from, for the schematic west-to-east
+         * styles line. Leave out for collections that are not a place (Antique, Diamonds ...).
+         */
+        longitude: z.number().min(-180).max(180).optional(),
+        /**
+         * A photograph of a piece in this style. Leave out until a real one exists: the page then
+         * shows a typeset plate, never a borrowed photograph.
+         */
+        image: image().optional(),
+        /** Required whenever `image` is set. */
+        imageAlt: z.string().optional(),
+        /** What `image` was shot on. */
+        imageGround: GROUND.default('velvet'),
+        order: z.number().int(),
+        featured: z.boolean().default(false),
+      })
+      .refine((c) => !c.image || Boolean(c.imageAlt), {
+        message: 'imageAlt is required when image is set',
+        path: ['imageAlt'],
+      }),
 });
 
 const occasions = defineCollection({
@@ -108,9 +136,24 @@ const products = defineCollection({
       finish: z.string().optional(),
       availability: z.enum(['in-store', 'made-to-order', 'sold']).default('in-store'),
       images: z
-        .array(z.object({ src: image(), alt: z.string().min(10) }))
+        .array(
+          z.object({
+            src: image(),
+            alt: z.string().min(10),
+            /** What the photograph was shot on: p01 to p09 are velvet, cut-outs lilac. */
+            ground: GROUND.default('lilac'),
+          }),
+        )
         .min(1)
         .max(6),
+      /**
+       * The velvet colour sampled from the photograph (#rrggbb), used as the stage behind the
+       * piece when it is shown alone. Leave out to use the default stage.
+       */
+      stage: z
+        .string()
+        .regex(/^#[0-9a-f]{6}$/i)
+        .optional(),
       featured: z.boolean().default(false),
       isNew: z.boolean().default(false),
       order: z.number().int().default(100),

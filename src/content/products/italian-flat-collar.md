@@ -10,6 +10,7 @@ karat: 18
 images:
   - src: '../../assets/products/p04.jpg'
     alt: 'Flat mirror-polished gold collar necklace on a white bust'
+    ground: 'velvet'
 featured: true
 isNew: false
 order: 4

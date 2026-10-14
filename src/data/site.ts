@@ -7,6 +7,7 @@
  * listing and the Brand/USP research report of 13 October 2026. Items marked `TODO(owner)`
  * must be confirmed with the company before launch; see docs/launch-checklist.md.
  */
+import type { DisplayKarat } from '@/lib/tones';
 
 export type DayName =
   'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
@@ -62,6 +63,12 @@ export interface Branch {
   publicNote?: string;
   /** Internal note for the owner. Never rendered. */
   ownerNote?: string;
+  /** Position on the schematic west-to-east route of BranchDoors (1 is westernmost). */
+  routeOrder?: number;
+  /** One-line address for a door: shop and building, without the district. */
+  shortAddress?: string;
+  /** Nearest metro, as a short door line. */
+  metro?: string;
 }
 
 export interface SocialProfile {
@@ -70,6 +77,8 @@ export interface SocialProfile {
   handle: string;
   url: string;
 }
+
+export type ExchangeBasis = 'posted-rate' | 'buying-rate';
 
 export interface Promise_ {
   id: string;
@@ -90,6 +99,9 @@ export const branches: Branch[] = [
     id: 'deira-gold-souq-extension',
     name: 'Gold Souq Extension, Deira',
     shortName: 'Deira',
+    routeOrder: 2,
+    shortAddress: 'Shop 6, Mariyam Plaza, behind RAK Bank',
+    metro: 'Gold Souq or Al Ras metro, about ten minutes on foot',
     venue: 'Mariyam Plaza, Gold Souq Extension',
     venueType: 'souq',
     city: 'Dubai',
@@ -134,6 +146,7 @@ export const branches: Branch[] = [
     id: 'safari-mall-sharjah',
     name: 'Safari Mall, Sharjah',
     shortName: 'Safari Mall',
+    routeOrder: 4,
     venue: 'Safari Mall',
     venueType: 'mall',
     city: 'Sharjah',
@@ -154,6 +167,7 @@ export const branches: Branch[] = [
     id: 'rolla-mall-sharjah',
     name: 'Rolla Mall, Sharjah',
     shortName: 'Rolla Mall',
+    routeOrder: 3,
     venue: 'Rolla Mall',
     venueType: 'mall',
     city: 'Sharjah',
@@ -174,6 +188,7 @@ export const branches: Branch[] = [
     id: 'madinat-zayed-abu-dhabi',
     name: 'Madinat Zayed, Abu Dhabi',
     shortName: 'Madinat Zayed',
+    routeOrder: 1,
     venue: 'Madinat Zayed',
     venueType: 'district',
     city: 'Abu Dhabi',
@@ -234,6 +249,10 @@ export const openBranches = branches.filter((b) => b.status === 'open');
 export const flagship = branches.find((b) => b.isFlagship) ?? branches[0]!;
 export const emirates = [...new Set(openBranches.map((b) => b.emirate))];
 
+/** The group's history, in the two clauses the copy uses (see site.group). TODO(owner): approve. */
+const experienceLead = 'in the gold trade for over 35 years';
+const experienceTail = 'more than 16 of them in the UAE';
+
 export const site = {
   name: 'Classic Jewels & Diamonds',
   shortName: 'Classic Jewels',
@@ -267,8 +286,14 @@ export const site = {
      */
     yearsInGold: 35,
     yearsInUae: 16,
-    /** The one approved way to state the group's history in copy. */
-    experience: 'in the gold trade for over 35 years, more than 16 of them in the UAE',
+    /**
+     * The group's history in two clauses, so the heritage band can set the tail in italic:
+     * "The Classic Group has been {experienceLead}, {experienceTail}." TODO(owner): approve.
+     */
+    experienceLead,
+    experienceTail,
+    /** The one approved way to state the group's history in copy (lead and tail joined). */
+    experience: `${experienceLead}, ${experienceTail}`,
     trade: 'bullion trading, scrap gold buying and refining',
   },
 
@@ -315,6 +340,50 @@ export const site = {
     count: 680,
     asOf: '2026-10-13',
     url: 'https://www.google.com/maps?cid=14419653802905195883',
+    /** Whose rating it is: "4.9 on Google, from 680 reviews of {of}". */
+    of: 'our Deira branch',
+  },
+
+  /**
+   * Where the posted gold rate comes from and what it leaves out. Printed beside every rate:
+   * "{source} {basis}, 13 October, 12:02" and "{excludes}".
+   * TODO(owner): confirm the source name and how often the feed updates (owner ask 6).
+   */
+  rate: {
+    source: 'Dubai Jewellery Group',
+    sourceLong: 'Dubai Gold & Jewellery Group',
+    basis: 'suggested retail rate',
+    excludes: 'Before making charges and 5% VAT',
+    /** UAE VAT on the gold value and the making charge. */
+    vat: 0.05,
+  },
+
+  /**
+   * Old-gold exchange terms (docs/design-system-v2.md §5.4 Estimator, §10 owner ask 1).
+   * TODO(owner): is old gold credited at the posted retail rate, at a buying rate, or after a
+   * deduction? Is "no weight deduction" true, and on what conditions? Until `confirmed` is true
+   * the estimator shows fine-gold weight only (a fact), never a dirham figure, and the exchange
+   * promise title and any "0% deduction" wording stay off every surface.
+   */
+  exchange: {
+    confirmed: false,
+    /** posted-rate: credited at the day's posted rate; buying-rate: at that rate less buyingDiscount. */
+    basis: 'posted-rate' as ExchangeBasis,
+    /** AED per gram below the posted rate, per karat, when `basis` is "buying-rate". */
+    buyingDiscount: {} as Partial<Record<DisplayKarat, number>>,
+    /** Upper limit of the estimator's weight field, in grams. */
+    maxGrams: 500,
+  },
+
+  /**
+   * Services staff offer on request. Each gates one line of copy; nothing ships until the owner
+   * says yes. TODO(owner): owner ask 12.
+   */
+  services: {
+    /** "Ask us to call you" on the piece ticket. */
+    callback: false,
+    /** "Ask on WhatsApp for another photograph" under a piece's photograph. */
+    morePhotos: false,
   },
 
   social: [

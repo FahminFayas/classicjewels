@@ -47,6 +47,17 @@ ErrorDocument 404 /404.html
   AddType application/manifest+json   .webmanifest
 </IfModule>
 
+# --- Prerendering (Chromium speculation rules) --------------------------------
+# The rules live in a same-origin JSON file named by a response header, because the CSP blocks an
+# inline <script type="speculationrules">. Moderate eagerness: a link prerenders on hover or
+# pointer-down. The JSON excludes /api/, /thank-you/, PHP endpoints and query-string URLs.
+<Files "speculation-rules.json">
+  ForceType application/speculationrules+json
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, must-revalidate"
+  </IfModule>
+</Files>
+
 # --- Compression -----------------------------------------------------------
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/xml application/json application/javascript application/manifest+json image/svg+xml
@@ -84,6 +95,7 @@ ErrorDocument 404 /404.html
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
   Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Speculation-Rules "\"/speculation-rules.json\""
   # CSP: first-party scripts only (the build never inlines scripts; see astro.config.mjs), plus
   # Google Tag Manager / Analytics, Meta and TikTok pixels, and the Google Maps embed.
   # A GTM "Custom HTML" tag would need 'unsafe-inline' in script-src.

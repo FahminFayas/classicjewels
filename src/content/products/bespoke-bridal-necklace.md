@@ -10,6 +10,7 @@ karat: 22
 images:
   - src: '../../assets/products/p07.jpg'
     alt: 'Custom-made 22K gold bridal necklace on a white bust'
+    ground: 'velvet'
 featured: true
 isNew: false
 order: 7

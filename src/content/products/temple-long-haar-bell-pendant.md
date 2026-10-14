@@ -10,6 +10,7 @@ karat: 22
 images:
   - src: '../../assets/products/p08.jpg'
     alt: '22K gold temple-style long necklace with a large bell pendant on a white bust'
+    ground: 'velvet'
 featured: true
 isNew: false
 order: 8

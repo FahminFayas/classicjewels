@@ -105,3 +105,43 @@ export async function getActiveOffers(now: Date = new Date()): Promise<Offer[]> 
     .filter((o) => o.data.endsOn >= today && o.data.startsOn <= today)
     .sort((a, b) => a.data.endsOn.valueOf() - b.data.endsOn.valueOf());
 }
+
+/* ---------- Grounds and karats (docs/design-system-v2.md §1.2 rule 1, §9.2) ---------- */
+
+/** What a photograph was shot on: velvet photos live on the stage, studio cut-outs on lilac. */
+export type PhotoGround = 'velvet' | 'lilac';
+
+/** The ground of a product's first (cover) photograph. */
+export function photoGround(product: Product): PhotoGround {
+  return product.data.images[0]?.ground ?? 'lilac';
+}
+
+/** Splits products by the ground of their cover photograph, keeping their order. */
+export function splitByGround(products: Product[]): { velvet: Product[]; lilac: Product[] } {
+  const velvet: Product[] = [];
+  const lilac: Product[] = [];
+  for (const p of products) (photoGround(p) === 'velvet' ? velvet : lilac).push(p);
+  return { velvet, lilac };
+}
+
+/**
+ * Collections that offer a karat, in editorial order ("In our cases:" on the hallmark stamps).
+ * Accepts 22 or "22k".
+ */
+export function collectionsWithKarat(
+  collections: DesignCollection[],
+  karat: 24 | 22 | 21 | 18 | '24k' | '22k' | '21k' | '18k',
+): DesignCollection[] {
+  const k = typeof karat === 'number' ? karat : Number.parseInt(karat, 10);
+  return collections.filter((c) => c.data.karats.includes(k as 24 | 22 | 21 | 18)).sort(byOrder);
+}
+
+/** The first published piece of a collection photographed on velvet, if any. */
+export async function firstVelvetProduct(collectionId: string): Promise<Product | undefined> {
+  return (await getProductsByCollection(collectionId)).find((p) => photoGround(p) === 'velvet');
+}
+
+/** Collection id -> shortName ("Kolkata"), for card eyebrows and CaseWall's collectionNames. */
+export function collectionShortNames(collections: DesignCollection[]): Record<string, string> {
+  return Object.fromEntries(collections.map((c) => [c.id, c.data.shortName]));
+}

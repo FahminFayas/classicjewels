@@ -1,5 +1,6 @@
 ---
 name: 'Antique Collection'
+shortName: 'Antique'
 title: 'Antique Gold Jewellery Dubai – Nakshi, Kundan & Polki'
 description: 'Antique-finish 22K gold jewellery in Dubai: nakshi necklaces, kundan sets and polki (uncut diamond) pieces with a heritage patina. Deira Gold Souq Extension.'
 origin: 'North and South Indian heritage styles'

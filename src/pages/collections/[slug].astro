@@ -92,9 +92,11 @@ const literalAlt: Record<string, string> = {
     'Gold long necklace with kundan-set plaques and a bell-shaped pendant with pearl drops on a white bust against navy velvet',
   turkish: 'Triple-row gold necklace of small cushion links on a white bust against navy velvet',
 };
-const heroAlt = literalAlt[entry.id] ?? data.imageAlt;
-const heroWidths = [480, 600, 800].filter((w) => w <= data.image.width);
-if (heroWidths.length === 0) heroWidths.push(data.image.width);
+/** A collection may have no photograph (Kuwaiti, Singapore): the typographic hero is used. */
+const image = data.image;
+const heroAlt = literalAlt[entry.id] ?? data.imageAlt ?? '';
+const heroWidths = image ? [480, 600, 800].filter((w) => w <= image.width) : [];
+if (image && heroWidths.length === 0) heroWidths.push(image.width);
 /** The photograph is shown only beside two or more cards; see the note at the top. */
 const showPhoto = products.length > 1;
 /** The facts row counts pieces only when there is more than one to count. */
@@ -137,7 +139,7 @@ const jsonLd =
     : [];
 ---
 
-<BaseLayout title={data.title} description={data.description} jsonLd={jsonLd}>
+<BaseLayout ground="ivory" title={data.title} description={data.description} jsonLd={jsonLd}>
   <div class="container">
     <Breadcrumbs
       items={[
@@ -147,7 +149,7 @@ const jsonLd =
     />
   </div>
 
-  {showPhoto ? (
+  {showPhoto && image ? (
     <section class="chero">
       <div class="container container--wide chero__grid">
         <div class="chero__text">
@@ -166,7 +168,7 @@ const jsonLd =
         <figure class="chero__media">
           <Picture
             class="chero__img"
-            src={data.image}
+            src={image}
             alt={heroAlt}
             formats={['avif', 'webp']}
             widths={heroWidths}

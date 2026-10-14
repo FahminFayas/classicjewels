@@ -1,84 +1,124 @@
 /*
- * Design tokens. The only place a colour, size or font is defined.
- * Components reference these custom properties; never a raw hex value.
- * See docs/design-spec.md §2–4 for the rationale and the contrast table.
+ * Design tokens v2: the only place a colour, size, duration, easing, mask or layer is defined.
+ * Spec: docs/design-system-v2.md §2. Components read these tokens, or the per-tone semantic
+ * variables that base.css derives from them (--fg, --body, --accent, --btn-bg ...). Never a raw
+ * value in a component. Per-element custom properties written from content (--stage, --cap) are
+ * the one exception.
  */
 :root {
-  /* ---- Surfaces: the page is ivory; white is a tray or plate; plum is a band. ---- */
-  --surface-0: #ffffff; /* trays, plates, inputs, mega-nav panel; equals photo white */
-  --surface-1: #faf7f2; /* page ivory: body, header, every section by default */
-  --surface-2: #f3eee6; /* parchment: table heads, FAQ answers, table stripes */
-  --surface-plum: #4b2849; /* rate board, old-gold band, "how buying works" band */
-  --surface-plum-deep: #2e1a2d; /* utility strip, footer, mobile drawer */
+  /* ---------- Stage: the dark room, sampled from the velvet corners (OKLCH h ≈ 285) ---------- */
+  --stage-0: #0b0918; /* the stage: velvet photographs live here */
+  --stage-1: #110e24; /* raised stage: alternate dark sections, mega panel, drawer, phone bar */
+  --stage-2: #19152f; /* fields, popovers and keys on the stage */
+  --stage-3: #221c3d; /* pressed or selected key on the stage */
+  --on-stage: #faf7f2; /* headings, names, numerals in ivory: 18.43:1 on stage-0 */
+  --on-stage-body: #ddd5df; /* running text: 13.74:1 (deliberately not white: less halation) */
+  --on-stage-muted: #a99fb5; /* captions, meta: 7.80:1 */
+  --rule-stage: rgb(190 134 88 / 0.26); /* decorative hairline on the stage */
+  --rule-stage-strong: rgb(190 134 88 / 0.7); /* control borders on the stage: 3.57:1 */
+  --wash-stage: rgb(220 194 154 / 0.08); /* hover wash on outlined controls on the stage */
+  --scrim-stage: rgb(11 9 24 / 0.86); /* popover and dialog backdrop */
 
-  /* ---- Ink ---- */
-  --ink-900: #1c1418;
-  --ink-700: #4a3f46;
-  --ink-500: #6b5f66;
-  --ink-300: #b8afb3; /* non-text only (disabled fills, decorative) */
-  --ink-on-plum: #faf7f2;
-  --ink-on-plum-muted: #d9ccd6;
+  /* ---------- Golds: brand bronze #BE8658 verbatim ---------- */
+  --bronze: #be8658; /* eyebrows and labels on dark grounds (6.32:1), hairlines, the filled button on dark */
+  --champagne: #dcc29a; /* numerals, italic accents, links and focus on dark grounds (11.46:1) */
+  --gold-800: #6f4a24;
+  --gold-700: #8a5c32; /* gold text on light grounds: 5.37:1 on ivory */
+  --gold-600: #b9814f; /* hover underline colour on light grounds (non-text) */
+  --gold-500: #cda678;
+  --gold-300: var(--champagne);
+  --gold-100: #f1e6d3;
 
-  /* ---- Plum scale (brand #4B2849 kept verbatim as plum-700) ---- */
+  /* ---------- Daylight surfaces ---------- */
+  --surface-0: #ffffff; /* white: plates, inputs on ivory */
+  --surface-1: #faf7f2; /* ivory: breath bands, reading pages, the piece ticket */
+  --surface-2: #f3eee6; /* parchment: the one warm alternate band */
+  --plate-lilac: #eae5e9; /* sampled: the exact ground of every studio cut-out */
+  --surface-plum: #4b2849; /* plum band */
+  --surface-plum-deep: #2e1a2d; /* footer, estimator panel */
+
+  /* ---------- Ink on light grounds ---------- */
+  --ink-900: #1c1418; /* 16.90:1 on ivory */
+  --ink-700: #4a3f46; /* 9.40:1 */
+  --ink-500: #6b5f66; /* 5.69:1 */
+  --ink-300: #b8afb3; /* non-text only */
+  --ink-on-plum: #faf7f2; /* 11.57:1 on plum, 15.10:1 on plum-deep */
+  --ink-on-plum-muted: #d9ccd6; /* 7.98:1 on plum */
+
+  /* ---------- Plum scale (brand #4B2849 kept verbatim as plum-700) ---------- */
   --plum-900: #2e1a2d;
   --plum-700: #4b2849;
   --plum-500: #6b3f68;
-  --plum-300: #b498b2;
+  --plum-300: #b498b2; /* small print on plum-deep only: 6.20:1 */
   --plum-100: #eadfe9;
   --plum-050: #f6f0f5;
 
-  /* ---- Gold scale. gold-600 is the brand bronze #BE8658 darkened a touch so numerals pass 3:1 on ivory ---- */
-  --gold-800: #6f4a24;
-  --gold-700: #8a5c32; /* gold text on light surfaces (AA) */
-  --gold-600: #b9814f;
-  --gold-500: #cda678;
-  --gold-300: #dcc29a; /* champagne: numerals and eyebrows on plum */
-  --gold-100: #f1e6d3;
+  /* ---------- Rules ---------- */
+  --rule-1: #e6e0d6; /* decorative hairline on light grounds */
+  --rule-2: #cfc6b8; /* stronger decorative hairline on light grounds */
+  --rule-input: #8f858b; /* field borders on light grounds: 3.33:1 on ivory */
+  --rule-gold: var(--bronze); /* seams, eyebrow ornaments, the rate rule */
+  --rule-on-plum: rgb(250 247 242 / 0.22); /* decorative hairline on plum */
+  --rule-on-plum-strong: rgb(250 247 242 / 0.5); /* control borders on plum: 4.13:1 */
+  --wash-plum: rgb(250 247 242 / 0.08); /* hover wash on outlined controls on plum */
 
-  /* ---- Rules (hairlines) ---- */
-  --rule-1: #e6e0d6; /* default hairline, tray dividers */
-  --rule-2: #cfc6b8; /* table borders, section dividers */
-  --rule-input: #8f858b; /* input borders, 3:1 on all light surfaces */
-  --rule-gold: #be8658; /* eyebrow rule, rate-board rules, footer top rule */
-  --rule-on-plum: rgb(250 247 242 / 0.22);
-
-  /* ---- Semantic ---- */
+  /* ---------- Semantic ---------- */
   --ok: #2e6b4f;
   --err: #a3362b;
   --ok-on-plum: #8fd1b0;
   --err-on-plum: #f3a89c;
-  --focus: #4b2849;
-  --focus-on-plum: #dcc29a;
+  --ok-on-stage: #8fd1b0;
+  --err-on-stage: #f3a89c;
+  --focus: #4b2849; /* focus ring on light grounds */
+  --focus-on-dark: #dcc29a; /* focus ring on stage, plum and plum-deep */
   --link: #4b2849;
   --link-hover: #8a5c32;
 
-  /* ---- Typography ---- */
-  /* --font-display and --font-text are declared by Astro's <Font> components (self-hosted,
-     with metric-matched fallbacks). These aliases keep component CSS readable. */
+  /* ---------- Typography ---------- */
+  /* --font-display and --font-text are declared by Astro's <Font> (self-hosted, subset, with
+     metric-matched fallbacks). The display family has a true italic variant. */
   --ff-display: var(--font-display, 'Cormorant Garamond', Georgia, serif);
   --ff-text: var(--font-text, 'IBM Plex Sans', Arial, sans-serif);
 
-  /* Fluid scale, 360 → 1280 px viewport */
-  --t-display: clamp(2.25rem, 1.6rem + 2.9vw, 4.5rem); /* 36 → 72 */
-  --t-h1: clamp(1.875rem, 1.45rem + 2.1vw, 3.5rem); /* 30 → 56 */
-  --t-h2: clamp(1.625rem, 1.3rem + 1.4vw, 2.5rem); /* 26 → 40 */
-  --t-h3: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem); /* 20 → 24 */
-  --t-numeral-xl: clamp(2.5rem, 1.6rem + 3.8vw, 4.5rem); /* rate board figures */
-  --t-numeral: 1.125rem;
-  --t-lead: clamp(1.125rem, 1.05rem + 0.35vw, 1.3125rem);
-  --t-body: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
-  --t-title: 1.0625rem;
-  --t-small: 0.875rem;
-  --t-caption: 0.8125rem;
-  --t-eyebrow: 0.75rem;
-  --t-note: 1.125rem;
+  /* Fluid scale; values at 390 / 1024 / 1440 px in docs/design-system-v2.md §2.3 */
+  --t-rate: clamp(5.75rem, 2.4rem + 13.5vw, 12.5rem); /* 92 → 200: the rate numeral only */
+  --t-display: clamp(3rem, 1.9rem + 5.2vw, 7rem); /* 51 → 105: one word per opener */
+  --t-stamp: clamp(4rem, 2.6rem + 6vw, 8rem); /* 65 → 128: hallmark stamps */
+  --t-numeral-xl: clamp(2.75rem, 1.6rem + 4.4vw, 6rem); /* 44 → 89: estimate, board figures */
+  --t-h2: clamp(2.25rem, 1.5rem + 3.2vw, 4.5rem); /* 37 → 70: section titles */
+  --t-band: clamp(2rem, 1.25rem + 3.2vw, 4.25rem); /* 33 → 66: one-line bands */
+  --t-hero: clamp(2rem, 1.4rem + 2.8vw, 4.25rem); /* 33 → 63: home H1 display line */
+  --t-h1: clamp(2.25rem, 1.55rem + 2.4vw, 3.75rem); /* 36 → 59: page H1 */
+  --t-h3: clamp(1.5rem, 1.3rem + 0.9vw, 2.125rem); /* 24 → 34: door names, panel titles */
+  --t-numeral: clamp(1.625rem, 1.35rem + 1.1vw, 2.375rem); /* 26 → 37: karat keys, fact numerals */
+  --t-name: clamp(1.25rem, 1.1rem + 0.6vw, 1.625rem); /* 20 → 26: case and window names, italic */
+  --t-lead: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem); /* 17 → 20 */
+  --t-body: 1.0625rem; /* 17 */
+  --t-title: 1.0625rem; /* Plex 500 labels inside cards */
+  --t-kicker: 1rem; /* home H1 first line: Plex 500, sentence case */
+  --t-small: 0.875rem; /* 14 */
+  --t-caption: 0.8125rem; /* 13 */
+  --t-eyebrow: 0.75rem; /* 12: Plex 500, uppercase, tracked */
+  --t-note: 1.125rem; /* Cormorant italic asides */
 
-  --track-display: -0.005em;
-  --track-h1: 0;
-  --track-h2: 0;
-  --track-eyebrow: 0.14em;
+  --fw-display: 300; /* Cormorant at 32 px and above */
+  --fw-display-small: 400; /* Cormorant from 22 to 31 px; never below 22 px */
+  --fw-text: 400; /* Plex body; never lighter on dark grounds */
+  --fw-text-strong: 500; /* Plex labels, buttons, small figures */
 
-  /* ---- Spacing (4 px base) ---- */
+  --lh-numeral: 0.86;
+  --lh-display: 1.02;
+  --lh-heading: 1.1;
+  --lh-text: 1.6;
+  --lh-text-stage: 1.65;
+
+  --track-rate: -0.02em;
+  --track-display: -0.012em;
+  --track-h1: -0.01em;
+  --track-h2: -0.012em;
+  --track-eyebrow: 0.18em;
+
+  /* ---------- Space (4 px base) ---------- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -89,50 +129,111 @@
   --space-8: 4rem;
   --space-9: 6rem;
   --space-10: 8rem;
-  --section-y: clamp(3.5rem, 2.5rem + 5vw, 7rem);
+  --section-y: clamp(4rem, 2.6rem + 6.2vw, 9.5rem); /* 66 → 131 */
+  --band-y: clamp(5rem, 2.6rem + 10vw, 12rem); /* 81 → 186: one-line bands */
+  --slim-y: clamp(2.5rem, 1.8rem + 2.4vw, 4rem); /* 40 → 63: campaign and slim bands */
 
-  /* ---- Layout ---- */
-  --container: 80rem; /* 1280 px */
-  /* Same as --container: every section shares one left edge (an earlier wider value gave pages
-     two edges 40 px apart). Kept as a token so tray grids can widen again in one place. */
-  --container-wide: 80rem;
-  --prose: 68ch;
-  --gutter: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
-  --grid-gap: clamp(1rem, 0.75rem + 1.25vw, 1.5rem);
-  --header-h: 3.5rem; /* 56 px; 72 px from the desktop breakpoint, see base.css */
-  --strip-h: 2rem;
-  --action-bar-h: 3.5rem;
-
-  /* ---- Controls ---- */
-  --control-h: 3rem; /* 48 px buttons and inputs */
-  --tap: 2.75rem; /* 44 px minimum hit area */
+  /* ---------- Layout ---------- */
+  --container: 80rem; /* 1280: reading, grids, forms */
+  --container-wide: 96rem; /* 1536: hero, cases, styles line, doors, header */
+  --container-narrow: 46rem; /* centred story text */
+  --measure: 34rem; /* leads */
+  --prose: 68ch; /* long reading */
+  --gutter: clamp(1rem, 0.35rem + 2.7vw, 3rem); /* 16 at 390, 44 at 1440 */
+  --grid-gap: clamp(1rem, 0.6rem + 1.6vw, 2.5rem); /* 16 → 33 */
+  --header-h: 3.5rem; /* 56; 72 from 64em (below) */
+  --action-bar-h: 3.5rem; /* 56, plus env(safe-area-inset-bottom) */
+  --control-h: 3rem; /* 48: buttons and fields */
+  --tap: 2.75rem; /* 44: minimum target for controls */
+  --tap-inline: 1.5rem; /* 24: minimum target for links in running lists (WCAG 2.5.8) */
   --radius: 0; /* the only curve on the site is the C-ring */
 
-  /* ---- Motion ---- */
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --dur-fast: 150ms;
-  --dur-base: 200ms;
-  --dur-slow: 240ms;
+  /* ---------- Image caps (CSS px; never above the source width) ---------- */
+  --cap-velvet: 600px; /* any velvet photograph */
+  --cap-hero: 560px; /* home hero piece on desktop */
+  --cap-case: 420px; /* a case in a wall */
+  --cap-portrait: 392px; /* occasion portraits: sharp on 2× screens */
+  --cap-pano: 120rem; /* the 1920 px panorama */
 
-  /* ---- Z-index ---- */
-  --z-sticky: 10;
-  --z-bar: 20;
-  --z-nav: 30;
-  --z-dialog: 40;
+  /* ---------- Motion ---------- */
+  --dur-quick: 160ms; /* colour and chip state */
+  --dur-ui: 320ms; /* buttons, popovers, drawer, mega panel, crossfades */
+  --dur-slow: 600ms; /* underline wipes, image fades, karat numeral crossfade */
+  --dur-roll: 640ms; /* one digit of the rate */
+  --roll-stagger: 55ms; /* per digit, from the right */
+  --dur-sheen: 1800ms; /* the single hairline sheen */
+  --dur-page: 240ms; /* cross-document root fade */
+  --dur-morph: 320ms; /* the piece growing into its page */
+  --dur-enter: var(--dur-ui); /* top-layer entry */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* interface */
+  --ease-lux: cubic-bezier(0.19, 1, 0.22, 1); /* decoration (Van Cleef's curve) */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* the sheen */
+  --ease-wipe: cubic-bezier(0.4, 0, 0.2, 1); /* bars that fill */
+
+  /* ---------- Masks (gradients appear only here, as alpha ramps) ---------- */
+  --feather-x: 14%;
+  --feather-y: 12%;
+  --mask-spot: radial-gradient(
+    closest-side,
+    #000 52%,
+    transparent 100%
+  ); /* a piece in its pool of light */
+  --mask-pool: radial-gradient(
+    closest-side,
+    #000 60%,
+    transparent 100%
+  ); /* the piece page: a wider pool */
+  --mask-edge:
+    linear-gradient(
+      to right,
+      transparent,
+      #000 var(--feather-x),
+      #000 calc(100% - var(--feather-x)),
+      transparent
+    ),
+    linear-gradient(
+      to bottom,
+      transparent,
+      #000 var(--feather-y),
+      #000 calc(100% - var(--feather-y)),
+      transparent
+    );
+  --mask-pano: linear-gradient(to bottom, #000 72%, transparent);
+  --mask-pano-sides: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+  --mask-sheen: linear-gradient(to right, transparent, #000 50%, transparent);
+  --mask-digit: linear-gradient(transparent, #000 30%, #000 90%, transparent);
+
+  /* ---------- Layers ---------- */
+  --z-raised: 1;
+  --z-sticky: 10; /* sticky columns and chapter chips */
+  --z-bar: 20; /* phone action bar */
+  --z-header: 30;
+  --z-dialog: 40; /* fallback when the top layer is unavailable */
   --z-skip: 50;
-}
 
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --dur-fast: 0ms;
-    --dur-base: 0ms;
-    --dur-slow: 0ms;
-  }
+  /* ---------- Deprecated aliases: WP6 removes them once no component uses them ---------- */
+  --ease: var(--ease-out);
+  --dur-fast: var(--dur-quick);
+  --dur-base: var(--dur-ui);
+  --z-nav: var(--z-header);
+  --strip-h: 0rem;
 }
 
 @media (min-width: 64em) {
   :root {
-    --header-h: 4.5rem;
-    --strip-h: 2.25rem;
+    --header-h: 4.5rem; /* 72 */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-quick: 0ms;
+    --dur-ui: 0ms;
+    --dur-slow: 0ms;
+    --dur-roll: 0ms;
+    --roll-stagger: 0ms;
+    --dur-sheen: 0ms;
+    --dur-page: 0ms;
+    --dur-morph: 0ms;
   }
 }

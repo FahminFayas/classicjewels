@@ -6,7 +6,8 @@ import { defineConfig, envField, fontProviders, sharpImageService } from 'astro/
 export const SITE_URL = 'https://classicjewels.ae';
 
 /** Pages that must never appear in the sitemap (utility pages, redirects targets). */
-const SITEMAP_EXCLUDE = ['/thank-you/', '/404/'];
+// '/system/' is the design-system specimen page (noindex; WP6 deletes it with this entry).
+const SITEMAP_EXCLUDE = ['/thank-you/', '/404/', '/system/'];
 
 export default defineConfig({
   site: SITE_URL,
@@ -25,14 +26,17 @@ export default defineConfig({
     responsiveStyles: true,
     service: sharpImageService({
       avif: { quality: 55, effort: 4 },
-      webp: { quality: 78 },
+      // AVIF stays at q55: a side-by-side of the p05 and p07 velvet corners at q55 and q60
+      // showed no banding (WP0 notes, docs/design-system-v2.md §4.3).
+      webp: { quality: 78, smartSubsample: true },
       jpeg: { quality: 82, mozjpeg: true },
     }),
   },
   /**
-   * Self-hosted variable fonts, served from /_astro/fonts/ with metric-matched fallbacks that
-   * Astro generates (zero layout shift on swap). Files come from the npm packages, so builds
-   * never touch a font CDN. Cormorant Garamond is weight-variable (300-700); Plex Sans is weight-only.
+   * Self-hosted variable fonts, subset to the glyphs the site uses by scripts/subset-fonts.mjs
+   * (`npm run fonts:subset`, 90 KB at most for the three files) and served from /_astro/fonts/
+   * with the metric-matched fallbacks Astro generates, so nothing shifts on swap. The weight
+   * ranges are the axis ranges the subsetter keeps. Spec: docs/design-system-v2.md §4.
    */
   fonts: [
     {
@@ -43,11 +47,15 @@ export default defineConfig({
       options: {
         variants: [
           {
-            src: [
-              './node_modules/@fontsource-variable/cormorant-garamond/files/cormorant-garamond-latin-wght-normal.woff2',
-            ],
-            weight: '300 700',
+            src: ['./src/assets/fonts/cormorant-garamond-wght-normal.woff2'],
+            weight: '300 500',
             style: 'normal',
+          },
+          {
+            // True italic for accent phrases and names (owner's choice of face, 13 October).
+            src: ['./src/assets/fonts/cormorant-garamond-wght-italic.woff2'],
+            weight: '300 500',
+            style: 'italic',
           },
         ],
       },
@@ -60,10 +68,8 @@ export default defineConfig({
       options: {
         variants: [
           {
-            src: [
-              './node_modules/@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2',
-            ],
-            weight: '100 700',
+            src: ['./src/assets/fonts/ibm-plex-sans-wght-normal.woff2'],
+            weight: '400 600',
             style: 'normal',
           },
         ],

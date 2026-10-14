@@ -1,5 +1,6 @@
 ---
 name: 'Kolkata Collection'
+shortName: 'Kolkata'
 title: 'Kolkata Gold Jewellery Dubai – Bengali Bridal Sets'
 description: 'Bengali-style 22K gold jewellery in Dubai: Kolkata chokers, sita haars, chik necklaces and jhumkas in the fine filigree style the city is known for.'
 origin: 'Kolkata filigree tradition'
@@ -7,6 +8,7 @@ summary: 'Fine filigree and light, broad chokers in the Bengali bridal tradition
 hallmarks:
   ['Hand filigree', 'Broad chokers', 'Lightweight for its size', 'Matte and bright finishes']
 karats: [22]
+longitude: 88
 image: '../../assets/collections/kolkata.jpg'
 imageAlt: '22K gold Kolkata choker with fringe drops on a white bust'
 order: 1

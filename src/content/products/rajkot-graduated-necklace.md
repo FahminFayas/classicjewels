@@ -10,6 +10,7 @@ karat: 22
 images:
   - src: '../../assets/products/p02.jpg'
     alt: 'Graduated 22K gold necklace with machine-cut links on a teal bust'
+    ground: 'velvet'
 featured: true
 isNew: true
 order: 2

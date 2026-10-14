@@ -13,6 +13,9 @@ images:
 featured: false
 isNew: false
 order: 15
+# Withdrawn: products/chain.jpg shows charms that resemble another brand's interlocking mark.
+# TODO(owner): owner ask 9. Unpublished until a replacement photograph exists.
+draft: true
 ---
 
 A diamond-cut Singapore-style chain in 22K. Sold in 16, 18, 20 and 24 inch lengths; the price moves with the day’s rate because the making charge is small.

@@ -1,5 +1,6 @@
 ---
 name: 'Italian Collection'
+shortName: 'Italian'
 title: 'Italian-Style Gold Jewellery Dubai – 18K Chains'
 description: 'Italian-style 18K gold jewellery in Dubai: flat chains, curb bracelets and minimalist necklaces with even, machine-finished links. Enquire on WhatsApp.'
 origin: 'Italian-style chains'
@@ -7,6 +8,7 @@ summary: 'Italian-style 18K chains and modern pieces for people who wear gold ev
 hallmarks:
   ['Machine-finished links', '18K and 22K', 'Modern minimal forms', 'Lightweight flat chains']
 karats: [22, 18]
+longitude: 12
 image: '../../assets/collections/italian.jpg'
 imageAlt: 'Flat Italian-style gold collar necklace'
 order: 7

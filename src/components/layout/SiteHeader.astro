@@ -13,10 +13,17 @@ import { site } from '@/data/site';
 import { getDesignCollections, getNavCategories } from '@/lib/content';
 import type { GoldRate } from '@/lib/gold-rate';
 import { routes } from '@/lib/routes';
+import type { Ground } from '@/lib/tones';
 import { whatsappGeneral } from '@/lib/whatsapp';
 
 export interface Props {
+  /** Ground of the page's first section (docs/design-system-v2.md §5.3). WP1 renders it. */
+  tone: Ground;
   rate: GoldRate | null;
+  /** The rate is more than two days old: the chip's marker turns hollow (WP1). */
+  stale: boolean;
+  /** When the rate was fetched (ISO), for the rate popover's status line (WP1). */
+  fetchedAt: string | null;
 }
 
 const { rate } = Astro.props;

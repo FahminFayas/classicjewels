@@ -18,6 +18,11 @@ export interface RatesAtBuild {
   history: RateSnapshot[];
   /** True when the latest rate is more than two calendar days old. */
   stale: boolean;
+  /**
+   * When the latest rate was fetched (ISO 8601, UTC), for the "source, {date}, {time}" status
+   * lines. Format with formatRateTime() / formatRateDate() from @/lib/format. Null with no rate.
+   */
+  fetchedAt: string | null;
 }
 
 let cache: Promise<RatesAtBuild> | undefined;
@@ -42,8 +47,16 @@ async function load(): Promise<RatesAtBuild> {
   }
 
   const history = snapshots.sort((a, b) => b.date.localeCompare(a.date));
-  const latest: GoldRate | null = history[0] ?? null;
-  return { latest, history, stale: latest ? isStale(latest.date) : false };
+  const newest = history[0];
+  const latest: GoldRate | null = newest
+    ? { date: newest.date, perGram: newest.perGram, currency: newest.currency }
+    : null;
+  return {
+    latest,
+    history,
+    stale: latest ? isStale(latest.date) : false,
+    fetchedAt: newest?.fetchedAt ?? null,
+  };
 }
 
 /** A rate is stale when its date is more than two calendar days before today (Dubai time). */

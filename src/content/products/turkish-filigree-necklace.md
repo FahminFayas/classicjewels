@@ -10,6 +10,7 @@ karat: 22
 images:
   - src: '../../assets/products/p05.jpg'
     alt: 'Turkish-style gold necklace with openwork filigree medallions on a white bust'
+    ground: 'velvet'
 featured: true
 isNew: true
 order: 5

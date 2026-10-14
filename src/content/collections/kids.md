@@ -1,5 +1,6 @@
 ---
 name: 'Kids Collection'
+shortName: 'Kids'
 title: 'Kids Gold Jewellery Dubai – Baby Bangles, Chains'
 description: 'Children’s gold jewellery in Dubai: 22K baby bangles, light chains, anklets and ear studs with safety clasps, from Classic Jewels in Deira Gold Souq Extension.'
 origin: 'Designed for children'
@@ -8,6 +9,7 @@ hallmarks: ['Safety clasps', 'Smooth rounded edges', 'Very light weight', 'Namin
 karats: [22]
 image: '../../assets/collections/kids.jpg'
 imageAlt: 'Small 22K gold baby bangle with safety clasp'
+imageGround: 'lilac'
 order: 8
 featured: false
 ---

@@ -7,6 +7,11 @@ import Icon from '@/components/ui/Icon.astro';
 import { site } from '@/data/site';
 import { routes } from '@/lib/routes';
 import { whatsappGeneral } from '@/lib/whatsapp';
+
+export interface Props {
+  /** Piece pages: the bar becomes "Ask about this piece" (docs/design-system-v2.md §5.3, WP1). */
+  piece?: { name: string; sku: string; url: string } | undefined;
+}
 ---
 
 <nav class="bar until-lg" aria-label="Quick contact" data-action-bar>
