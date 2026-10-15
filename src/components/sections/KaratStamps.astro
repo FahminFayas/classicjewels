@@ -1,0 +1,266 @@
+---
+/**
+ * The hallmark stamps (docs/design-system-v2.md §5.4, §8.2 section 5): what each karat holds.
+ * Content only; the page supplies the Section (ivory) and the SectionHead.
+ *
+ * Four ruled columns (2 × 2 on phones), one per UAE hallmark: the karat, the stamp itself
+ * (999 / 916 / 875 / 750) at --t-stamp, a 3 px bar filled to the gold content (it draws from
+ * nothing as it enters, .draw-x; static it is simply full to its fineness), the fineness in words,
+ * today's rate a gram (a RateFigure, so a newer posting reaches it) and, in the band variant,
+ * "In our cases:" with the collections that come in that karat, in editorial order, three names
+ * then "and {n} more". 24K reads "Coins and bars", from the gold-coins-bars category.
+ *
+ * A foot row names the rate's source and time, and links to "How a price is built" except on
+ * /gold-rate/ itself. `compact`: no "In our cases" line, stamps at --t-numeral-xl.
+ */
+import { getEntry } from 'astro:content';
+
+import MoreLink from '@/components/ui/MoreLink.astro';
+import RateFigure from '@/components/ui/RateFigure.astro';
+import { site } from '@/data/site';
+import { collectionsWithKarat, type DesignCollection } from '@/lib/content';
+import { countWord, formatDate, formatRateDate, formatRateTime, listWords } from '@/lib/format';
+import type { GoldRate } from '@/lib/gold-rate';
+import { getRates } from '@/lib/rates';
+import { routes } from '@/lib/routes';
+import { DISPLAY_KARATS, KARAT_FACTS, type DisplayKarat } from '@/lib/tones';
+
+export interface Props {
+  rate: GoldRate | null;
+  collections: DesignCollection[];
+  variant?: 'band' | 'compact';
+}
+
+const { rate, collections, variant = 'band' } = Astro.props;
+const { fetchedAt, stale } = await getRates();
+const onRatePage = Astro.url.pathname === routes.goldRate;
+
+const coins = await getEntry('categories', 'gold-coins-bars');
+const coinsName = (coins?.data.shortName ?? 'Coins and bars').replace(/\s&\s/g, ' and ');
+
+/** "Kolkata, Antique, Rajkot and eight more", or every name when there are three or fewer. */
+function inOurCases(k: DisplayKarat): string | null {
+  const names = collectionsWithKarat(collections, k).map((c) => c.data.shortName);
+  if (names.length === 0) return null;
+  if (names.length <= 3) return listWords(names);
+  return `${names.slice(0, 3).join(', ')} and ${countWord(names.length - 3).toLowerCase()} more`;
+}
+
+/** "Dubai Jewellery Group suggested retail rate, 13 October, 12:02." */
+const source = rate
+  ? stale || !fetchedAt
+    ? {
+        lead: 'last published rate,',
+        at: rate.date,
+        text: formatDate(rate.date, { year: undefined }),
+      }
+    : {
+        lead: `${site.rate.source} ${site.rate.basis},`,
+        at: fetchedAt,
+        text: `${formatRateDate(fetchedAt)}, ${formatRateTime(fetchedAt)}`,
+      }
+  : null;
+---
+
+<div class="stamps" data-variant={variant}>
+  <ol class="stamps__list" role="list">
+    {DISPLAY_KARATS.map((k) => {
+      const facts = KARAT_FACTS[k];
+      const cases = k === '24k' ? null : inOurCases(k);
+      return (
+        <li class="stamps__col">
+          <p class="stamps__k eyebrow">{facts.label}</p>
+          <p class="stamps__stamp" aria-hidden="true">
+            {facts.stamp}
+          </p>
+          <p class="sr-only">Stamped {facts.stamp}</p>
+          <div class="stamps__bar" aria-hidden="true">
+            <span class="stamps__fill draw-x" style={`--f:${facts.fineness}`} />
+          </div>
+          <p class="stamps__pct">{facts.percent} gold</p>
+          <p class="stamps__rate">
+            <RateFigure rate={rate} karat={k} format="aed" class="stamps__fig" />{' '}
+            {rate && <span class="stamps__unit">a gram today</span>}
+          </p>
+          {variant === 'band' && k === '24k' && (
+            <p class="stamps__use">
+              <span class="stamps__use-k">In our cases:</span>{' '}
+              <a href={routes.goldCoinsBars}>{coinsName}</a>
+            </p>
+          )}
+          {variant === 'band' && cases && (
+            <p class="stamps__use">
+              <span class="stamps__use-k">In our cases:</span> {cases}
+            </p>
+          )}
+        </li>
+      );
+    })}
+  </ol>
+  {(source || !onRatePage) && (
+    <div class="stamps__foot">
+      {source && (
+        <p class="stamps__src small">
+          Rates:{' '}
+          <span data-rate-lead data-fresh={`${site.rate.source} ${site.rate.basis},`}>
+            {source.lead}
+          </span>{' '}
+          <time datetime={source.at} data-rate-time>
+            {source.text}
+          </time>
+        </p>
+      )}
+      {!onRatePage && <MoreLink href={`${routes.goldRate}#price`}>How a price is built</MoreLink>}
+    </div>
+  )}
+</div>
+
+<style>
+  .stamps__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-block-start: 1px solid var(--rule-strong);
+  }
+
+  .stamps__col {
+    display: grid;
+    grid-template-rows: auto auto auto auto 1fr auto;
+    align-content: start;
+    gap: var(--space-3);
+    min-inline-size: 0;
+    padding: var(--space-5) var(--space-4) var(--space-6) 0;
+  }
+
+  .stamps__col:nth-child(even) {
+    padding-inline-start: var(--space-4);
+    border-inline-start: 1px solid var(--rule);
+  }
+
+  .stamps__col:nth-child(n + 3) {
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .stamps__k {
+    margin: 0;
+  }
+
+  .stamps__stamp {
+    margin-block-start: var(--space-2);
+    font-family: var(--ff-display);
+    font-size: var(--t-stamp);
+    font-weight: var(--fw-display);
+    line-height: 0.85;
+    letter-spacing: var(--track-rate);
+    font-variant-numeric: lining-nums tabular-nums;
+    color: var(--numeral);
+    text-box: trim-both cap alphabetic;
+  }
+
+  .stamps[data-variant='compact'] .stamps__stamp {
+    font-size: var(--t-numeral-xl);
+  }
+
+  .stamps__bar {
+    position: relative;
+    block-size: 3px;
+    margin-block: var(--space-3) var(--space-1);
+    background: var(--rule);
+  }
+
+  .stamps__fill {
+    position: absolute;
+    inset: 0;
+    background: var(--wipe);
+    scale: var(--f) 1;
+    transform-origin: 0 50%;
+  }
+
+  :global([dir='rtl']) .stamps__fill {
+    transform-origin: 100% 50%;
+  }
+
+  .stamps__pct {
+    font-size: var(--t-small);
+    font-weight: var(--fw-text-strong);
+    color: var(--fg);
+  }
+
+  .stamps__rate {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-2);
+    color: var(--muted);
+  }
+
+  .stamps__rate :global(.stamps__fig) {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1.15;
+    color: var(--fg);
+    white-space: nowrap;
+  }
+
+  .stamps__unit {
+    font-size: var(--t-small);
+  }
+
+  .stamps__use {
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--rule);
+    font-size: var(--t-small);
+    line-height: 1.5;
+    color: var(--body);
+  }
+
+  .stamps__use-k {
+    color: var(--muted);
+  }
+
+  .stamps__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3) var(--space-6);
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule-strong);
+  }
+
+  .stamps__src {
+    max-inline-size: 40rem;
+  }
+
+  .stamps__src time {
+    white-space: nowrap;
+  }
+
+  @media (min-width: 64em) {
+    .stamps__list {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .stamps__col,
+    .stamps__col:nth-child(even) {
+      padding: var(--space-6) var(--space-5) var(--space-7);
+      border-inline-start: 0;
+    }
+
+    .stamps__col:first-child {
+      padding-inline-start: 0;
+    }
+
+    .stamps__col:last-child {
+      padding-inline-end: 0;
+    }
+
+    .stamps__col + .stamps__col {
+      border-inline-start: 1px solid var(--rule);
+    }
+
+    .stamps__col:nth-child(n + 3) {
+      border-block-start: 0;
+    }
+  }
+</style>

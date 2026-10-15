@@ -1,31 +1,43 @@
 ---
 /**
- * Occasion page (/occasions/{slug}/), design-spec §7.15: portrait hero, the categories to start
- * with, the pieces tagged for the occasion, a short buying note and the enquiry block.
+ * One occasion (docs/design-system-v2.md §6.7). Ivory: the portrait is a pale-ground photograph.
+ *
+ *   1. Opener: the portrait in its window (at most 392 CSS px, the page's priority image, no text
+ *      on it) beside the H1, the summary and the two ways to ask.
+ *   2. Festivals only, while an offer runs: the campaign line.
+ *   3. The buying note: the Markdown body and any fact the body does not already give.
+ *   4. Festivals only: today's rate, on the stage.
+ *   5. The pieces tagged for the occasion: velvet photographs in a case wall on the stage, studio
+ *      cut-outs on their own lilac plates on ivory; then the categories to start with and, where
+ *      the body names them, the styles (Wedding: Kolkata, Temple, Antique, Kuwaiti) as text links
+ *      until bridal photography exists.
+ *   6. An enquiry band: book a viewing.
  */
 import type { InferGetStaticPropsType } from 'astro';
+import { Picture } from 'astro:assets';
 import { getEntries, render } from 'astro:content';
 
-import CategoryTile from '@/components/sections/CategoryTile.astro';
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
-import Faq from '@/components/sections/Faq.astro';
-import Hero from '@/components/sections/Hero.astro';
-import ProductCard from '@/components/sections/ProductCard.astro';
-import TrayGrid from '@/components/sections/TrayGrid.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import CampaignLine from '@/components/sections/CampaignLine.astro';
+import CaseWall from '@/components/sections/CaseWall.astro';
+import EnquiryBand from '@/components/sections/EnquiryBand.astro';
+import PlateGrid from '@/components/sections/PlateGrid.astro';
+import RateInstrument from '@/components/sections/RateInstrument.astro';
 import Button from '@/components/ui/Button.astro';
-import Icon from '@/components/ui/Icon.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Section from '@/components/ui/Section.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
 import { site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import {
+  collectionShortNames,
   getActiveOffers,
   getDesignCollections,
-  getFaqGroup,
   getOccasions,
   getProductsByOccasion,
+  splitByGround,
 } from '@/lib/content';
-import { countWord, formatDate } from '@/lib/format';
+import { countWord } from '@/lib/format';
 import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
 import { itemListSchema } from '@/lib/schema';
@@ -41,71 +53,92 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { occasion } = Astro.props as Props;
 const { data } = occasion;
 
-const [products, categories, collections, faq, rates, offers, { Content }] = await Promise.all([
+const [products, categories, collections, rates, offers, { Content }] = await Promise.all([
   getProductsByOccasion(occasion.id),
   getEntries(data.suggestedCategories),
   getDesignCollections(),
-  getFaqGroup('occasions'),
   getRates(),
   getActiveOffers(),
   render(occasion),
 ]);
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
-const collectionName = new Map(collections.map((c) => [c.id, c.data.name]));
-const offer = offers[0];
+const { velvet, lilac } = splitByGround(products);
+const collectionNames = collectionShortNames(collections);
+const festivals = occasion.id === 'festivals';
+const offer = festivals ? offers[0] : undefined;
 
 /**
- * H1 and lead per design-spec §5.1 and §7.15; unknown occasions fall back to the content.
- * `forPhrase` gives headings their article ("for a wedding", "for festivals").
- * `note` is printed after the Markdown body, so it carries only facts the body does not already
- * give; leave it out where the body says it all.
+ * Copy per occasion; unknown occasions fall back to the content. `forPhrase` gives headings their
+ * article ("for a wedding"); `viewing` names the visit in the enquiry band; `reason` is the visit
+ * form's reason key; `note` is printed after the Markdown body, so it carries only facts the body
+ * does not already give.
  */
 interface OccasionCopy {
   h1: string;
-  lead: string;
   ask: string;
   forPhrase: string;
+  viewing: string;
+  reason?: string;
   note?: string;
 }
 const copy: Record<string, OccasionCopy> = {
   wedding: {
     h1: 'Bridal gold sets',
-    lead: '22K bridal sets, bangles and haars for Indian, Pakistani and Arab weddings, hallmarked 916 and priced at the day’s rate.',
     ask: 'I’m planning wedding jewellery. Could we arrange a consultation?',
     forPhrase: 'for a wedding',
+    viewing: 'bridal',
+    reason: 'bridal',
   },
   anniversary: {
     h1: 'Anniversary jewellery',
-    lead: '18K diamond pieces with their paperwork, and 22K classics that hold their value by weight.',
     ask: 'I’m looking for an anniversary gift. Could you suggest a few pieces?',
     forPhrase: 'for an anniversary',
+    viewing: 'anniversary',
     note: 'Diamonds are set in 18K because it holds a stone better than 22K. Every stone is instrument-tested in the shop, and larger diamonds come with an independent grading report.',
   },
   birthday: {
     h1: 'Birthday gold',
-    lead: 'Pendants, light earrings and children’s bangles, weighed and invoiced, boxed and ready to give.',
     ask: 'I’m looking for a birthday gift in gold. What would you suggest?',
     forPhrase: 'for a birthday',
+    viewing: 'birthday',
     note: 'Keep the invoice with the gift: it records the karat and the weight in grams, which is what any later exchange is based on.',
   },
   festivals: {
     h1: 'Gold for Diwali, Dhanteras, Akshaya Tritiya and Eid',
-    lead: 'Coins, Lakshmi pendants and 22K sets, reserved on WhatsApp and collected from the branch of your choice.',
     ask: 'I’d like to buy gold for the festival. What do you have in coins and sets?',
     forPhrase: 'for festivals',
+    viewing: 'festival',
+    reason: 'coins',
     note: 'On VAT: 24K coins and bars of 99% purity or more are zero-rated, while 22K coins and jewellery carry 5%.',
   },
 };
 const page: OccasionCopy = copy[occasion.id] ?? {
   h1: data.name,
-  lead: data.summary,
   ask: `I’m looking for jewellery for ${data.name.toLowerCase()}.`,
   forPhrase: `for ${data.name.toLowerCase()}`,
+  viewing: data.name.toLowerCase(),
 };
+
+/** Styles the body names ("…the Kolkata, Temple, Antique and Kuwait collections"). */
+const body = occasion.body ?? '';
+const styles = collections.filter((c) => {
+  const base = c.data.name.replace(/\s+Collection$/i, '');
+  return new RegExp(`\\b(${base}|${c.data.shortName})\\b`).test(body);
+});
 
 const title = data.title.length <= TITLE_MAX ? data.title : `${page.h1} in Dubai`;
 const whatsapp = whatsappUrl(`${site.whatsapp.greeting} ${page.ask}`);
+const visitHref = `${routes.contact}${page.reason ? `?reason=${page.reason}` : ''}#visit`;
+
+/* The portrait: drawn at most 392 CSS px wide (2x sharp from the 784 px source), never more. */
+const portrait = data.image;
+const cap = Math.min(392, portrait.width);
+const widths = [...new Set([296, 392, 588, 784, cap].filter((w) => w <= portrait.width))].sort(
+  (a, b) => a - b,
+);
+
+const pieceWord = (n: number) => `${countWord(n)} ${n === 1 ? 'piece' : 'pieces'}`;
 
 /** No ItemList when nothing is tagged: a list of zero items tells a search engine nothing. */
 const jsonLd =
@@ -123,174 +156,225 @@ const jsonLd =
 ---
 
 <BaseLayout ground="ivory" title={title} description={data.description} jsonLd={jsonLd}>
-  <div class="container container--wide">
-    <Breadcrumbs
-      items={[
-        { name: 'Occasions', href: routes.occasions },
-        { name: data.name, href: routes.occasion(occasion.id) },
-      ]}
-    />
-  </div>
-
-  <Hero
-    eyebrow="Occasion"
+  <PageHead
+    tone="ivory"
+    breadcrumbs={[
+      { name: 'Occasions', href: routes.occasions },
+      { name: data.name, href: routes.occasion(occasion.id) },
+    ]}
+    eyebrow={data.name}
     title={page.h1}
-    lead={page.lead}
-    media="image"
-    shape="portrait"
-    image={data.image}
-    imageAlt={data.imageAlt}
+    lead={data.summary}
+    layout="split"
+    mediaFirst
   >
     <Button href={whatsapp} icon="whatsapp" external>
       Ask on WhatsApp
     </Button>
-    <Button href={routes.stores} variant="secondary">
-      Visit a branch
+    <Button href={visitHref} variant="secondary" icon="calendar">
+      Book a visit
     </Button>
-  </Hero>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <SectionHead eyebrow="Start with" title="The pieces people usually choose." />
-      <div class="tiles">
-        {categories.map((c) => (
-          <CategoryTile category={c} />
-        ))}
+    <figure
+      class="portrait"
+      slot="media"
+      style={`--cap:${cap}px;--ar:${portrait.width}/${portrait.height}`}
+    >
+      <div class="portrait__frame">
+        <Picture
+          src={portrait}
+          alt={data.imageAlt}
+          formats={['avif', 'webp']}
+          widths={widths}
+          sizes={`(min-width: 64em) ${cap}px, min(${cap}px, calc(100vw - 3rem))`}
+          fit="cover"
+          position="top"
+          priority
+        />
       </div>
-    </div>
-  </section>
+    </figure>
+  </PageHead>
 
-  <section class="section section--ruled">
-    <div class="container container--wide">
-      {products.length > 0 ? (
-        <>
-          <SectionHead
-            eyebrow="In the trays"
-            title={`${countWord(products.length)} ${products.length === 1 ? 'piece' : 'pieces'} ${page.forPhrase}.`}
-          >
-            <Fragment slot="aside">
-              <a class="link-quiet section__link" href={routes.jewellery}>
-                All jewellery <Icon name="arrow-right" />
-              </a>
-            </Fragment>
-          </SectionHead>
-          <TrayGrid>
-            {products.map((p) => (
-              <ProductCard
-                product={p}
-                collectionName={
-                  p.data.collection ? collectionName.get(p.data.collection.id) : undefined
-                }
-                rate={rates.latest}
-              />
-            ))}
-          </TrayGrid>
-        </>
-      ) : (
-        <div class="empty">
-          <h2>Nothing for this occasion is online yet.</h2>
-          <p class="lead">Ask us on WhatsApp; we have more in the trays than on the site.</p>
-          <Button href={whatsapp} icon="whatsapp" external>
-            Ask on WhatsApp
-          </Button>
-        </div>
-      )}
-    </div>
-  </section>
+  {offer && <CampaignLine offer={offer} />}
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="prose">
-        <h2>Buying {page.forPhrase}</h2>
+  <Section tone="ivory" ruled={!offer} labelledby="buying-title">
+    <div class="buying">
+      <h2 class="buying__title" id="buying-title">
+        Buying <em>{page.forPhrase}</em>
+      </h2>
+      <div class="buying__body prose">
         <Content />
         {page.note && <p>{page.note}</p>}
       </div>
-      {offer && (
-        <a class="offer link-quiet" href={routes.offer(offer.id)}>
-          <span class="small offer__when">
-            Current offer · until {formatDate(offer.data.endsOn)}
-          </span>
-          <span class="offer__headline">{offer.data.headline}</span>
-          <Icon name="arrow-right" />
-        </a>
+    </div>
+  </Section>
+
+  {festivals && (
+    <Section tone="stage" labelledby="rate-title">
+      <SectionHead
+        id="rate-title"
+        eyebrow="Today"
+        title="Bought by weight,"
+        accent="at today’s rate"
+        shape="split"
+      >
+        Coins and bars follow the 24K figure; most of our jewellery is 22K.
+        <MoreLink href={routes.goldRate} slot="aside">
+          Today’s gold rate
+        </MoreLink>
+      </SectionHead>
+      <RateInstrument
+        rate={rates.latest}
+        stale={rates.stale}
+        fetchedAt={rates.fetchedAt}
+        variant="compact"
+        id="festival-rate"
+      />
+    </Section>
+  )}
+
+  {velvet.length > 0 && (
+    <Section tone={festivals ? 'stage-raised' : 'stage'} labelledby="cases-title">
+      <SectionHead
+        id="cases-title"
+        eyebrow="In the cases"
+        title={`${pieceWord(velvet.length)} ${page.forPhrase}`}
+        shape="split"
+      >
+        Open a piece for its page, or message us for its weight and today’s price.
+        <MoreLink href={routes.jewellery} slot="aside">
+          All jewellery
+        </MoreLink>
+      </SectionHead>
+      <CaseWall
+        products={velvet}
+        rate={rates.latest}
+        collectionNames={collectionNames}
+        layout="grid"
+        columns={velvet.length >= 4 && velvet.length % 3 !== 0 ? 4 : 3}
+      />
+    </Section>
+  )}
+
+  <Section tone="ivory" ruled={velvet.length === 0} labelledby="start-title">
+    {lilac.length > 0 ? (
+      <>
+        <SectionHead
+          id="start-title"
+          eyebrow="From the studio"
+          title={
+            velvet.length > 0
+              ? `And ${pieceWord(lilac.length).toLowerCase()} more`
+              : `${pieceWord(lilac.length)} ${page.forPhrase}`
+          }
+          shape="split"
+        >
+          Photographed in the studio. Ask us what the cases hold today.
+        </SectionHead>
+        <PlateGrid products={lilac} rate={rates.latest} collectionNames={collectionNames} />
+      </>
+    ) : (
+      <h2 class="sr-only" id="start-title">
+        Where to start
+      </h2>
+    )}
+    <div class:list={['starts', lilac.length > 0 && 'starts--after']}>
+      <p class="starts__row list-links">
+        <span class="starts__label eyebrow">Start with</span>
+        {categories.map((c) => (
+          <a class="link-wipe" href={routes.category(c.id)}>
+            {c.data.shortName ?? c.data.name}
+          </a>
+        ))}
+      </p>
+      {styles.length > 0 && (
+        <p class="starts__row list-links">
+          <span class="starts__label eyebrow">Styles {page.forPhrase}</span>
+          {styles.map((c) => (
+            <a class="link-wipe" href={routes.collection(c.id)}>
+              {c.data.shortName}
+            </a>
+          ))}
+        </p>
       )}
     </div>
-  </section>
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <Faq heading={faq.data.heading} items={faq.data.items} />
-        <EnquiryBlock
-          compact
-          text="Tell us the date, the pieces and a budget. We reply with a shortlist and today’s prices."
-          whatsappUrl={whatsapp}
-        />
-      </div>
-    </div>
-  </section>
+  <EnquiryBand
+    title={`Book a ${page.viewing} viewing`}
+    accent="at a branch"
+    text="Tell us the date, the pieces and a budget. We reply with a shortlist and today’s prices."
+    whatsappUrl={whatsapp}
+    secondary={{ href: visitHref, label: 'Book a visit' }}
+  />
 </BaseLayout>
 
 <style>
-  .section__link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-weight: 500;
-    color: var(--plum-700);
+  /* ---------- The portrait window: a frame set 0.5 rem out, nothing on the photograph ---------- */
+  .portrait {
+    inline-size: min(100%, calc(var(--cap) + var(--space-4) + 2px));
+    margin: 0;
   }
 
-  .tiles {
+  .portrait__frame {
+    padding: var(--space-2);
+    border: 1px solid var(--rule-strong);
+  }
+
+  .portrait__frame :global(picture) {
+    display: block;
+  }
+
+  .portrait__frame :global(img) {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: var(--ar);
+    object-fit: cover;
+    object-position: top;
+  }
+
+  /* ---------- Buying note ---------- */
+  .buying {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--grid-gap);
+    gap: var(--space-6);
   }
 
-  .empty {
+  .buying__title {
+    max-inline-size: 12ch;
+  }
+
+  .buying__body {
+    font-size: var(--t-lead);
+    line-height: 1.6;
+  }
+
+  @media (min-width: 64em) {
+    .buying {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: calc(var(--grid-gap) * 2);
+    }
+  }
+
+  /* ---------- Where to start ---------- */
+  .starts {
     display: grid;
     gap: var(--space-4);
-    justify-items: start;
-    padding-block: var(--space-7);
-    border-block: 1px solid var(--rule-1);
   }
 
-  .prose > h2:first-child {
-    margin-block-start: 0;
+  .starts--after {
+    margin-block-start: var(--space-8);
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule);
   }
 
-  .offer {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: var(--space-1) var(--space-4);
-    align-items: center;
-    max-inline-size: var(--prose);
-    margin-block-start: var(--space-7);
-    padding-block: var(--space-4);
-    border-block: 1px solid var(--rule-1);
-    color: var(--ink-900);
+  .starts__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-5);
   }
 
-  .offer__when {
-    grid-column: 1;
-    color: var(--gold-700);
-  }
-
-  .offer__headline {
-    grid-column: 1;
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 500;
-  }
-
-  .offer .icon {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    color: var(--gold-600);
-  }
-
-  @media (min-width: 40em) {
-    .tiles {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
+  .starts__label {
+    margin-inline-end: var(--space-3);
   }
 </style>

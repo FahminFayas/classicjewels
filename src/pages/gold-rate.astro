@@ -1,99 +1,65 @@
 ---
 /**
- * Gold rate. Section order follows docs/design-spec.md §7.8: typographic hero (eyebrow, H1, lead,
- * no buttons) followed directly by the plum board, prose with anchored H2s beside an on-page index,
- * the history table once a week of snapshots exists, the rate FAQ and the enquiry block. Every
- * figure is baked at build from src/content/rates and carries a rate.ts hook (data-rate,
- * data-rate-calc, data-rate-date), so a refresh in the browser updates the derived amounts and the
- * dates too. Prints as a black-on-white board with the address and URL.
+ * Today's gold rate (docs/design-system-v2.md §6.8). The page is the instrument: a stage opener
+ * with the H1 and the 200 px numeral (the LCP candidate; no image on this page), the four karat
+ * keys as a vertical board beside it, then the hallmark stamps (ivory), our record of postings
+ * (stage-raised), how a price is built (ivory, #price), old gold with the estimator (plum), the
+ * questions (ivory) and the four doors (stage), so the page ends at a person.
+ *
+ * Every figure is baked at build from src/content/rates (or the live feed) and carries a rate.ts
+ * hook, so a newer posting reaches the numeral, the keys, the stamps and the quote lines in place.
  */
 import type { Dataset, WithContext } from 'schema-dts';
 
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import BranchDoors from '@/components/sections/BranchDoors.astro';
+import Estimator from '@/components/sections/Estimator.astro';
 import Faq from '@/components/sections/Faq.astro';
-import Hero from '@/components/sections/Hero.astro';
-import RateBoard from '@/components/sections/RateBoard.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
-import { site } from '@/data/site';
+import KaratStamps from '@/components/sections/KaratStamps.astro';
+import QuoteLines from '@/components/sections/QuoteLines.astro';
+import RateInstrument from '@/components/sections/RateInstrument.astro';
+import RateRecord from '@/components/sections/RateRecord.astro';
+import Button from '@/components/ui/Button.astro';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Section from '@/components/ui/Section.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { emirates, openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { getActiveOffers, getFaqGroup, type Offer } from '@/lib/content';
-import { formatAed, formatDate } from '@/lib/format';
-import { KARAT_META, KARATS, type Karat } from '@/lib/gold-rate';
+import { getDesignCollections, getFaqGroup } from '@/lib/content';
+import { countWord, formatDate, listWords } from '@/lib/format';
 import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
 import { ORG_ID } from '@/lib/schema';
+import { DISPLAY_KARATS, KARAT_FACTS } from '@/lib/tones';
 import { whatsappGoldRate } from '@/lib/whatsapp';
 
-const [faq, offers, { latest, history, stale }] = await Promise.all([
+const [faq, collections, { latest, history, stale, fetchedAt }] = await Promise.all([
   getFaqGroup('gold-rate'),
-  getActiveOffers(),
+  getDesignCollections(),
   getRates(),
 ]);
 
-const updated = latest ? formatDate(latest.date) : null;
-
-/*
- * Worked example for the pricing section, computed from the baked 22K rate. Rounded to the dirham
- * exactly as rate.ts recomputes [data-rate-calc], so the baked and refreshed figures match.
- */
-const EXAMPLE_GRAMS = 8;
-const METHOD_LABEL = 'How it is worked out';
-const AMOUNT_LABEL = `${EXAMPLE_GRAMS} g, 22K`;
-const k22 = latest ? latest.perGram['22k'] : null;
-const exampleGold = k22 === null ? null : Math.round(EXAMPLE_GRAMS * k22);
-
-/*
- * The first active offer that lets customers book the rate. The sentence is written here rather
- * than spliced from the offer's headline and term: only the deposit figure and a short offer name
- * ("Diwali 2026 offer", the headline before its colon) are taken from the content.
- */
-let booking: { offer: Offer; deposit: string; name: string } | undefined;
-for (const offer of offers) {
-  const term = offer.data.terms.find(
-    (t) => /\brate\b/i.test(t) && /\b(book|lock|deposit|advance)/i.test(t),
-  );
-  if (!term) continue;
-  const pct = /(\d+(?:\.\d+)?)\s*%\s*deposit/i.exec(term)?.[1];
-  const deposit = pct ? `${/^(8|11|18)\b/.test(pct) ? 'an' : 'a'} ${pct}% deposit` : 'a deposit';
-  const short = (offer.data.headline.split(':')[0] ?? offer.data.headline)
-    .replace(/[.!]$/, '')
-    .trim();
-  booking = { offer, deposit, name: /\boffers?$/i.test(short) ? short : `${short} offer` };
-  break;
-}
-
-const HISTORY_KARATS: Karat[] = ['24k', '22k', '21k', '18k'];
-const showHistory = history.length >= 7;
+const exchangePromise = site.promises.find((p) => p.id === 'gold-exchange')?.detail;
 const oldest = history.at(-1);
-
-const sections = [
-  { id: 'how', label: 'How the rate is set' },
-  { id: 'pricing', label: 'What you pay for a piece' },
-  { id: 'booking', label: 'Booking the rate' },
-  { id: 'coins', label: 'Coins and bars' },
-  { id: 'exchange', label: 'Exchanging old gold' },
-  { id: 'history', label: 'Rate history' },
-  { id: 'karat', label: 'Which karat should I buy' },
-];
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const pageUrl = new URL(routes.goldRate, origin).toString();
 
-/* Dataset markup for the posted figures (no rich result is claimed; see design-spec §5.4). */
+/* Dataset markup for the posted figures we print (no rich result is claimed; design-spec §5.4). */
 const jsonLd: WithContext<Dataset>[] = latest
   ? [
       {
         '@context': 'https://schema.org',
         '@type': 'Dataset',
         name: 'Gold rate in Dubai, AED per gram',
-        description: `Dubai Jewellery Group suggested retail rate for 24K, 22K, 21K, 18K and 14K gold in AED per gram, as posted on the boards at ${site.name}. Updated ${updated}.`,
+        description: `${site.rate.source} ${site.rate.basis} for 24K, 22K, 21K and 18K gold in AED per gram, as posted on the boards at ${site.name}. Updated ${formatDate(latest.date)}.`,
         url: pageUrl,
         creator: { '@id': ORG_ID },
         spatialCoverage: { '@type': 'Place', name: 'Dubai, United Arab Emirates' },
         temporalCoverage: oldest ? `${oldest.date}/${latest.date}` : latest.date,
-        variableMeasured: KARATS.map((k) => ({
+        variableMeasured: DISPLAY_KARATS.map((k) => ({
           '@type': 'PropertyValue',
-          name: `${KARAT_META[k].label} gold rate`,
+          name: `${KARAT_FACTS[k].label} gold rate`,
           value: latest.perGram[k],
           unitText: 'AED per gram',
         })),
@@ -101,410 +67,176 @@ const jsonLd: WithContext<Dataset>[] = latest
     ]
   : [];
 
-/* The posting date sits under the lead, with rate.ts hooks, so it changes with the board. */
-const lead = latest
-  ? `AED per gram for 24K, 22K, 21K, 18K and 14K, as posted on the boards in our branches.`
-  : `AED per gram for 24K, 22K, 21K, 18K and 14K, as posted on the boards in our branches. Call ${site.phone.landline.display} for today’s figure.`;
-const description = `Today’s gold rate in Dubai, AED per gram for 24K, 22K, 21K, 18K and 14K, as posted in our branches, with a worked pricing example.`;
+const description =
+  'Today’s gold rate in Dubai, AED per gram for 24K, 22K, 21K and 18K, as posted in our branches, with what each karat holds and how a price is built.';
+const steps = [
+  'Tested at the counter, in front of you',
+  'Weighed, with stones and clasps set aside',
+  'Credited at the day’s rate for its karat',
+];
 ---
 
 <BaseLayout
-  ground="ivory"
+  ground="stage"
   title="Gold Rate in Dubai Today: 24K, 22K, 21K, 18K per gram"
   description={description}
   jsonLd={jsonLd}
 >
-  <div class="container">
-    <Breadcrumbs items={[{ name: 'Gold rate', href: routes.goldRate }]} class="no-print" />
-  </div>
+  <PageHead
+    tone="stage"
+    id="board"
+    breadcrumbs={[{ name: 'Gold rate', href: routes.goldRate }]}
+    eyebrow="Gold rate · Dubai"
+    title="Today’s gold rate in Dubai"
+  >
+    <RateInstrument
+      slot="media"
+      rate={latest}
+      stale={stale}
+      fetchedAt={fetchedAt}
+      variant="page"
+      id="rate"
+      history={history}
+    />
+    <Button href={whatsappGoldRate()} icon="whatsapp" external class="board__act">
+      Ask on WhatsApp
+    </Button>
+    <Button href={routes.stores} variant="secondary" icon="map-pin" class="board__act">
+      Find a branch
+    </Button>
+  </PageHead>
 
-  <Hero eyebrow="Gold rate · Dubai" title="Today’s gold rate in Dubai" lead={lead} display>
-    {latest && (
-      <p class="posted small">
-        {stale ? 'Last posted' : 'Updated'}{' '}
-        <time datetime={latest.date} data-rate-date={latest.date}>
-          <span data-rate-date-text data-format="full">
-            {updated}
-          </span>
-        </time>
-        .
-      </p>
-    )}
-  </Hero>
+  <Section tone="ivory" id="karats" labelledby="karats-title">
+    <SectionHead
+      eyebrow="Karat guide"
+      title="What each"
+      accent="karat holds"
+      id="karats-title"
+      shape="stack"
+      class="reveal"
+    >
+      Every piece carries the UAE hallmark for its karat, and your invoice prints its weight and
+      fineness.
+    </SectionHead>
+    <KaratStamps rate={latest} collections={collections} variant="band" />
+  </Section>
 
-  <section class="board-section">
-    <div class="container">
-      <RateBoard variant="full" rate={latest} stale={stale} history={history} id="board" />
-    </div>
-  </section>
+  <Section tone="stage-raised" id="record" labelledby="record-title">
+    <RateRecord history={history}>
+      <SectionHead title="Our record" id="record-title" shape="stack" class="reveal" />
+    </RateRecord>
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <nav class="toc no-print" aria-label="On this page">
-          <p class="toc__label small">On this page</p>
-          <ol class="toc__list rows" role="list">
-            {sections.map((s) => (
-              <li>
-                <a class="toc__link link-quiet" href={`#${s.id}`}>
-                  {s.label}
-                </a>
-              </li>
-            ))}
-          </ol>
-        </nav>
+  <Section tone="ivory" id="price" labelledby="price-title">
+    <QuoteLines karat="22k" rate={latest} title="How a price is built," accent="in three lines" />
+    <p class="price__close">No prices online. Each piece is quoted on request at the day’s rate.</p>
+  </Section>
 
-        <div class="prose">
-          <h2 id="how">How the rate is set</h2>
-          <p>
-            The figure on our board is the Dubai Jewellery Group’s suggested retail rate for gold
-            jewellery: AED per gram, one figure for each karat. It is derived from the international
-            gold price converted to dirhams per gram, plus a retail margin, and it is the rate
-            posted on the boards of member jewellers across Dubai.
-          </p>
-          <p>
-            We post the latest rate from our board and refresh this page during the day; the date
-            beside the figures is the day they were posted. The rate is the price of the gold alone.
-            The making charge for the work and 5% VAT are added per piece, which is why two shops
-            showing the same board can quote different prices for similar pieces.
-          </p>
-
-          <h2 id="pricing">What you pay for a piece</h2>
-          <p>
-            Price = rate × net gold weight + making charge + 5% VAT. Net gold weight is the gross
-            weight minus stones and any non-gold parts, and all four lines are printed on your
-            invoice so you can compare shops line by line.
-          </p>
-          {exampleGold !== null && k22 !== null ? (
-            <p>
-              An {EXAMPLE_GRAMS} g 22K bangle at{' '}
-              <span class="nowrap">
-                AED <span data-rate="22k">{k22.toFixed(2)}</span>
-              </span>{' '}
-              per gram is{' '}
-              <span class="nowrap" data-rate-calc="22k" data-grams={EXAMPLE_GRAMS}>
-                {formatAed(exampleGold)}
-              </span>{' '}
-              in gold, plus the making charge for the work, plus VAT.
-            </p>
-          ) : (
-            <p>
-              An {EXAMPLE_GRAMS} g 22K bangle is {EXAMPLE_GRAMS} × the day’s 22K rate in gold, plus
-              the making charge for the work, plus VAT. Call {site.phone.landline.display} for
-              today’s figure.
-            </p>
-          )}
-          <table class="example">
-            <caption class="sr-only">
-              How the price of an{EXAMPLE_GRAMS}g 22K bangle is built
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Line</th>
-                <th scope="col">{METHOD_LABEL}</th>
-                <th scope="col">{AMOUNT_LABEL}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">Gold</th>
-                <td data-label={METHOD_LABEL}>22K rate × net gold weight</td>
-                <td data-label={AMOUNT_LABEL}>
-                  {exampleGold !== null && k22 !== null ? (
-                    <>
-                      {EXAMPLE_GRAMS} g ×{' '}
-                      <span class="nowrap">
-                        AED <span data-rate="22k">{k22.toFixed(2)}</span>
-                      </span>{' '}
-                      ={' '}
-                      <span class="nowrap" data-rate-calc="22k" data-grams={EXAMPLE_GRAMS}>
-                        {formatAed(exampleGold)}
-                      </span>
-                    </>
-                  ) : (
-                    `${EXAMPLE_GRAMS} g × today’s 22K rate`
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <th scope="row">Making charge</th>
-                <td data-label={METHOD_LABEL}>Quoted per piece for the work</td>
-                <td data-label={AMOUNT_LABEL}>Quoted at the counter</td>
-              </tr>
-              <tr>
-                <th scope="row">VAT</th>
-                <td data-label={METHOD_LABEL}>5% of the gold value plus the making charge</td>
-                <td data-label={AMOUNT_LABEL}>5% of the subtotal</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <h2 id="booking">Booking the rate</h2>
-          {booking ? (
-            <>
-              <p>
-                Until {formatDate(booking.offer.data.endsOn)} you can lock the day’s rate with{' '}
-                {booking.deposit}, as part of our{' '}
-                <a href={routes.offer(booking.offer.id)}>{booking.name}</a>.
-              </p>
-              <p>
-                The rate on the day you pay the deposit is the rate on your invoice, whatever the
-                board says when you collect. Ask on WhatsApp which pieces and order sizes qualify.
-              </p>
-            </>
-          ) : (
-            <p>
-              No rate-booking offer is running at the moment. Ask on WhatsApp whether the rate can
-              be booked for your order.
-            </p>
-          )}
-
-          <h2 id="coins">Coins and bars</h2>
-          <p>
-            Coins and bars are priced near the rate with no making charge; ask for the coin premium
-            before you come in.
-          </p>
-          <p>
-            24K bars and coins of 99% purity or higher are zero-rated for VAT under UAE law; 22K
-            coins carry 5% VAT like jewellery. <a href={routes.goldCoinsBars}>Coins and bars</a>.
-          </p>
-
-          <h2 id="exchange">Exchanging old gold</h2>
-          <p>
-            Old gold is tested and weighed in front of you and credited by weight at the day’s rate
-            for its karat against a new piece. Ask whether a promotion or the type of gold changes
-            the terms.
-          </p>
-          <p>
-            Making charges and VAT apply to the new piece.{' '}
-            <a href={routes.goldExchange}>How exchange works</a>.
-          </p>
-
-          <h2 id="history">Rate history</h2>
-          {showHistory ? (
-            <table class="history tabular">
-              <caption class="sr-only">Posted gold rates in AED per gram, newest first</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Date</th>
-                  {HISTORY_KARATS.map((k) => (
-                    <th scope="col">{KARAT_META[k].label}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((snapshot) => (
-                  <tr>
-                    <th scope="row">
-                      <time datetime={snapshot.date}>{formatDate(snapshot.date)}</time>
-                    </th>
-                    {HISTORY_KARATS.map((k) => (
-                      <td>{snapshot.perGram[k].toFixed(2)}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>
-              {oldest
-                ? `Daily snapshots began on ${formatDate(oldest.date)}; a history table appears once a week of rates has been recorded.`
-                : 'A history table appears once a week of daily rates has been recorded.'}
-            </p>
-          )}
-
-          <h2 id="karat">Which karat should I buy</h2>
-          <p>
-            24K (999) for coins and bars. It is the purest and the softest, priced closest to the
-            metal with no making charge, and at 99% purity or above it is zero-rated for VAT. Too
-            soft for jewellery that is worn every day.
-          </p>
-          <p>
-            22K (916) for most Indian and Gulf jewellery: bridal sets, bangles, chains and haar.
-            Hard enough to wear, pure enough to hold its value by weight; most of what is on our
-            trays is 22K.
-          </p>
-          <p>
-            21K (875) for Arabic and Turkish designs. It is the long-standing Gulf standard for
-            bangles, chains and bridal sets, a little harder than 22K and priced a little below it
-            per gram.
-          </p>
-          <p>
-            18K (750) for diamond and gemstone settings, and for white and rose gold. The harder
-            alloy holds stones securely and keeps fine work in shape, which is why diamond pieces
-            are made in it.
-          </p>
-        </div>
+  <Section tone="parchment" id="old-gold" labelledby="old-gold-title">
+    <div class="oldgold">
+      <div class="oldgold__text">
+        <Eyebrow>Old gold</Eyebrow>
+        <h2 id="old-gold-title">
+          Old gold, <em>on today’s scale</em>
+        </h2>
+        {exchangePromise && <p class="lead">{exchangePromise}</p>}
+        <ol class="oldgold__steps rows" role="list">
+          {steps.map((step, i) => (
+            <li>
+              <span class="oldgold__n fig" aria-hidden="true">
+                {i + 1}
+              </span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
       </div>
+      <Estimator rate={latest} id="estimator" />
     </div>
-  </section>
+  </Section>
 
-  <section class="section section--ruled no-print">
-    <div class="container">
-      <div class="split">
-        <Faq heading={faq.data.heading} items={faq.data.items} />
-        <EnquiryBlock
-          heading="Ask for a quote at today’s rate"
-          text="Tell us the piece, the karat and the weight you have in mind. We reply with the gold value, the making charge and the VAT, itemised."
-          whatsappUrl={whatsappGoldRate()}
-          whatsappLabel="Enquire on WhatsApp"
-        />
-      </div>
-    </div>
-  </section>
+  <Section tone="ivory" id="questions" width="narrow">
+    <Faq heading={faq.data.heading} items={faq.data.items} />
+  </Section>
 
-  <p class="print-foot small">
-    {site.name} · {site.address.oneLine} · {site.phone.landline.display} · {pageUrl}
-  </p>
+  <Section tone="stage" id="branches" labelledby="branches-title">
+    <SectionHead
+      eyebrow="Branches"
+      title="Buy or exchange"
+      accent="at today’s rate"
+      id="branches-title"
+      shape="split"
+      class="reveal"
+    >
+      {countWord(openBranches.length)} branches in {listWords(emirates)}. Message the one nearest
+      you before you come.
+    </SectionHead>
+    <BranchDoors variant="compact" />
+  </Section>
 </BaseLayout>
 
 <style>
-  .board-section {
-    padding-block-end: var(--section-y);
-  }
-
-  .toc {
-    align-self: start;
-  }
-
-  .toc__label {
-    margin-block-end: var(--space-3);
-    font-weight: 500;
-    color: var(--gold-700);
-  }
-
-  .toc__link {
-    display: flex;
-    align-items: center;
-    min-block-size: var(--tap);
-    padding-block: var(--space-2);
-    color: var(--ink-900);
-  }
-
-  .toc__link:hover {
-    color: var(--link-hover);
-  }
-
-  .example,
-  .history {
-    inline-size: 100%;
-  }
-
-  .example th[scope='row'],
-  .history th[scope='row'] {
-    background: transparent;
-    font-weight: 500;
-    white-space: nowrap;
-  }
-
-  .history td {
-    text-align: end;
-  }
-
-  /* The hero's action row holds only the posting date on this page. */
-  .posted {
-    color: var(--ink-500);
-  }
-
-  /* Below 40em the three columns become label/value pairs, one row per line of the price. */
+  /* Phones: the two actions as an even pair. */
   @media (max-width: 39.99em) {
-    .example,
-    .example tbody,
-    .example tr,
-    .example th,
-    .example td {
-      display: block;
-    }
-
-    .example thead {
-      position: absolute;
-      inline-size: 1px;
-      block-size: 1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-    }
-
-    .example tr {
-      display: grid;
-      gap: var(--space-2);
-      padding-block: var(--space-4);
-      border-block-end: 1px solid var(--rule-1);
-    }
-
-    .example tr:last-child {
-      border-block-end: 0;
-    }
-
-    .example th[scope='row'],
-    .example td {
-      padding: 0;
-      border: 0;
-    }
-
-    .example td::before {
-      content: attr(data-label);
-      display: block;
-      font-size: var(--t-caption);
-      color: var(--ink-500);
+    :global(.btn.board__act) {
+      flex: 1 1 0;
+      padding-inline: var(--space-3);
     }
   }
 
-  .history thead th:not(:first-child) {
-    text-align: end;
+  .price__close {
+    margin-block-start: var(--space-7);
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule);
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1.25;
+    color: var(--fg);
+    text-wrap: balance;
   }
 
-  .print-foot {
-    display: none;
+  .oldgold {
+    display: grid;
+    gap: var(--space-7) var(--grid-gap);
+    align-items: start;
+  }
+
+  .oldgold__text {
+    display: grid;
+    gap: var(--space-5);
+    max-inline-size: 34rem;
+  }
+
+  .oldgold__text :global(.eyebrow) {
+    margin-block-end: 0;
+  }
+
+  .oldgold__steps {
+    margin-block-start: var(--space-3);
+  }
+
+  .oldgold__steps li {
+    display: grid;
+    grid-template-columns: var(--space-7) minmax(0, 1fr);
+    align-items: baseline;
+    gap: var(--space-3);
+    padding-block: var(--space-4);
+    color: var(--fg);
+  }
+
+  .oldgold__n {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1;
+    color: var(--numeral);
   }
 
   @media (min-width: 64em) {
-    .toc {
-      position: sticky;
-      inset-block-start: calc(var(--header-h) + var(--space-5));
-    }
-  }
-
-  /* The board prints as a black table on white, with the shop's address and this URL below. */
-  @media print {
-    :global(.strip),
-    :global(.header),
-    :global([data-scroll-sentinel]),
-    :global(.footer),
-    :global(.bar),
-    :global(.skip) {
-      display: none !important;
-    }
-
-    :global(.board),
-    :global(.board *) {
-      background: #fff !important;
-      color: #000 !important;
-    }
-
-    :global(.board__table) {
-      border-color: #000 !important;
-    }
-
-    :global(.board__table tr + tr > *) {
-      border-color: #000 !important;
-    }
-
-    .board-section,
-    .section {
-      padding-block: var(--space-5);
-    }
-
-    .prose {
-      max-inline-size: none;
-    }
-
-    .print-foot {
-      display: block;
-      margin: var(--space-5) var(--gutter) 0;
-      padding-block-start: var(--space-3);
-      border-block-start: 1px solid #000;
-      color: #000;
+    .oldgold {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      column-gap: calc(var(--grid-gap) * 2);
     }
   }
 </style>

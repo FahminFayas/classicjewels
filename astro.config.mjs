@@ -6,8 +6,7 @@ import { defineConfig, envField, fontProviders, sharpImageService } from 'astro/
 export const SITE_URL = 'https://classicjewels.ae';
 
 /** Pages that must never appear in the sitemap (utility pages, redirects targets). */
-// '/system/' is the design-system specimen page (noindex; WP6 deletes it with this entry).
-const SITEMAP_EXCLUDE = ['/thank-you/', '/404/', '/system/'];
+const SITEMAP_EXCLUDE = ['/thank-you/', '/404/'];
 
 export default defineConfig({
   site: SITE_URL,
@@ -18,7 +17,11 @@ export default defineConfig({
   compressHTML: true,
   build: {
     format: 'directory',
-    inlineStylesheets: 'auto',
+    // Every stylesheet is inlined into its page: the pages are small and static, the CSP allows
+    // inline styles ('unsafe-inline' in style-src), and twelve small render-blocking CSS files
+    // cost the home page about 0.6 s of LCP on a throttled phone (Lighthouse, WP6). Scripts are
+    // never inlined: see vite.build.assetsInlineLimit below.
+    inlineStylesheets: 'always',
   },
   image: {
     // Every <Image>/<Picture> gets a responsive srcset + sizes and intrinsic dimensions (CLS 0).
@@ -100,12 +103,19 @@ export default defineConfig({
     }),
   ],
   vite: {
+    // Note on scroll-driven animations: the CSS minifier (Lightning CSS) folds a literal
+    // `animation-timeline: view()` into the `animation` shorthand, which no browser parses, so
+    // every scroll-driven effect died in the build while working in dev (found by the WP6 audit).
+    // Components therefore write `animation-timeline: var(--tl-view)` (tokens.css), which a
+    // minifier cannot merge. scripts/audit-dist.mjs fails the build if a merged shorthand appears.
     build: {
       // Never inline scripts into the HTML. The Content-Security-Policy in public/.htaccess and
       // public/_headers allows only same-origin script files, so an inlined <script> would be
       // blocked in production (the mobile menu would stop working). scripts/audit-dist.mjs fails
-      // the build check if an inline script ever appears.
-      assetsInlineLimit: 0,
+      // the build check if an inline script ever appears. Other assets keep Vite's default
+      // (4 KB) so that `undefined` leaves the decision to Astro; stylesheets are inlined by
+      // build.inlineStylesheets above regardless.
+      assetsInlineLimit: (file) => (/\.[cm]?js$/.test(file) ? false : undefined),
     },
     server: {
       // In dev, proxy the gold-rate feed to the live host so the widget works without PHP.

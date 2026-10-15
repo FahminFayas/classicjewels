@@ -136,6 +136,26 @@ for (const file of files.sort()) {
     }
   }
 
+  // Scroll-driven animations: a minifier that folds `animation-timeline: view()` into the
+  // `animation` shorthand produces a declaration no browser parses, and the effect silently
+  // dies. Components write the timeline as var(--tl-view) (tokens.css) so it cannot be folded;
+  // this catches a regression in the page's inline styles and its linked stylesheets.
+  const styles = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]);
+  for (const tag of html.match(/<link\s[^>]*rel="stylesheet"[^>]*>/gi) ?? []) {
+    const href = attr(tag, 'href');
+    if (href?.startsWith('/') && (await exists(join(DIST, href.slice(1))))) {
+      styles.push(await readFile(join(DIST, href.slice(1)), 'utf8'));
+    }
+  }
+  for (const css of styles) {
+    const folded = css.match(/animation:[^;}]*(?:view|scroll)\([^;}]*/);
+    if (folded) {
+      problems.push(
+        `animation shorthand carrying a timeline (dead in every browser): ${folded[0]}`,
+      );
+    }
+  }
+
   for (const [, json] of html.matchAll(
     /<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi,
   )) {

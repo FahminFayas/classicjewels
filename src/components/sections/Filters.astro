@@ -1,29 +1,44 @@
 ---
 /**
- * Filter and sort controls for a tray grid (catalogue index and category pages).
- * Karat and collection chips are <button aria-pressed>; sort is a <select>. State lives in
- * location.hash so the page keeps one canonical URL. The controls stay hidden until
- * src/scripts/filter.ts runs; without JavaScript the block shows plain links to the category
- * pages instead, so nothing on the page is a dead control.
+ * Filter and sort controls for one or more grids of pieces (docs/design-system-v2.md §5.5, §6.2,
+ * §6.3): on /jewellery/ one block drives both the velvet wall and the studio grid. Tone-aware, so
+ * it sits on the stage or on ivory.
+ *
+ *   Karat chips      square 44 px <button aria-pressed>, each with today's rate for its karat
+ *                    ("22K · 468.25", a RateFigure hook, so a newer posting reaches it)
+ *   Collection chips the collections present, by their short names
+ *   Sort             featured, newest, name
+ *
+ * State lives in location.hash (#karat=22&collection=kolkata&sort=name) with replaceState, so the
+ * page keeps one canonical URL and adds no history entries; a grid's whole section hides when
+ * none of its cards match. The controls stay hidden until src/scripts/filter.ts runs; without
+ * JavaScript the block shows plain links to the category pages instead, so nothing is a dead
+ * control. Under three pieces the block renders nothing. Phones: each chip row scrolls sideways.
  */
+import RateFigure from '@/components/ui/RateFigure.astro';
+import type { GoldRate } from '@/lib/gold-rate';
 import { routes } from '@/lib/routes';
+import { isDisplayKarat, KARAT_FACTS } from '@/lib/tones';
 import { whatsappGeneral } from '@/lib/whatsapp';
 
 export interface Props {
-  /** id of the <TrayGrid filterable> this block controls. */
-  gridId: string;
-  /** Number of cells in the grid, for the initial "{n} pieces shown" line. */
+  /** ids of every grid this block controls, e.g. the velvet wall and the studio grid. */
+  grids: string[];
+  /** Number of pieces across those grids, for the initial "{n} pieces shown" line. */
   total: number;
-  /** Karats present in the grid, in display order. Chips render only when there are two or more. */
+  /** Karats present, in display order. Chips render only when there are two or more. */
   karats: number[];
-  /** Collections present in the grid. Chips render only when there are two or more. */
+  /** Collections present. Chips render only when there are two or more. */
   collections?: { id: string; name: string }[];
   /** Category links shown when JavaScript is unavailable. */
   categories: { id: string; name: string }[];
+  /** Today's rate, printed on each karat chip. */
+  rate: GoldRate | null;
   class?: string;
 }
 
-const { gridId, total, karats, collections = [], categories, class: className } = Astro.props;
+const { grids, total, karats, collections = [], categories, rate, class: className } = Astro.props;
+
 /** Filtering or sorting fewer than three pieces is noise: the block renders nothing. */
 const show = total >= 3;
 const sorts = [
@@ -31,14 +46,19 @@ const sorts = [
   { value: 'newest', label: 'Newest first' },
   { value: 'name', label: 'Name, A to Z' },
 ];
+const karatKey = (k: number) => {
+  const key = `${k}k`;
+  return isDisplayKarat(key) ? key : null;
+};
+const pieces = (n: number) => `${n} ${n === 1 ? 'piece' : 'pieces'} shown`;
 ---
 
 {show && (
-  <div class:list={['filters', className]} data-filters={gridId}>
+  <div class:list={['filters', className]} data-filters={grids.join(' ')}>
     <noscript>
       <nav class="filters__nojs" aria-label="Browse by piece">
-        <p class="small">By piece:</p>
-        <ul class="filters__links" role="list">
+        <p class="filters__label eyebrow">By piece</p>
+        <ul class="filters__links list-links" role="list">
           {categories.map((c) => (
             <li>
               <a href={routes.category(c.id)}>{c.name}</a>
@@ -51,31 +71,47 @@ const sorts = [
     <div class="filters__controls" data-filter-controls hidden>
       <div class="filters__facets">
         {karats.length > 1 && (
-          <div class="filters__group" role="group" aria-label="Karat">
-            <span class="filters__label small">Karat</span>
-            <span class="filters__chips">
-              {karats.map((k) => (
-                <button
-                  type="button"
-                  class="chip"
-                  aria-pressed="false"
-                  data-facet="karat"
-                  data-value={String(k)}
-                >
-                  {k}K
-                </button>
-              ))}
+          <div class="filters__row" role="group" aria-labelledby="filters-karat">
+            <span class="filters__label eyebrow" id="filters-karat">
+              Karat
             </span>
+            <div class="filters__chips">
+              {karats.map((k) => {
+                const key = karatKey(k);
+                return (
+                  <button
+                    type="button"
+                    class="fchip"
+                    aria-pressed="false"
+                    data-facet="karat"
+                    data-value={String(k)}
+                  >
+                    <span class="fchip__k">{key ? KARAT_FACTS[key].label : `${k}K`}</span>
+                    {key && rate && (
+                      <>
+                        <span class="fchip__sep" aria-hidden="true">
+                          ·
+                        </span>
+                        <RateFigure rate={rate} karat={key} class="fchip__rate" />
+                        <span class="sr-only"> AED a gram today</span>
+                      </>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
         {collections.length > 1 && (
-          <div class="filters__group" role="group" aria-label="Collection">
-            <span class="filters__label small">Collection</span>
-            <span class="filters__chips">
+          <div class="filters__row" role="group" aria-labelledby="filters-collection">
+            <span class="filters__label eyebrow" id="filters-collection">
+              Style
+            </span>
+            <div class="filters__chips">
               {collections.map((c) => (
                 <button
                   type="button"
-                  class="chip"
+                  class="fchip"
                   aria-pressed="false"
                   data-facet="collection"
                   data-value={c.id}
@@ -83,35 +119,34 @@ const sorts = [
                   {c.name}
                 </button>
               ))}
-            </span>
+            </div>
           </div>
         )}
       </div>
-      <label class="filters__sort">
-        <span class="filters__label small">Sort</span>
-        <select class="field__input filters__select" data-sort>
-          {sorts.map((s) => (
-            <option value={s.value}>{s.label}</option>
-          ))}
-        </select>
-      </label>
-      <p class="filters__status small" aria-live="polite">
-        <span data-count>
-          {total} {total === 1 ? 'piece' : 'pieces'} shown
-        </span>
-        <span class="filters__sep" aria-hidden="true">
-          ·
-        </span>
-        <button type="button" class="filters__clear" data-clear hidden>
-          Clear
-        </button>
-      </p>
+      <div class="filters__foot">
+        <p class="filters__status small" aria-live="polite">
+          <span class="fig" data-count>
+            {pieces(total)}
+          </span>
+          <button type="button" class="filters__clear" data-clear hidden>
+            Clear
+          </button>
+        </p>
+        <label class="filters__sort">
+          <span class="filters__label eyebrow">Sort</span>
+          <select class="field__input filters__select" data-sort>
+            {sorts.map((s) => (
+              <option value={s.value}>{s.label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
       <p class="filters__empty" data-empty hidden>
         No pieces match.{' '}
         <a href={whatsappGeneral()} target="_blank" rel="noopener">
           Ask us on WhatsApp
         </a>
-        : we have more in the trays than online.
+        : the cases hold more than the site does.
       </p>
     </div>
   </div>
@@ -120,95 +155,159 @@ const sorts = [
 
 <style>
   .filters {
-    margin-block-end: var(--space-5);
+    container: filters / inline-size;
+    min-inline-size: 0;
+    border-block: 1px solid var(--rule);
   }
 
   .filters__nojs {
     display: grid;
-    gap: var(--space-2);
-    padding-block: var(--space-4);
-    border-block: 1px solid var(--rule-1);
+    gap: var(--space-3);
+    padding-block: var(--space-5);
   }
 
   .filters__links {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2) var(--space-4);
-  }
-
-  .filters__links a {
-    display: inline-flex;
-    align-items: center;
-    min-block-size: var(--tap);
+    gap: var(--space-2) var(--space-5);
   }
 
   .filters__controls {
     display: grid;
     gap: var(--space-4);
-    align-items: end;
-    padding-block: var(--space-4);
-    border-block: 1px solid var(--rule-1);
+    padding-block: var(--space-5);
   }
 
   .filters__controls[hidden] {
     display: none;
   }
 
-  .filters__facets {
-    display: grid;
-    gap: var(--space-3);
+  .filters__label {
+    margin: 0;
+    white-space: nowrap;
   }
 
-  /* Label column, then chips that wrap under the first chip rather than under the label. */
-  .filters__group {
-    display: grid;
-    grid-template-columns: 5.5rem minmax(0, 1fr);
-    align-items: start;
+  /*
+   * Phones: every chip in one row that scrolls sideways, edge to edge, karats first; the group
+   * labels stay for screen readers only and a hairline divides the groups.
+   */
+  .filters__facets {
+    display: flex;
+    gap: var(--space-2);
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .filters__facets::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filters__row {
+    display: flex;
+    flex: none;
     gap: var(--space-2);
   }
 
-  .filters__group > .filters__label {
-    min-block-size: var(--tap);
-    display: inline-flex;
-    align-items: center;
+  .filters__row + .filters__row {
+    padding-inline-start: var(--space-2);
+    border-inline-start: 1px solid var(--rule-strong);
+  }
+
+  .filters__row > .filters__label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: clip;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .filters__chips {
     display: flex;
-    flex-wrap: wrap;
     gap: var(--space-2);
   }
 
-  .filters__label {
-    min-inline-size: 5.5rem;
-    color: var(--ink-500);
-  }
-
-  .chip {
+  .fchip {
+    flex: none;
     display: inline-flex;
     align-items: center;
+    gap: var(--space-2);
     min-block-size: var(--tap);
     padding-inline: var(--space-4);
-    border: 1px solid var(--rule-2);
+    border: 1px solid var(--chip-line);
     border-radius: var(--radius);
-    background: var(--surface-0);
-    color: var(--plum-700);
+    color: var(--fg);
     font-size: var(--t-small);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums lining-nums;
+    font-weight: var(--fw-text-strong);
+    line-height: 1.2;
+    white-space: nowrap;
     transition:
-      background-color var(--dur-fast) var(--ease),
-      border-color var(--dur-fast) var(--ease);
+      background-color var(--dur-quick) var(--ease-out),
+      color var(--dur-quick) var(--ease-out),
+      border-color var(--dur-quick) var(--ease-out);
   }
 
-  .chip:hover {
-    border-color: var(--plum-700);
+  .fchip:hover {
+    background: var(--btn-wash);
   }
 
-  .chip[aria-pressed='true'] {
-    background: var(--plum-700);
-    border-color: var(--plum-700);
-    color: var(--ink-on-plum);
+  .fchip[aria-pressed='true'] {
+    background: var(--chip-on-bg);
+    border-color: var(--chip-on-bg);
+    color: var(--chip-on-fg);
+  }
+
+  .fchip__sep {
+    color: var(--muted);
+  }
+
+  .fchip :global(.fchip__rate) {
+    font-weight: var(--fw-text);
+    color: var(--body);
+  }
+
+  .fchip[aria-pressed='true'] .fchip__sep,
+  .fchip[aria-pressed='true'] :global(.fchip__rate) {
+    color: inherit;
+  }
+
+  .filters__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3) var(--space-5);
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .filters__status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    min-block-size: var(--tap);
+    color: var(--muted);
+  }
+
+  .filters__clear {
+    min-block-size: var(--tap);
+    color: var(--link);
+    font-weight: var(--fw-text-strong);
+    text-decoration: underline;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.18em;
+  }
+
+  .filters__clear:hover {
+    color: var(--link-hover);
+    text-decoration-color: currentColor;
+  }
+
+  .filters__clear[hidden] {
+    display: none;
   }
 
   .filters__sort {
@@ -220,38 +319,12 @@ const sorts = [
   .filters__select {
     inline-size: auto;
     min-inline-size: 11rem;
-    padding-inline-end: var(--space-6);
-  }
-
-  .filters__status {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
     min-block-size: var(--tap);
-  }
-
-  .filters__clear {
-    min-block-size: var(--tap);
-    color: var(--plum-700);
-    font-weight: 500;
-    text-decoration: underline;
-    text-decoration-color: var(--rule-2);
-    text-underline-offset: 0.15em;
-  }
-
-  .filters__clear:hover {
-    text-decoration-color: var(--gold-600);
-  }
-
-  .filters__clear[hidden],
-  .filters__sep:has(+ [hidden]) {
-    display: none;
+    font-size: var(--t-small);
   }
 
   .filters__empty {
-    padding: var(--space-5);
-    background: var(--surface-2);
-    color: var(--ink-700);
+    color: var(--body);
     max-inline-size: var(--prose);
   }
 
@@ -259,29 +332,51 @@ const sorts = [
     display: none;
   }
 
-  @media (min-width: 56.25em) {
-    .filters__controls {
-      grid-template-columns: 1fr auto;
-      grid-template-areas:
-        'facets sort'
-        'status status'
-        'empty empty';
-    }
-
+  /* From 48em: one row per group, the label above its chips, the chips wrapping. */
+  @media (min-width: 48em) {
     .filters__facets {
-      grid-area: facets;
+      display: grid;
+      gap: var(--space-4);
+      margin-inline: 0;
+      padding-inline: 0;
+      overflow: visible;
     }
 
-    .filters__sort {
-      grid-area: sort;
+    .filters__row {
+      display: grid;
+      gap: var(--space-3);
+      min-inline-size: 0;
     }
 
-    .filters__status {
-      grid-area: status;
+    .filters__row + .filters__row {
+      padding-inline-start: 0;
+      border-inline-start: 0;
     }
 
-    .filters__empty {
-      grid-area: empty;
+    .filters__row > .filters__label {
+      position: static;
+      inline-size: auto;
+      block-size: auto;
+      overflow: visible;
+      clip-path: none;
+    }
+
+    .filters__chips {
+      flex-wrap: wrap;
+    }
+  }
+
+  /* A wide block (a full-width bar): each label in a column of its own beside its chips. */
+  @container filters (min-width: 40rem) {
+    .filters__row {
+      grid-template-columns: 6rem minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .filters__row > .filters__label {
+      min-block-size: var(--tap);
+      display: inline-flex;
+      align-items: center;
     }
   }
 </style>

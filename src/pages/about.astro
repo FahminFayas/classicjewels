@@ -1,69 +1,68 @@
 ---
 /**
- * About. Design-spec §7.9, adapted for a four-branch brand: the group, the branches, what is on
- * the trays, how a piece is sold, the public rating and the written terms. No staff section.
- * Every number comes from src/data/site.ts or the content collections.
+ * About (docs/design-system-v2.md §6.12). Five movements, each fact from src/data/site.ts or the
+ * content collections:
+ *
+ *   1. Opener, ivory: the group lockup above the H1; the heritage sentence as the lead.
+ *   2. The group, ivory: its three divisions as ruled chapters, and its trade.
+ *   3. From bar to bangle, stage: BarToBangle (the bar, the stamp, the piece).
+ *   4. Our terms, ivory: the condensed promise ledger.
+ *   5. Come in, stage: the doors.
+ *
+ * No pull quotes, no invented milestones, no reprinted reviews.
  */
-import { Picture } from 'astro:assets';
+import { getEntry } from 'astro:content';
 
-import ringsImage from '@/assets/story/about-2.jpg';
-import heroImage from '@/assets/story/about-3.jpg';
 import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
-import Hero from '@/components/sections/Hero.astro';
-import StoreCard from '@/components/sections/StoreCard.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
-import Button from '@/components/ui/Button.astro';
-import Icon from '@/components/ui/Icon.astro';
+import BarToBangle from '@/components/sections/BarToBangle.astro';
+import BranchDoors from '@/components/sections/BranchDoors.astro';
+import GroupLockup from '@/components/ui/GroupLockup.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Section from '@/components/ui/Section.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
-import { branches, emirates, flagship, openBranches, site } from '@/data/site';
+import { emirates, flagship, openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { getDesignCollections, getNavCategories } from '@/lib/content';
-import { countWord, formatDate, listWords } from '@/lib/format';
+import { getFeaturedProducts, photoGround } from '@/lib/content';
+import { countWord, listWords } from '@/lib/format';
+import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
 import { jewelryStoreSchema } from '@/lib/schema';
-import { whatsappGeneral } from '@/lib/whatsapp';
 
-const [collections, categories] = await Promise.all([getDesignCollections(), getNavCategories()]);
+const [{ latest: rate }, p03, featured] = await Promise.all([
+  getRates(),
+  getEntry('products', 'antique-pearl-drop-bib'),
+  getFeaturedProducts(12),
+]);
+/* The bar-to-bangle piece: p03, else the first featured piece photographed on velvet. */
+const piece =
+  p03 && photoGround(p03) === 'velvet' ? p03 : featured.find((p) => photoGround(p) === 'velvet');
 
 const brandYear = site.founded.brandYear;
 const branchWord = countWord(openBranches.length).toLowerCase();
 const emirateList = listWords(emirates);
+const { group } = site;
 
-/** The branches that followed the flagship, grouped by emirate: "Safari Mall and Rolla Mall in Sharjah and …". */
-const venuesByEmirate = new Map<string, string[]>();
-for (const b of openBranches.filter((b) => !b.isFlagship)) {
-  venuesByEmirate.set(b.emirate, [...(venuesByEmirate.get(b.emirate) ?? []), b.venue]);
-}
-const expansion = listWords(
-  [...venuesByEmirate].map(([emirate, venues]) => `${listWords(venues)} in ${emirate}`),
-);
-const followed = openBranches.filter((b) => !b.isFlagship).length;
-const soon = branches.filter((b) => b.status === 'opening-soon');
+/** The heritage sentence (§8.2 band), from site.group. */
+const heritage = `The Classic Group has been ${group.experienceLead}, ${group.experienceTail}.`;
 
-const pieceNames = categories
-  .filter((c) => c.id !== 'gold-coins-bars')
-  .map((c) => (c.data.shortName ?? c.data.name).toLowerCase());
-const collectionNames = collections.map((c) => c.data.name.replace(/ Collection$/i, ''));
-
-const steps = [
-  {
-    title: 'We weigh the piece in front of you.',
-    text: 'The gross weight is read off the scale before anything else is discussed.',
-  },
-  {
-    title: 'We apply the day’s rate per gram for its karat.',
-    text: 'The same rate is posted on the board in the shop and on this site, in AED per gram.',
-  },
-  {
-    title: 'We quote the making charge for the work.',
-    text: 'Per piece, for the work in that piece. Then 5% VAT is added on the invoice.',
-  },
-  {
-    title: 'You leave with the hallmark on the piece and the facts on the invoice.',
-    text: 'Weight, fineness, rate, making charge and VAT are itemised, so you can compare shops line by line.',
-  },
-];
+/** The three divisions as chapters: name, the year or role site.ts gives, and one paragraph. */
+const chapters = group.divisions.map((d) => {
+  const year = /since (\d{4})/.exec(d.note)?.[1];
+  const role = d.note.replace(/,?\s*since \d{4}$/, '').replace(/^the group’s first business: /, '');
+  const first = /first business/.test(d.note);
+  const text = first
+    ? `Where the group began. Its trade is still ${group.trade}.`
+    : d.name === site.name
+      ? `The jewellery house, opened in ${brandYear} at ${flagship.name}; now ${branchWord} branches in ${emirateList}.`
+      : `The group’s ${role} business.`;
+  return {
+    name: d.name,
+    when: first ? 'First' : year ? `Since ${year}` : '',
+    role: role.charAt(0).toUpperCase() + role.slice(1),
+    text,
+  };
+});
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const storeImage = new URL('/og/default.png', origin).toString();
@@ -72,396 +71,119 @@ const jsonLd = openBranches
   .map((b) => jewelryStoreSchema(b, storeImage));
 
 const title = 'About Classic Jewels & Diamonds, Classic Group, Dubai';
-const description = `The Classic Group has been ${site.group.experience}. Its jewellery house opened in ${brandYear} and has ${branchWord} UAE branches.`;
+const description = `The Classic Group has been ${group.experience}. Its jewellery house opened in ${brandYear} and has ${branchWord} UAE branches.`;
 ---
 
 <BaseLayout ground="ivory" title={title} description={description} jsonLd={jsonLd}>
-  <div class="container">
-    <Breadcrumbs items={[{ name: 'About', href: routes.about }]} />
-  </div>
-
-  <Hero
-    eyebrow="Classic Group · Dubai"
+  <PageHead
+    tone="ivory"
+    breadcrumbs={[{ name: 'About', href: routes.about }]}
     title="About Classic Jewels & Diamonds"
-    lead={`The jewellery house of the Classic Group, ${site.group.experience}. Jewellers since ${brandYear}, now with ${branchWord} branches in ${emirateList}.`}
-    media="image"
-    image={heroImage}
-    imageAlt="Oval diamond pendant and matching earrings on a mint box"
+    lead={heritage}
+    layout="centre"
   >
-    <Button href={routes.stores} iconEnd="arrow-right">
-      Find a branch
-    </Button>
-    <Button href={whatsappGeneral()} variant="secondary" icon="whatsapp" external>
-      WhatsApp the shop
-    </Button>
-  </Hero>
+    <div slot="media">
+      <GroupLockup size="md" link />
+    </div>
+  </PageHead>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="story">
-        <div class="story__body prose">
-          <h2>Gold traders first</h2>
-          <p>
-            The Classic Group began with Classic Bullion. Its trade is {site.group.trade}, and the
-            group has been {site.group.experience}. Jewellery came later: in {brandYear} the group
-            opened Classic Jewels &amp; Diamonds to sell the metal it already traded, tested and
-            refined, at the weight and karat it was used to standing behind.
+  <Section tone="ivory" ruled labelledby="group-title">
+    <SectionHead
+      id="group-title"
+      eyebrow={group.name}
+      title="Gold traders"
+      accent="first"
+      shape="split"
+    >
+      Jewellery came last. The group was in bullion, scrap gold and refining long before it opened a
+      jewellery counter in {brandYear}.
+    </SectionHead>
+    <ol class="chapters" role="list">
+      {chapters.map((c, i) => (
+        <li class="chapter reveal">
+          <p class="chapter__when eyebrow">
+            <span class="chapter__n fig">{String(i + 1).padStart(2, '0')}</span>
+            {c.when}
           </p>
-          <p>
-            The group today has {countWord(site.group.divisions.length).toLowerCase()} divisions.
-          </p>
-          <ol class="divisions rows" role="list">
-            {site.group.divisions.map((d, i) => (
-              <li class="divisions__row">
-                <span class="divisions__no" aria-hidden="true">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <span class="divisions__text">
-                  <span class="divisions__name">{d.name}</span>
-                  <span class="divisions__note small">{d.note}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-          <p class="small">
-            <a href={site.group.url} target="_blank" rel="noopener">
-              {site.group.name} <Icon name="external" />
-            </a>
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
+          <h3 class="chapter__name">{c.name}</h3>
+          <p class="chapter__role">{c.role}</p>
+          <p class="chapter__text">{c.text}</p>
+        </li>
+      ))}
+    </ol>
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="story">
-        <aside class="story__note note">
-          <Icon name="c-ring" class="story__glyph" size="0.75rem" />
-          <span>Where elegance meets eternity.</span>
-        </aside>
-        <div class="story__body prose">
-          <h2>From one shop to {branchWord}</h2>
-          <p>
-            The first shop opened in {brandYear} in {site.address.locality}, at{' '}
-            {site.address.street}. Since then {expansion} {followed === 1 ? 'has' : 'have'}{' '}
-            followed, so there are now {branchWord} branches across {emirateList}.
-          </p>
-          {soon.length > 0 && (
-            <p>
-              {countWord(soon.length)} more {soon.length === 1 ? 'is' : 'are'} announced:{' '}
-              {soon.map((b) => b.name).join('; ')}.
-            </p>
-          )}
-          <p>
-            Each branch, with directions and the hours we have for it, is on the{' '}
-            <a href={routes.stores}>stores page</a>.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
+  {piece && <BarToBangle rate={rate} piece={piece} />}
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="story">
-        <aside class="story__note note">
-          <Icon name="c-ring" class="story__glyph" size="0.75rem" />
-          <span>A treasure as unique as you.</span>
-        </aside>
-        <div class="story__body prose">
-          <h2>What is on the trays</h2>
-          <p>
-            {listWords(pieceNames).replace(/^./, (c) => c.toUpperCase())} in 22K and 18K gold, every
-            piece hallmarked and listed with its karat. <a href={routes.diamonds}>Diamond pieces</a>{' '}
-            are set in 18K and tested in front of you.{' '}
-            <a href={routes.goldCoinsBars}>Coins and bars</a> are priced near the rate with no
-            making charge; ask which are in stock.
-          </p>
-          <p>
-            The jewellery is arranged in{' '}
-            <a href={routes.collections}>
-              {countWord(collections.length).toLowerCase()} collections
-            </a>
-            , named for the place whose goldsmiths set the style, for a tradition, or for who will
-            wear it: {listWords(collectionNames)}. Each collection page states the karats it is made
-            in.
-          </p>
-          <p class="small">
-            <a href={routes.jewellery}>All jewellery, by the gram</a>
-          </p>
-        </div>
-      </div>
-    </div>
-    <div class="container">
-      <figure class="rings">
-        <Picture
-          src={ringsImage}
-          alt="Five diamond rings standing in a row on a pale grey surface, four in white gold and one in yellow gold"
-          formats={['avif', 'webp']}
-          widths={[640, 960, 1280, 1920]}
-          sizes="(min-width: 80em) 75rem, 100vw"
-          fit="cover"
-        />
-        <figcaption class="caption">
-          Five diamond rings from the trays: two cluster rings with pierced shoulders, two
-          solitaires and a stone-set band, in white and yellow 18K gold.
-        </figcaption>
-      </figure>
-    </div>
-  </section>
+  <Section tone="ivory" labelledby="terms-title">
+    <SectionHead id="terms-title" eyebrow="In writing" title="Our terms" shape="split">
+      What every piece leaves the counter with.
+      <MoreLink href={routes.promise} slot="aside">
+        Our promise
+      </MoreLink>
+    </SectionHead>
+    <AssuranceLedger variant="condensed" />
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="story">
-        <div class="story__body prose">
-          <h2>How we sell</h2>
-          <p>
-            A sale at any of our counters has the same four steps, whatever the piece or the branch.
-          </p>
-          <ol class="steps rows" role="list">
-            {steps.map((s, i) => (
-              <li class="steps__row">
-                <span class="steps__no" aria-hidden="true">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <span class="steps__text">
-                  <span class="steps__title">{s.title}</span>
-                  <span class="steps__detail">{s.text}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-          <p class="small">
-            <a href={routes.goldRate}>Today’s rate and how a price is worked out</a>
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="story">
-        <div class="story__body prose">
-          <h2>What customers say</h2>
-          <p class="rating">
-            <span class="rating__score tabular">{site.reviews.rating}</span>
-            <span class="rating__text">
-              out of 5 on Google, from {site.reviews.count.toLocaleString('en-GB')} reviews of the{' '}
-              {flagship.name} branch, as of{' '}
-              <time datetime={site.reviews.asOf}>{formatDate(site.reviews.asOf)}</time>.
-            </span>
-          </p>
-          <p>
-            We do not reprint reviews here. Read them where they were written, and add your own
-            after you visit.
-          </p>
-          <p class="small">
-            <a href={site.reviews.url} target="_blank" rel="noopener">
-              Read the reviews on Google <Icon name="external" />
-            </a>
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <SectionHead eyebrow="In writing" title="Our terms.">
-        <Fragment slot="aside">
-          <a class="link-quiet section__link" href={routes.promise}>
-            Read the conditions <Icon name="arrow-right" />
-          </a>
-        </Fragment>
-      </SectionHead>
-      <AssuranceLedger />
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <SectionHead eyebrow="Stores" title="Our branches across the UAE.">
-        <Fragment slot="aside">
-          <a class="link-quiet section__link" href={routes.stores}>
-            Hours and directions <Icon name="arrow-right" />
-          </a>
-        </Fragment>
-      </SectionHead>
-      <div class="stores rows">
-        {openBranches.map((b) => (
-          <StoreCard branch={b} compact />
-        ))}
-      </div>
-      {soon.length > 0 && (
-        <p class="small stores__soon">Opening soon: {soon.map((b) => b.name).join('; ')}.</p>
-      )}
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <EnquiryBlock
-        heading="Ask us anything about the group or the shops"
-        text={`WhatsApp is fastest during shop hours. Calls go to the ${flagship.shortName} counter.`}
-      />
-    </div>
-  </section>
+  <Section tone="stage" labelledby="doors-title">
+    <SectionHead id="doors-title" eyebrow="Branches" title="Come in" accent="and hold it">
+      {countWord(openBranches.length)} branches in {emirateList}. Message the one nearest you before
+      you come.
+      <MoreLink href={routes.stores} slot="aside">
+        All branches
+      </MoreLink>
+    </SectionHead>
+    <BranchDoors variant="compact" />
+  </Section>
 </BaseLayout>
 
 <style>
-  .section__link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-weight: 500;
-    color: var(--plum-700);
-  }
-
-  /* 2 / 7 / 3 text block with the margin note in the inline-start gutter (spec §3). */
-  .story {
+  .chapters {
     display: grid;
-    gap: var(--space-5);
+    gap: var(--space-7);
   }
 
-  .story__body {
-    min-inline-size: 0;
-  }
-
-  .story__note {
-    display: flex;
+  .chapter {
+    display: grid;
+    align-content: start;
     gap: var(--space-3);
-    align-items: baseline;
-    max-inline-size: 18rem;
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule-strong);
   }
 
-  .story__glyph {
-    flex: none;
-    color: var(--gold-600);
-    transform: translateY(0.05em);
-  }
-
-  .divisions__row,
-  .steps__row {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: var(--space-4);
-    align-items: baseline;
-    padding-block: var(--space-4);
-  }
-
-  .prose .divisions,
-  .prose .steps {
-    padding-inline-start: 0;
-  }
-
-  .prose .divisions li + li,
-  .prose .steps li + li {
-    margin-block-start: 0;
-  }
-
-  .divisions__no,
-  .steps__no {
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-variant-numeric: tabular-nums;
-    color: var(--gold-600);
-    min-inline-size: 2.2ch;
-  }
-
-  .divisions__text,
-  .steps__text {
-    display: grid;
-    gap: var(--space-1);
-  }
-
-  .divisions__name,
-  .steps__title {
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 600;
-    line-height: 1.25;
-  }
-
-  .divisions__note {
-    color: var(--ink-700);
-  }
-
-  .divisions__note::first-letter {
-    text-transform: uppercase;
-  }
-
-  .steps__detail {
-    color: var(--ink-700);
-  }
-
-  .rings {
-    margin-block-start: var(--space-7);
-    min-inline-size: 0;
-  }
-
-  .rings :global(img) {
-    inline-size: 100%;
-    block-size: auto;
-    aspect-ratio: 4 / 1;
-    object-fit: cover;
-  }
-
-  /* On phones the 4:1 panorama is too thin to show the rings; crop to the centre instead. */
-  @media (max-width: 39.99em) {
-    .rings :global(img) {
-      aspect-ratio: 3 / 2;
-      object-position: center;
-    }
-  }
-
-  .rings figcaption {
-    margin-block-start: var(--space-3);
-    max-inline-size: 48rem;
-  }
-
-  .rating {
+  .chapter__when {
     display: flex;
-    flex-wrap: wrap;
     align-items: baseline;
-    gap: var(--space-2) var(--space-4);
-    padding-block: var(--space-4);
-    border-block: 1px solid var(--rule-1);
+    gap: var(--space-3);
+    margin: 0;
   }
 
-  .rating__score {
+  .chapter__n {
+    color: var(--muted);
+  }
+
+  .chapter__name {
+    font-size: var(--t-h3);
+  }
+
+  .chapter__role {
     font-family: var(--ff-display);
-    font-size: var(--t-numeral-xl);
-    font-weight: 500;
-    line-height: 1;
-    color: var(--ink-900);
+    font-size: var(--t-name);
+    font-style: italic;
+    font-weight: var(--fw-display-small);
+    line-height: 1.3;
+    color: var(--accent);
   }
 
-  .rating__text {
-    max-inline-size: 34rem;
-    color: var(--ink-700);
+  .chapter__text {
+    max-inline-size: 34ch;
+    color: var(--body);
   }
 
-  .stores__soon {
-    margin-block-start: var(--space-4);
-  }
-
-  @media (min-width: 64em) {
-    .story {
-      grid-template-columns: 2fr 7fr 3fr;
-      column-gap: calc(var(--grid-gap) * 2);
-    }
-
-    .story__note {
-      grid-column: 1;
-      grid-row: 1;
-      align-self: start;
-      padding-block-start: var(--space-2);
-    }
-
-    .story__body {
-      grid-column: 2;
+  @media (min-width: 48em) {
+    .chapters {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--grid-gap);
     }
   }
 </style>

@@ -1,0 +1,143 @@
+---
+/**
+ * A wall of lit cases (docs/design-system-v2.md §5.5; replaces TrayGrid for velvet pieces). Velvet
+ * photographs only: a studio cut-out passed here fails the build (it belongs in PlateGrid, on its
+ * own lilac). Renders ProductCard layout="case" cells; the page supplies the stage Section.
+ *
+ *   grid     equal columns: `columns` (4 or 3) from 64em, 3 from 48em, 2 below; the row gap is
+ *            half as wide again as the column gap, so each case reads as its own pool of light
+ *   stagger  the same grid with every second column dropped --space-9 on desktop (the middle
+ *            column at three) and the right column dropped --space-8 on phones. The drop uses
+ *            position: relative + inset-block-start, so a reveal's translate stays free, and the
+ *            wall grows by the drop at its foot so the next section is never overlapped.
+ *
+ * `light="scroll"` (default) lets each case light come on as it enters; pass "static" where the
+ * wall can sit in the first viewport. Cases are lazy with fetchpriority low; at 313 px and wider
+ * no more than eight masked images share a 1440 x 900 viewport. Loads piece-morph.ts, so the
+ * clicked case grows into its piece page. With `filterable` and an `id` the list is a filter grid
+ * (src/scripts/filter.ts reads the cards inside each cell).
+ */
+import ProductCard from '@/components/sections/ProductCard.astro';
+import { photoGround, type Product } from '@/lib/content';
+import type { GoldRate } from '@/lib/gold-rate';
+
+export interface Props {
+  products: Product[]; // velvet only (build error otherwise)
+  rate: GoldRate | null;
+  collectionNames: Record<string, string>;
+  layout?: 'stagger' | 'grid';
+  columns?: 3 | 4;
+  cap?: number; // default 420
+  light?: 'scroll' | 'static'; // default scroll
+  headingLevel?: 'h2' | 'h3';
+  id?: string;
+  filterable?: boolean;
+}
+
+const {
+  products,
+  rate,
+  collectionNames,
+  layout = 'grid',
+  columns = 4,
+  cap = 420,
+  light = 'scroll',
+  headingLevel = 'h3',
+  id,
+  filterable = false,
+} = Astro.props;
+
+const studio = products.filter((p) => photoGround(p) !== 'velvet');
+if (studio.length) {
+  throw new Error(
+    `CaseWall takes velvet pieces only; ${studio.map((p) => p.id).join(', ')} ${studio.length === 1 ? 'is a studio cut-out' : 'are studio cut-outs'}: use PlateGrid.`,
+  );
+}
+---
+
+<ul
+  class="wall"
+  role="list"
+  id={id}
+  data-layout={layout}
+  data-columns={columns}
+  data-filter-grid={filterable || undefined}
+>
+  {products.map((p) => (
+    <li class="wall__cell">
+      <ProductCard
+        product={p}
+        collectionName={p.data.collection ? collectionNames[p.data.collection.id] : undefined}
+        rate={rate}
+        layout="case"
+        cap={cap}
+        light={light}
+        headingLevel={headingLevel}
+      />
+    </li>
+  ))}
+</ul>
+
+<script src="@/scripts/piece-morph.ts"></script>
+
+<style>
+  .wall {
+    --drop: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6) var(--grid-gap);
+    align-items: start;
+  }
+
+  .wall__cell {
+    min-inline-size: 0;
+  }
+
+  /* Phones: the right column stands lower. */
+  .wall[data-layout='stagger'] {
+    --drop: var(--space-8);
+    padding-block-end: var(--drop);
+  }
+
+  .wall[data-layout='stagger'] > .wall__cell:nth-child(even) {
+    position: relative;
+    inset-block-start: var(--drop);
+  }
+
+  @media (min-width: 48em) {
+    .wall {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      row-gap: calc(var(--grid-gap) * 1.5);
+    }
+
+    /* Three across: the middle column stands lower. */
+    .wall[data-layout='stagger'] > .wall__cell:nth-child(even) {
+      inset-block-start: 0;
+    }
+
+    .wall[data-layout='stagger'] > .wall__cell:nth-child(3n + 2) {
+      position: relative;
+      inset-block-start: var(--drop);
+    }
+  }
+
+  @media (min-width: 64em) {
+    .wall[data-columns='4'] {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .wall[data-layout='stagger'] {
+      --drop: var(--space-9);
+    }
+
+    /* Four across: columns two and four stand lower. */
+    .wall[data-layout='stagger'][data-columns='4'] > .wall__cell:nth-child(3n + 2) {
+      inset-block-start: 0;
+    }
+
+    .wall[data-layout='stagger'][data-columns='4'] > .wall__cell:nth-child(even) {
+      position: relative;
+      inset-block-start: var(--drop);
+    }
+  }
+</style>

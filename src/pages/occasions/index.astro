@@ -1,30 +1,39 @@
 ---
 /**
- * Occasions index (design-spec §7.15): the occasions as portrait features, captions below.
- * Branch counts and emirates come from src/data/site.ts.
+ * Occasions index (docs/design-system-v2.md §6.7). Ivory throughout: the portraits are pale-ground
+ * photographs (rule 1). Four windows with their summaries, never wider than 392 CSS px (sharp on
+ * 2x screens from the 784 px sources), two by two on desktop with the second column set lower,
+ * one column on phones. The Festivals window carries the running offer while it runs. The page
+ * ends at a person.
  */
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
-import Faq from '@/components/sections/Faq.astro';
-import Hero from '@/components/sections/Hero.astro';
-import OccasionFeature from '@/components/sections/OccasionFeature.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
-import Button from '@/components/ui/Button.astro';
-import { emirates } from '@/data/site';
+import EnquiryBand from '@/components/sections/EnquiryBand.astro';
+import OccasionWindow from '@/components/sections/OccasionWindow.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Section from '@/components/ui/Section.astro';
+import { emirates, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { getActiveOffers, getFaqGroup, getOccasions } from '@/lib/content';
-import { formatDate, listWords } from '@/lib/format';
+import { getActiveOffers, getOccasions } from '@/lib/content';
+import { countWord, formatDate, listWords } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { itemListSchema } from '@/lib/schema';
-import { whatsappGeneral } from '@/lib/whatsapp';
+import { whatsappUrl } from '@/lib/whatsapp';
 
-const [occasions, faq, offers] = await Promise.all([
-  getOccasions(),
-  getFaqGroup('occasions'),
-  getActiveOffers(),
-]);
+const [occasions, offers] = await Promise.all([getOccasions(), getActiveOffers()]);
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
-const offer = offers[0];
 const places = listWords(emirates);
+
+/** "Diwali 2026: book the rate…" -> "Diwali offers until 10 November" (only while it runs). */
+const offer = offers[0];
+const offerNote = offer
+  ? `${offer.data.headline
+      .split(':')[0]!
+      .replace(/\s*\d{4}$/, '')
+      .trim()} offers until ${formatDate(offer.data.endsOn, { year: undefined })}`
+  : undefined;
+
+const ask = whatsappUrl(
+  `${site.whatsapp.greeting} I’m planning jewellery for a date. Could you suggest a few pieces?`,
+);
 
 const jsonLd = [
   itemListSchema(
@@ -43,88 +52,68 @@ const jsonLd = [
   description={`Bridal gold sets, anniversary diamonds, birthday gold and festival coins from Classic Jewels in ${places}, bought by weight at the day’s rate.`}
   jsonLd={jsonLd}
 >
-  <div class="container container--wide">
-    <Breadcrumbs items={[{ name: 'Occasions', href: routes.occasions }]} />
-  </div>
-
-  <Hero
+  <PageHead
+    tone="ivory"
+    breadcrumbs={[{ name: 'Occasions', href: routes.occasions }]}
     eyebrow="Occasions"
     title="Jewellery by occasion"
     lead="Wedding sets, anniversary diamonds, birthday gold and festival coins, each bought by weight at the day’s rate."
-    display
-  >
-    <Button href={whatsappGeneral()} icon="whatsapp" external>
-      Tell us the occasion
-    </Button>
-    <Button href={routes.goldRate} variant="secondary">
-      Today’s gold rate
-    </Button>
-  </Hero>
+  />
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="occasions">
-        {occasions.map((o) => (
-          <OccasionFeature occasion={o} />
-        ))}
-      </div>
-    </div>
-  </section>
+  <Section tone="ivory" class="occ-windows">
+    <h2 class="sr-only">{countWord(occasions.length)} occasions</h2>
+    <ul class="windows" role="list">
+      {occasions.map((o, i) => (
+        <li class:list={['windows__cell', i > 1 && 'reveal']}>
+          <OccasionWindow
+            occasion={o}
+            summary
+            headingLevel="h3"
+            note={o.id === 'festivals' ? offerNote : undefined}
+          />
+        </li>
+      ))}
+    </ul>
+  </Section>
 
-  {offer && (
-    <section class="section section--ruled offer">
-      <div class="container offer__inner">
-        <p class="small offer__when">Current offer · until {formatDate(offer.data.endsOn)}</p>
-        <a class="offer__link link-quiet" href={routes.offer(offer.id)}>
-          {offer.data.headline}
-        </a>
-      </div>
-    </section>
-  )}
-
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <Faq heading={faq.data.heading} items={faq.data.items} />
-        <EnquiryBlock
-          compact
-          text="Tell us the occasion, the date and a budget. We reply with a shortlist from the trays at our branches."
-        />
-      </div>
-    </div>
-  </section>
+  <EnquiryBand
+    title="Planning for a date?"
+    accent="Tell us when."
+    text="Tell us the occasion, the date and a budget. We reply with a shortlist from the cases at our branches."
+    whatsappUrl={ask}
+    secondary={{ href: `${routes.contact}#visit`, label: 'Book a visit' }}
+  />
 </BaseLayout>
 
 <style>
-  .occasions {
+  :global(.sec.occ-windows) {
+    padding-block-start: 0;
+  }
+
+  .windows {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--grid-gap);
+    justify-items: center;
+    gap: var(--space-8);
   }
 
-  .offer {
-    padding-block: var(--space-6);
-  }
-
-  .offer__inner {
+  .windows__cell {
     display: grid;
-    gap: var(--space-2);
+    justify-items: center;
+    inline-size: 100%;
   }
 
-  .offer__when {
-    color: var(--gold-700);
-  }
-
-  .offer__link {
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 500;
-    color: var(--ink-900);
-  }
-
+  /* Two by two, the second column set lower: windows along a wall, not a grid of tiles. */
   @media (min-width: 64em) {
-    .occasions {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+    .windows {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--grid-gap);
+      row-gap: var(--space-9);
+      max-inline-size: 64rem;
+      margin-inline: auto;
+    }
+
+    .windows__cell:nth-child(even) {
+      margin-block-start: var(--space-10);
     }
   }
 </style>

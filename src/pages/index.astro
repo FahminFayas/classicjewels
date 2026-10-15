@@ -1,79 +1,128 @@
 ---
 /**
- * Home. Section order follows docs/design-spec.md §7.1, adjusted for the multi-branch brand
- * (proof strip, campaign slot and store strip from the October 2026 research report).
- * This page is also the reference for how the other templates compose the shared components.
+ * Home (docs/design-system-v2.md §6.1, copy §8.2, heading shapes §8.3). The shop after dark:
+ * the day's rate and one lit piece first, then breath and cases in turn, and every path ending at
+ * a person. Grounds in order:
+ *
+ *   1 stage         the rate, lit (HomeHero: H1, instrument, p03 and three more pieces lit in
+ *                   turn, facts)
+ *   2 plum, seam    the campaign line, only while an offer runs (CampaignLine)
+ *   3 ivory         the heritage sentence (OneLineBand)
+ *   4 stage         the cases: eight velvet pieces (CaseWall), then "By piece"
+ *   5 ivory         the hallmark stamps (KaratStamps)
+ *   6 stage-raised  the styles line, west to east (StylesLine)
+ *   7 plum, seam    old gold on today's scale (Estimator)
+ *   8 ivory         occasions as four shop windows (OccasionWindow)
+ *   9 stage         branches: the panorama, the doors, the closing line
+ *
+ * Never three dark sections in a row; the panorama sits between ivory and the footer, never next
+ * to plum. Budgets (§6.1): 750 words in <main>, 9,000 px tall at 1440 x 900 and 10,500 px at
+ * 390 x 844; the measured figures and what still exceeds them are in docs/launch-checklist.md.
+ * Exactly one priority image (the hero piece). Every fact comes from src/data/site.ts or
+ * src/content/.
  */
-import { Picture } from 'astro:assets';
-
-import heroImage from '@/assets/story/store-lifestyle.jpg';
-import storyImage from '@/assets/story/about-1.jpg';
-import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
-import CategoryTile from '@/components/sections/CategoryTile.astro';
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
-import Faq from '@/components/sections/Faq.astro';
-import Hero from '@/components/sections/Hero.astro';
-import JournalCard from '@/components/sections/JournalCard.astro';
-import OccasionFeature from '@/components/sections/OccasionFeature.astro';
-import PlumBand from '@/components/sections/PlumBand.astro';
-import ProductCard from '@/components/sections/ProductCard.astro';
-import ProofStrip from '@/components/sections/ProofStrip.astro';
-import RateBoard from '@/components/sections/RateBoard.astro';
-import StoreCard from '@/components/sections/StoreCard.astro';
-import TrayGrid from '@/components/sections/TrayGrid.astro';
+import HomeHero from '@/components/home/HomeHero.astro';
+import BranchDoors from '@/components/sections/BranchDoors.astro';
+import CampaignLine from '@/components/sections/CampaignLine.astro';
+import CaseWall from '@/components/sections/CaseWall.astro';
+import Estimator from '@/components/sections/Estimator.astro';
+import KaratStamps from '@/components/sections/KaratStamps.astro';
+import OccasionWindow from '@/components/sections/OccasionWindow.astro';
+import OneLineBand from '@/components/sections/OneLineBand.astro';
+import StylesLine from '@/components/sections/StylesLine.astro';
 import Button from '@/components/ui/Button.astro';
-import Eyebrow from '@/components/ui/Eyebrow.astro';
 import Icon from '@/components/ui/Icon.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import Panorama from '@/components/ui/Panorama.astro';
+import Section from '@/components/ui/Section.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
-import { branches, emirates, flagship, openBranches, site } from '@/data/site';
+import { emirates, flagship, openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import panorama from '@/assets/story/banner-about.jpg';
 import {
+  collectionShortNames,
   getActiveOffers,
-  getArticles,
   getDesignCollections,
-  getFaqGroup,
   getFeaturedProducts,
   getNavCategories,
   getOccasions,
-  getProducts,
+  splitByGround,
 } from '@/lib/content';
 import { countWord, formatDate, listWords } from '@/lib/format';
 import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
 import { itemListSchema, jewelryStoreSchema } from '@/lib/schema';
-import { whatsappGeneral, whatsappUrl } from '@/lib/whatsapp';
+import { whatsappGeneral } from '@/lib/whatsapp';
 
-const [categories, products, featured, collections, occasions, articles, faq, rates, offers] =
-  await Promise.all([
-    getNavCategories(),
-    getProducts(),
-    getFeaturedProducts(8),
-    getDesignCollections(),
-    getOccasions(),
-    getArticles(),
-    getFaqGroup('home'),
-    getRates(),
-    getActiveOffers(),
-  ]);
+/** The piece lit first in the hero (p03, §6.1). Any featured velvet piece can take its place. */
+const HERO_PIECE = 'antique-pearl-drop-bib';
+/** The hero's case: the first piece and the next featured velvet pieces, in editorial order. */
+const HERO_SET = 4;
+/** At most eight cases on the wall (§6.1 section 4). */
+const WALL_SIZE = 8;
 
-if (featured.length < 6) {
-  throw new Error(`Home needs at least six featured products; ${featured.length} are flagged.`);
+const [categories, featured, collections, occasions, rates, offers] = await Promise.all([
+  getNavCategories(),
+  getFeaturedProducts(24),
+  getDesignCollections(),
+  getOccasions(),
+  getRates(),
+  getActiveOffers(),
+]);
+
+const { velvet } = splitByGround(featured);
+const piece = velvet.find((p) => p.id === HERO_PIECE) ?? velvet[0];
+if (!piece) throw new Error('Home needs a featured piece photographed on velvet for the hero.');
+const cases = velvet.filter((p) => p.id !== piece.id).slice(0, WALL_SIZE);
+if (cases.length < 4) {
+  throw new Error(`Home needs at least four featured velvet pieces; ${cases.length} are flagged.`);
 }
+const heroPieces = [piece, ...cases.slice(0, HERO_SET - 1)];
 
-const countByCategory = new Map<string, number>();
-for (const p of products) {
-  countByCategory.set(p.data.category.id, (countByCategory.get(p.data.category.id) ?? 0) + 1);
-}
-const collectionName = new Map(collections.map((c) => [c.id, c.data.name]));
-const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
-const storeImage = new URL('/og/default.png', origin).toString();
+const shortNames = collectionShortNames(collections);
 const offer = offers[0];
 const places = listWords(emirates);
-const experience = site.group.experience;
 
+// Section 4: "Eight necklaces, eight styles" when every case is from a different collection.
+const caseCount = countWord(cases.length);
+const caseCategories = new Set(cases.map((p) => p.data.category.id));
+const noun = caseCategories.size === 1 && caseCategories.has('necklaces') ? 'necklaces' : 'pieces';
+const caseCollections = new Set(cases.map((p) => p.data.collection?.id).filter(Boolean));
+const casesTitle =
+  caseCollections.size === cases.length
+    ? `${caseCount} ${noun}, ${caseCount.toLowerCase()} styles`
+    : `${caseCount} ${noun} from the cases`;
+const byPiece = categories
+  .filter((c) => !caseCategories.has(c.id))
+  .map((c) => ({ href: routes.category(c.id), label: c.data.shortName ?? c.data.name }))
+  .map((c) => ({ ...c, label: c.label.replace(' & ', ' and ') }));
+
+// Section 6: the place-based styles on the line.
+const placeStyles = collections.filter((c) => typeof c.data.longitude === 'number').length;
+
+// Section 7: the exchange promise's detail, as written in site.ts.
+const exchangeLead = site.promises.find((p) => p.id === 'gold-exchange')?.detail;
+const steps = [
+  'Tested at the counter, in front of you',
+  'Weighed, with stones and clasps set aside',
+  'Credited at the day’s rate for its karat',
+];
+
+// Section 8: the festival window carries the running offer ("Diwali offers until 10 November").
+const offerName = offer?.data.headline
+  .split(':')[0]
+  ?.replace(/\s+\d{4}$/, '')
+  .trim();
+const festivalNote =
+  offer && offerName
+    ? `${offerName} offers until ${formatDate(offer.data.endsOn, { year: undefined })}`
+    : undefined;
+
+const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
+const storeImage = new URL('/og/default.png', origin).toString();
 const jsonLd = [
   itemListSchema(
-    featured.map((p) => ({
+    [piece, ...cases].map((p) => ({
       name: p.data.name,
       url: new URL(routes.product(p.data.category.id, p.id), origin).toString(),
     })),
@@ -84,505 +133,412 @@ const jsonLd = [
 ---
 
 <BaseLayout
-  ground="ivory"
+  ground="stage"
   title="Gold Jewellers in Dubai, UAE"
   brandFirst
   description={`22K and 18K hallmarked gold, tested diamonds and 24K coins from our branches in ${places}, weighed in front of you at today’s gold rate.`}
   jsonLd={jsonLd}
 >
-  <Hero
-    variant="flagship"
-    shape="portrait"
-    eyebrow={`Fine jewellery house · ${emirates.join(' · ')}`}
-    title={`Gold and diamond jewellers in ${places}.`}
-    lead={`Weighed in front of you, priced at today’s Dubai rate. Pure 22K and 18K hallmarked jewellery, certified diamonds and investment bullion from the Classic Group.`}
-    media="image"
-    badge="UAE Hallmarked · 916 & 750"
-    image={heroImage}
-    imageAlt="Two rose-gold diamond rings from the Diamonds collection on textured blue paper"
-  >
-    <Button href={whatsappGeneral()} icon="whatsapp" external>
-      WhatsApp the showroom
-    </Button>
-    <Button href="#rate" variant="secondary">
-      Today’s gold rate
-    </Button>
-    <a href={routes.jewellery} class="hero__browse-link">
-      Explore jewellery trays <span aria-hidden="true">&rarr;</span>
-    </a>
-  </Hero>
-
-  <ProofStrip rate={rates.latest} />
-
-  {offer && (
-    <section class="section offer">
-      <div class="container offer__inner">
-        <div>
-          <Eyebrow>Until {formatDate(offer.data.endsOn)}</Eyebrow>
-          <h2 class="offer__title">{offer.data.headline}</h2>
-          <p class="offer__summary lead">{offer.data.summary}</p>
-        </div>
-        <div class="offer__actions">
-          <Button href={routes.offer(offer.id)} iconEnd="arrow-right">
-            See the offer
-          </Button>
-          {offer.data.whatsappMessage && (
-            <Button
-              href={whatsappUrl(offer.data.whatsappMessage)}
-              variant="secondary"
-              icon="whatsapp"
-              external
-            >
-              Ask on WhatsApp
-            </Button>
-          )}
-        </div>
-      </div>
-    </section>
-  )}
-
-  <RateBoard
+  {/* 1. The rate, lit */}
+  <HomeHero
     rate={rates.latest}
     stale={rates.stale}
-    history={rates.history}
-    variant="band"
-    id="rate"
+    fetchedAt={rates.fetchedAt}
+    pieces={heroPieces}
+    collectionNames={shortNames}
   />
 
-  <section class="section">
-    <div class="container">
-      <SectionHead eyebrow="By piece" title="Necklaces to anklets, by the gram.">
-        Every listing states karat and hallmark, and the gross weight once the store has confirmed
-        it.
-      </SectionHead>
-      <div class="tiles">
-        {categories.slice(0, 8).map((c) => (
-          <CategoryTile category={c} count={countByCategory.get(c.id)} />
-        ))}
-      </div>
-      <p class="also small">
-        Also: <a href={routes.jewellery}>22K &amp; 18K gold</a>
-        {' · '}
-        <a href={routes.diamonds}>Diamonds</a>
-        {' · '}
-        <a href={routes.collection('gemstone')}>Gemstones</a>
-        {' · '}
-        <a href={routes.goldCoinsBars}>Coins &amp; bars</a>
+  {/* 2. The campaign line: renders nothing once the offer has ended */}
+  {offer && <CampaignLine offer={offer} />}
+
+  {/* 3. Heritage */}
+  <OneLineBand
+    id="heritage"
+    lockup
+    line={`The Classic Group has been ${site.group.experienceLead},`}
+    accent={`${site.group.experienceTail}.`}
+  >
+    <p>
+      The group began in bullion, and still works in {site.group.trade}. In {site.founded.brandYear}
+      it opened Classic Jewels &amp; Diamonds at {flagship.name}.
+    </p>
+    <MoreLink href={routes.about}>How the house began</MoreLink>
+  </OneLineBand>
+
+  {/* 4. The cases */}
+  <Section tone="stage" width="wide" id="cases" labelledby="cases-title">
+    <SectionHead
+      id="cases-title"
+      eyebrow="On the velvet"
+      ornament
+      title={casesTitle}
+      shape="split"
+      class="reveal"
+    >
+      <Fragment slot="aside">
+        <MoreLink href={routes.jewellery}>All jewellery</MoreLink>
+      </Fragment>
+    </SectionHead>
+    <CaseWall
+      products={cases}
+      rate={rates.latest}
+      collectionNames={shortNames}
+      layout="stagger"
+      columns={4}
+    />
+    <nav class="bypiece" aria-labelledby="bypiece-label">
+      <p class="bypiece__label eyebrow" id="bypiece-label">
+        By piece:
       </p>
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container container--wide">
-      <SectionHead
-        eyebrow="From the trays"
-        title={`${countWord(featured.length)} pieces from the trays, weighed and ready to quote.`}
-      >
-        <Fragment slot="aside">
-          <a class="link-quiet section__link" href={routes.jewellery}>
-            All jewellery <Icon name="arrow-right" />
-          </a>
-        </Fragment>
-      </SectionHead>
-      <TrayGrid>
-        {featured.map((p, i) => (
-          <ProductCard
-            product={p}
-            collectionName={
-              p.data.collection ? collectionName.get(p.data.collection.id) : undefined
-            }
-            rate={rates.latest}
-            priority={i < 2}
-          />
-        ))}
-      </TrayGrid>
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <SectionHead eyebrow="Our terms, in writing" title="Six promises, with their conditions.">
-        <Fragment slot="aside">
-          <a class="link-quiet section__link" href={routes.promise}>
-            Read the conditions <Icon name="arrow-right" />
-          </a>
-        </Fragment>
-      </SectionHead>
-      <AssuranceLedger />
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <SectionHead eyebrow="Collections" title="By tradition, by style, by stone.">
-        Named for the place whose goldsmiths set the style, for a tradition, or for who will wear
-        it.
-      </SectionHead>
-      <ol class="index" role="list">
-        {collections.map((c, i) => (
-          <li class="index__row">
-            <a class="index__link" href={routes.collection(c.id)}>
-              <span class="index__no" aria-hidden="true">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <span class="index__text">
-                <span class="index__name">{c.data.name.replace(/ Collection$/i, '')}</span>
-                <span class="index__desc small">{c.data.summary}</span>
-              </span>
-              <span class="index__karat small tabular">
-                {c.data.karats.map((k) => `${k}K`).join(' · ')}
-              </span>
+      <ul class="bypiece__list list-links" role="list">
+        {byPiece.map((c) => (
+          <li>
+            <a class="link-wipe" href={c.href}>
+              {c.label}
             </a>
           </li>
         ))}
-      </ol>
-    </div>
-  </section>
+      </ul>
+    </nav>
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <SectionHead
-        eyebrow="Occasions"
-        title="Wedding sets. Anniversary diamonds. Birthday gold. Festival coins."
-      >
-        <Fragment slot="aside">
-          <a class="link-quiet section__link" href={routes.occasions}>
-            All occasions <Icon name="arrow-right" />
-          </a>
-        </Fragment>
-      </SectionHead>
-      <div class="occasions">
-        {occasions.map((o) => (
-          <OccasionFeature occasion={o} />
-        ))}
-      </div>
-    </div>
-  </section>
+  {/* 5. The stamp says what's inside */}
+  <Section tone="ivory" id="hallmarks" labelledby="hallmarks-title">
+    <SectionHead
+      id="hallmarks-title"
+      eyebrow="Know your gold"
+      title="The stamp says"
+      accent="what’s inside"
+      shape="stack"
+      class="reveal"
+    >
+      Every piece carries the UAE hallmark for its karat, and your invoice prints its weight and
+      fineness.
+    </SectionHead>
+    <KaratStamps rate={rates.latest} collections={collections} variant="band" />
+  </Section>
 
-  <PlumBand>
-    <div class="band-cols">
-      <div>
-        <Eyebrow>Old gold</Eyebrow>
-        <h2>Bring old gold. Leave with its full weight.</h2>
-        <p>
-          We test and weigh it in front of you and credit it by weight at the day’s rate against a
-          new piece. The Classic Group buys and refines scrap gold and has been {experience}, so we
-          price old gold the way traders do. Ask for the terms before you bring it in.
-        </p>
-        <Button href={routes.goldExchange} variant="secondary">
-          How exchange works
-        </Button>
-      </div>
-      <div>
-        <Eyebrow>Coins and bars</Eyebrow>
-        <h3>24K coins and PAMP bars at the day’s rate.</h3>
-        <p>
-          Coins in 22K and 24K, and PAMP Suisse bars with their assay card, priced near the day’s
-          rate with no making charge. Ask which weights are in stock, and the premium, before you
-          come in.
-        </p>
-        <Button
-          href={whatsappUrl(
-            `${site.whatsapp.greeting} what is today’s price for gold coins and bars?`,
-          )}
-          variant="secondary"
-          icon="whatsapp"
-          external
+  {/* 6. Styles */}
+  <Section tone="stage-raised" width="wide" id="styles" labelledby="styles-title">
+    <SectionHead
+      id="styles-title"
+      eyebrow="Styles"
+      title="From Kuwait to Kolkata"
+      shape="centre"
+      size="display"
+      class="reveal"
+    >
+      {countWord(placeStyles)} goldsmithing styles at our counters, west and east of Dubai.
+    </SectionHead>
+    <StylesLine collections={collections} variant="full" />
+  </Section>
+
+  {/* 7. Old gold, on today's scale */}
+  <Section tone="parchment" id="old-gold" labelledby="old-gold-title">
+    <div class="split split--5-6 exchange">
+      <div class="exchange__copy">
+        <SectionHead
+          id="old-gold-title"
+          eyebrow="Old gold"
+          title="Old gold,"
+          accent="on today’s scale"
+          accentBreak
+          shape="stack"
+          class="exchange__head"
         >
-          Ask today’s coin price
+          {exchangeLead}
+        </SectionHead>
+        <ol class="exchange__steps rows" role="list">
+          {steps.map((step, i) => (
+            <li class="exchange__step">
+              <span class="exchange__n fig" aria-hidden="true">
+                {i + 1}
+              </span>
+              <span>{step}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <Estimator rate={rates.latest} variant="panel" id="home-estimator" />
+    </div>
+  </Section>
+
+  {/* 8. Occasions */}
+  <Section tone="ivory" id="occasions" labelledby="occasions-title">
+    <SectionHead
+      id="occasions-title"
+      eyebrow="Occasions"
+      title="For the wedding, and every year after"
+      shape="split"
+      class="reveal"
+    >
+      <Fragment slot="aside">
+        <MoreLink href={routes.occasions}>All occasions</MoreLink>
+      </Fragment>
+    </SectionHead>
+    <div class="occ rail-wrap bleed reveal">
+      <ul class="occ__list rail" role="list">
+        {occasions.map((o) => (
+          <li class="occ__item">
+            <OccasionWindow
+              occasion={o}
+              cap={296}
+              note={o.id === 'festivals' ? festivalNote : undefined}
+            />
+          </li>
+        ))}
+      </ul>
+      <div class="occ__controls">
+        <div class="rail__progress occ__progress" aria-hidden="true"></div>
+        <div class="occ__buttons">
+          <button class="occ__btn" type="button" data-rail-prev hidden>
+            <Icon name="arrow-left" label="Previous occasion" />
+          </button>
+          <button class="occ__btn" type="button" data-rail-next hidden>
+            <Icon name="arrow-right" label="Next occasion" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </Section>
+
+  {/* 9. Come in and hold it */}
+  <Section tone="stage" pad="flush" width="wide" id="branches" labelledby="branches-title">
+    <Panorama
+      image={panorama}
+      alt="Gold sun pendant set with small white stones on navy leather"
+      field="start"
+    >
+      <SectionHead
+        id="branches-title"
+        eyebrow="Branches"
+        ornament
+        title="Come in"
+        accent="and hold it"
+        accentBreak
+        shape="stack"
+        class="branches__head"
+      >
+        {countWord(openBranches.length)} branches in {places}. Message the one nearest you before
+        you come.
+      </SectionHead>
+    </Panorama>
+    <div class="branches__doors">
+      <BranchDoors variant="home" />
+    </div>
+    <div class="close">
+      <p class="close__line h-band">
+        Tell us which piece you want to see, <em>and which branch suits you.</em>
+      </p>
+      <div class="close__actions actions actions--pair">
+        <Button href={whatsappGeneral()} icon="whatsapp" external>
+          WhatsApp us
+        </Button>
+        <Button href={`tel:${site.phone.landline.e164}`} variant="secondary" icon="phone">
+          Call {site.phone.landline.display}
         </Button>
       </div>
     </div>
-  </PlumBand>
-
-  <section class="section">
-    <div class="container">
-      <div class="split split--reverse story">
-        <div class="story__text">
-          <Eyebrow>Classic Group</Eyebrow>
-          <h2>Gold traders first. Jewellers since {site.founded.brandYear}.</h2>
-          <p class="lead">
-            The Classic Group began with Classic Bullion and has been {experience}. In{' '}
-            {site.founded.brandYear} it opened Classic Jewels &amp; Diamonds at {flagship.name}, to
-            sell what it knows best: honest weight, correct karat, diamonds tested in front of you.
-            It now has branches across {places}.
-          </p>
-          <a class="link-quiet section__link" href={routes.about}>
-            Our story <Icon name="arrow-right" />
-          </a>
-        </div>
-        <figure class="story__media">
-          <Picture
-            src={storyImage}
-            alt="Rose-gold pavé ball pendant and matching earrings on a mint box"
-            formats={['avif', 'webp']}
-            widths={[640, 900]}
-            sizes="(min-width: 64em) 58vw, 100vw"
-            fit="cover"
-          />
-        </figure>
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <SectionHead eyebrow="Stores" title="Our branches across the UAE.">
-        <Fragment slot="aside">
-          <a class="link-quiet section__link" href={routes.stores}>
-            Hours and directions <Icon name="arrow-right" />
-          </a>
-        </Fragment>
-      </SectionHead>
-      <div class="stores rows">
-        {openBranches.map((b) => (
-          <StoreCard branch={b} compact />
-        ))}
-      </div>
-      {branches.some((b) => b.status === 'opening-soon') && (
-        <p class="small stores__soon">
-          {`Opening soon: ${branches
-            .filter((b) => b.status === 'opening-soon')
-            .map((b) => b.name)
-            .join('; ')}.`}
-        </p>
-      )}
-    </div>
-  </section>
-
-  {articles.length >= 3 && (
-    <section class="section section--ruled">
-      <div class="container">
-        <SectionHead eyebrow="Journal" title="Notes on gold, rates and hallmarks.">
-          <Fragment slot="aside">
-            <a class="link-quiet section__link" href={routes.journal}>
-              All articles <Icon name="arrow-right" />
-            </a>
-          </Fragment>
-        </SectionHead>
-        <div class="journal">
-          {articles.slice(0, 3).map((a) => (
-            <JournalCard article={a} />
-          ))}
-        </div>
-      </div>
-    </section>
-  )}
-
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <Faq heading={faq.data.heading} items={faq.data.items} />
-        <EnquiryBlock compact />
-      </div>
-    </div>
-  </section>
+  </Section>
 </BaseLayout>
 
 <style>
-  .section__link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-weight: 500;
-    color: var(--plum-700);
-  }
-
-  .offer {
-    padding-block: var(--space-7);
-    border-block-end: 1px solid var(--rule-1);
-  }
-
-  .offer__inner {
+  /* ---------- 4. "By piece" under the wall ---------- */
+  /* Phones: an index of two columns, each link a full tap row. From 48em: one dotted line. */
+  .bypiece {
     display: grid;
-    gap: var(--space-5);
-    align-items: end;
-  }
-
-  .offer__title {
-    max-inline-size: 30ch;
-  }
-
-  .offer__summary {
-    margin-block-start: var(--space-3);
-    max-inline-size: 48rem;
-  }
-
-  .offer__actions {
-    display: flex;
-    flex-wrap: wrap;
     gap: var(--space-3);
-  }
-
-  .tiles {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--grid-gap);
-  }
-
-  .also {
     margin-block-start: var(--space-6);
     padding-block-start: var(--space-4);
-    border-block-start: 1px solid var(--rule-1);
+    border-block-start: 1px solid var(--rule);
   }
 
-  /* Twelve collections in two ruled columns: 01-06 left, 07-12 right on wide screens. */
-  .index {
-    display: grid;
-    column-gap: var(--space-8);
-    border-block-end: 1px solid var(--rule-1);
-  }
-
-  .index__row {
-    border-block-start: 1px solid var(--rule-1);
-  }
-
-  @media (min-width: 56.25em) {
-    .index {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      grid-template-rows: repeat(6, auto);
-      grid-auto-flow: column;
-    }
-  }
-
-  .index__link {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: var(--space-4);
-    align-items: baseline;
-    padding-block: var(--space-4);
-    color: var(--ink-900);
-    text-decoration: none;
-  }
-
-  .index__no {
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-variant-numeric: tabular-nums;
-    color: var(--gold-600);
-    min-inline-size: 2.2ch;
-  }
-
-  .index__text {
-    display: grid;
-    gap: var(--space-1);
-  }
-
-  .index__name {
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 600;
-    line-height: 1.25;
-  }
-
-  .index__link:hover .index__name {
-    text-decoration: underline;
-    text-decoration-color: var(--gold-700);
-    text-underline-offset: 0.15em;
-  }
-
-  .index__desc {
-    color: var(--ink-700);
-  }
-
-  .index__karat {
-    color: var(--ink-500);
-    white-space: nowrap;
-  }
-
-  .occasions {
+  .bypiece__list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--grid-gap);
+    column-gap: var(--grid-gap);
   }
 
-  .band-cols {
-    display: grid;
-    gap: var(--space-8);
+  .bypiece__list li {
+    border-block-end: 1px solid var(--rule);
   }
 
-  .band-cols h2,
-  .band-cols h3 {
-    margin-block-end: var(--space-4);
+  .bypiece__list a {
+    display: flex;
+    align-items: center;
+    min-block-size: var(--tap);
+    color: var(--fg);
+    font-weight: var(--fw-text);
   }
 
-  .band-cols p {
-    max-inline-size: 34rem;
-    margin-block-end: var(--space-5);
-  }
-
-  .story__text > * + * {
-    margin-block-start: var(--space-4);
-  }
-
-  .story__media {
-    min-inline-size: 0;
-  }
-
-  .story__media :global(img) {
-    inline-size: 100%;
-    block-size: auto;
-    aspect-ratio: 3 / 2;
-    object-fit: cover;
-  }
-
-  .stores__soon {
-    margin-block-start: var(--space-4);
-  }
-
-  .journal {
-    display: grid;
-    gap: var(--grid-gap);
-  }
-
-  @media (min-width: 40em) {
-    .tiles {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+  @media (min-width: 48em) {
+    .bypiece {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: var(--space-5);
     }
 
-    .journal {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    .bypiece__list {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0 var(--space-4);
     }
+
+    .bypiece__list li {
+      display: inline-flex;
+      align-items: baseline;
+      gap: var(--space-4);
+      border: 0;
+      white-space: nowrap;
+    }
+
+    .bypiece__list li:not(:last-child)::after {
+      content: '·' / '';
+      color: var(--muted);
+    }
+
+    .bypiece__list a {
+      display: inline-flex;
+      min-block-size: var(--tap-inline);
+    }
+  }
+
+  /* ---------- 7. Old gold ---------- */
+  .exchange {
+    align-items: start;
+    row-gap: var(--space-7);
+  }
+
+  .exchange :global(.exchange__head) {
+    margin-block-end: var(--space-6);
+  }
+
+  .exchange__steps {
+    max-inline-size: var(--measure);
+  }
+
+  .exchange__step {
+    display: grid;
+    grid-template-columns: var(--space-7) minmax(0, 1fr);
+    align-items: baseline;
+    padding-block: var(--space-4);
+    color: var(--fg);
+    font-weight: var(--fw-text-strong);
+  }
+
+  .exchange__n {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1;
+    color: var(--numeral);
+  }
+
+  /* ---------- 8. Occasions: a rail on phones, one row of four from 64em ---------- */
+  .occ__item {
+    display: grid;
+    justify-items: start;
+  }
+
+  .occ__controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-5);
+    padding-inline-end: var(--gutter);
+  }
+
+  .occ__controls .occ__progress {
+    margin-block-start: 0;
+  }
+
+  .occ {
+    row-gap: var(--space-5);
+    display: grid;
+  }
+
+  .occ__buttons {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .occ__btn {
+    display: grid;
+    place-items: center;
+    inline-size: var(--tap);
+    block-size: var(--tap);
+    border: 1px solid var(--rule-strong);
+    color: var(--fg);
+    transition:
+      border-color var(--dur-quick) var(--ease-out),
+      color var(--dur-quick) var(--ease-out);
+  }
+
+  .occ__btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .occ__btn:disabled {
+    color: var(--muted);
+    cursor: default;
   }
 
   @media (min-width: 64em) {
-    .offer__inner {
-      grid-template-columns: 7fr 5fr;
-      column-gap: calc(var(--grid-gap) * 2);
+    .occ.bleed {
+      grid-column: content;
     }
 
-    .offer__actions {
-      justify-content: end;
-    }
-
-    .occasions {
+    .occ__list {
+      grid-auto-flow: row;
       grid-template-columns: repeat(4, minmax(0, 1fr));
+      overflow: visible;
+      padding-inline: 0;
     }
 
-    .band-cols {
-      grid-template-columns: 7fr 5fr;
-      column-gap: calc(var(--grid-gap) * 2);
+    .occ__controls {
+      display: none;
     }
   }
 
-  .hero__browse-link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: var(--t-small);
-    font-weight: 500;
-    color: var(--plum-700);
-    text-decoration: underline;
-    text-decoration-color: var(--rule-gold);
-    text-underline-offset: 0.25em;
-    min-block-size: var(--tap);
-    transition:
-      color var(--dur-fast) var(--ease),
-      text-decoration-color var(--dur-fast) var(--ease);
+  /* ---------- 9. Branches ---------- */
+  /* The head above already ends with its own margin: the doors follow closely. */
+  .branches__doors {
+    margin-block-start: var(--space-5);
   }
 
-  .hero__browse-link:hover {
-    color: var(--gold-700);
-    text-decoration-color: var(--gold-700);
+  .close {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-6);
+    padding-block: var(--space-8) var(--section-y);
+    text-align: center;
+  }
+
+  /*
+   * A sentence band with its own leading (the stage rule for running text, 1.65, would otherwise
+   * win over .h-band). 32 ch, like the heritage band: Cormorant's narrow zero makes ch small.
+   */
+  .close__line {
+    max-inline-size: 32ch;
+    line-height: 1.12;
+  }
+
+  @media (min-width: 64em) {
+    .branches__doors {
+      margin-block-start: var(--space-6);
+    }
+  }
+
+  .close__actions {
+    justify-content: center;
+  }
+
+  @media (max-width: 39.99em) {
+    .close__actions {
+      inline-size: 100%;
+    }
   }
 </style>

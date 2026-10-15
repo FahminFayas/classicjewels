@@ -1,16 +1,15 @@
 ---
 /**
- * A product photo on a square white plate. Product images are only ever shown through this
- * component, so a grid of pieces always reads as one tray.
+ * A studio cut-out on its own ground (docs/design-system-v2.md §1.2 rules 1 and 4, §5.2). Studio
+ * photographs were shot on a pale lilac sweep (sampled as --plate-lilac), so the plate is that
+ * colour and no edge shows between photo and plate. Never used for velvet photographs: those go
+ * through StageImage.
  *
- * Two treatments, chosen from the file type unless `bleed` is passed:
- *  - Cut-outs (PNG, transparent or pale ground) are letter-boxed with padding, so the metal sits
- *    on the white cell with no visible rectangle.
- *  - Photographs (JPG) carry their own backdrop (the current shots are busts on velvet). They
- *    fill the square edge to edge; a padded photo would read as a framed print inside a frame.
- *
- * The plate never grows beyond 1.25x its source width, so a small source is shown smaller and
- * centred rather than stretched soft across a wide column.
+ * A square box, inline-size min(100%, --cap), with its size before the image loads (CLS 0; the
+ * old plate could collapse to 0 x 0), overflow: clip, the image contained inside it. `cap`
+ * defaults to half the source width (sharp on 2x screens); openers pass image.width. It is
+ * clamped to the source (a build warning names the file), and the srcset never offers a width
+ * above the source. One `priority` image per page, as with StageImage.
  */
 import { Picture } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -18,61 +17,84 @@ import type { ImageMetadata } from 'astro';
 export interface Props {
   image: ImageMetadata;
   alt: string;
-  widths?: number[];
+  /** CSS px. Default Math.round(image.width / 2) (sharp on 2× screens); openers pass image.width. */
+  cap?: number;
+  ground?: 'lilac' | 'white';
   sizes?: string;
   priority?: boolean;
-  /** Inner padding for cut-outs, as a percentage of the cell. */
-  padding?: string;
-  /** Force edge-to-edge (true) or padded (false). Defaults to edge-to-edge for JPG photographs. */
-  bleed?: boolean;
   class?: string;
 }
 
 const {
   image,
   alt,
-  widths = [320, 480, 640],
-  sizes = '(min-width: 64em) 25vw, (min-width: 40em) 33vw, 50vw',
+  cap: wanted,
+  ground = 'lilac',
+  sizes,
   priority = false,
-  padding = '8%',
-  bleed = image.format === 'jpg' || image.format === 'jpeg',
   class: className,
 } = Astro.props;
 
-/** Requested widths below the source, plus the source itself: never upscale, never skip it. */
-const safeWidths = [...new Set([...widths.filter((w) => w < image.width), image.width])];
-const maxWidth = Math.round(image.width * 1.25);
-const style = [`--plate-max:${maxWidth}px`, bleed ? '' : `--plate-pad:${padding}`]
-  .filter(Boolean)
-  .join(';');
+const name = image.src.split('?')[0]?.split('/').pop() ?? image.src;
+const requested = Math.round(wanted ?? image.width / 2);
+if (requested > image.width) {
+  console.warn(
+    `[Plate] ${name} is ${image.width}px wide; a cap of ${requested}px was asked for. Drawn at ${image.width}px (never upscaled).`,
+  );
+}
+const cap = Math.min(requested, image.width);
+const widths = [
+  ...new Set([180, 240, 300, 360, 480, 600, cap, image.width].filter((w) => w <= image.width)),
+].sort((a, b) => a - b);
+const sizesAttr = sizes ?? `(min-width: 64em) ${cap}px, min(${cap}px, 100vw)`;
+
+if (priority) {
+  const locals = Astro.locals as Record<string, unknown>;
+  const count = ((locals.cjPriorityImages as number | undefined) ?? 0) + 1;
+  locals.cjPriorityImages = count;
+  if (count > 1) {
+    console.warn(`[Plate] ${Astro.url.pathname} has ${count} priority images (one allowed)`);
+  }
+}
 ---
 
-<div class:list={['plate', bleed && 'plate--bleed', className]} style={style}>
-  <Picture
-    class="plate__img"
-    src={image}
-    alt={alt}
-    formats={['avif', 'webp']}
-    widths={safeWidths}
-    sizes={sizes}
-    fit={bleed ? 'cover' : 'contain'}
-    priority={priority}
-  />
+<div class:list={['plate', className]} data-ground={ground} style={`--cap:${cap}px`}>
+  {priority ? (
+    <Picture
+      src={image}
+      alt={alt}
+      formats={['avif', 'webp']}
+      widths={widths}
+      sizes={sizesAttr}
+      fit="contain"
+      priority
+    />
+  ) : (
+    <Picture
+      src={image}
+      alt={alt}
+      formats={['avif', 'webp']}
+      widths={widths}
+      sizes={sizesAttr}
+      fit="contain"
+      loading="lazy"
+      decoding="async"
+      fetchpriority="low"
+    />
+  )}
 </div>
 
 <style>
   .plate {
-    min-inline-size: 0;
-    max-inline-size: var(--plate-max, none);
-    margin-inline: auto;
+    inline-size: min(100%, var(--cap));
     aspect-ratio: 1;
-    padding: var(--plate-pad, 8%);
-    background: var(--surface-0);
-    overflow: hidden;
+    margin-inline: auto;
+    background: var(--plate-lilac);
+    overflow: clip;
   }
 
-  .plate--bleed {
-    padding: 0;
+  .plate[data-ground='white'] {
+    background: var(--surface-0);
   }
 
   /* <picture> is inline by default; it needs a definite height for object-fit to centre. */
@@ -85,9 +107,5 @@ const style = [`--plate-max:${maxWidth}px`, bleed ? '' : `--plate-pad:${padding}
     inline-size: 100%;
     block-size: 100%;
     object-fit: contain;
-  }
-
-  .plate--bleed :global(img) {
-    object-fit: cover;
   }
 </style>

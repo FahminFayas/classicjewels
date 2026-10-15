@@ -1,0 +1,55 @@
+---
+/**
+ * The one way a rate number is printed (docs/design-system-v2.md §1.2 rule 6, §5.2). Real text,
+ * lining tabular figures (.fig), always toFixed(2) from the snapshot baked at build, and marked
+ * with a data-rate hook so rate.ts can write a newer posting into it.
+ *
+ *   karat="22k"      one figure: <span class="fig" data-rate="22k">468.25</span>
+ *   karat="follow"   four .kv spans, one per karat; base.css shows the visitor's choice
+ *                    (html[data-karat], set by karat.ts; 22K without JavaScript)
+ *   format           number "468.25", aed "AED 468.25" ("AED " outside the hook), label "22K 468.25"
+ *   roll             rate.ts rolls the changed digits on a real change (instrument, ticket and
+ *                    estimator only); everywhere else the text swaps
+ *
+ * With no rate at all it prints "Ask for today's rate" and carries no hook. Style the figure
+ * through `class` (on the outermost element) and the tone's --numeral or --fg.
+ */
+import type { GoldRate } from '@/lib/gold-rate';
+import { DISPLAY_KARATS, KARAT_FACTS, type DisplayKarat } from '@/lib/tones';
+
+export interface Props {
+  rate: GoldRate | null;
+  /** A fixed karat, or "follow": the visitor's chosen karat (html[data-karat], 22K default). */
+  karat: DisplayKarat | 'follow';
+  /** number: "468.25"; aed: "AED 468.25"; label: "22K 468.25" (follow only). */
+  format?: 'number' | 'aed' | 'label';
+  /** Mark for rate.ts to roll on a real change (instrument, ticket, estimator only). */
+  roll?: boolean;
+  class?: string;
+}
+
+const { rate, karat, format = 'number', roll = false, class: className } = Astro.props;
+const value = (k: DisplayKarat) => (rate ? rate.perGram[k].toFixed(2) : '');
+const karats = karat === 'follow' ? DISPLAY_KARATS : [karat];
+const single = karat !== 'follow' && format === 'number';
+---
+
+{!rate ? (
+  <span class:list={['rate-fig', 'rate-fig--none', className]}>Ask for today’s rate</span>
+) : single ? (
+  <span class:list={['fig', className]} data-rate={karat} data-roll={roll ? '' : undefined}>
+    {value(karat)}
+  </span>
+) : (
+  <span class:list={['rate-fig', className]}>
+    {format === 'aed' && <span class="rate-fig__aed">AED </span>}
+    {karats.map((k) => (
+      <span class:list={[karat === 'follow' && 'kv']} data-k={karat === 'follow' ? k : undefined}>
+        {format === 'label' && <span class="rate-fig__k">{KARAT_FACTS[k].label} </span>}
+        <span class="fig" data-rate={k} data-roll={roll ? '' : undefined}>
+          {value(k)}
+        </span>
+      </span>
+    ))}
+  </span>
+)}

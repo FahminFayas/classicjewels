@@ -1,311 +1,199 @@
 ---
 /**
- * Custom jewellery. docs/design-spec.md §7.13 adapted to the four-branch brand: plate hero from
- * the Customised collection, the four-step ledger (built here as ruled rows), examples from the
- * trays (made-to-order pieces, or the Customised collection) shown only once three exist, remaking
- * old gold, the custom FAQ and the enquiry block. The timeline is not published: it is agreed in
- * writing with each quote until the owner confirms typical lead times (design-spec §11).
+ * Custom jewellery (docs/design-system-v2.md §6.10).
+ *
+ *   1. Opener, stage: a made-to-order piece (p07, the Customised collection's first velvet piece)
+ *      lit in its pool beside the H1, the collection's summary and the two ways to start.
+ *   2. How it works, ivory: four numbered steps, each agreed before the next.
+ *   3. Tell us about it, plum: the brief form (reply method, guidance, the piece, who you are).
+ *   4. Questions, ivory, closing on WhatsApp and a call.
+ *
+ * The timeline is not published: it is agreed in writing with each quote until the owner confirms
+ * typical lead times.
  */
-import { Picture } from 'astro:assets';
-
-import remakeImage from '@/assets/story/about-3.jpg';
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import ContactForm from '@/components/sections/ContactForm.astro';
 import Faq from '@/components/sections/Faq.astro';
-import Hero from '@/components/sections/Hero.astro';
-import ProductCard from '@/components/sections/ProductCard.astro';
-import TrayGrid from '@/components/sections/TrayGrid.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import StepStrip from '@/components/sections/StepStrip.astro';
 import Button from '@/components/ui/Button.astro';
-import Eyebrow from '@/components/ui/Eyebrow.astro';
-import Icon from '@/components/ui/Icon.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Section from '@/components/ui/Section.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
+import StageImage from '@/components/ui/StageImage.astro';
 import { site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import {
-  getDesignCollections,
-  getFaqGroup,
-  getProducts,
-  getProductsByCollection,
-} from '@/lib/content';
-import { countWord } from '@/lib/format';
-import { getRates } from '@/lib/rates';
+import { firstVelvetProduct, getDesignCollections, getFaqGroup } from '@/lib/content';
 import { routes } from '@/lib/routes';
-import { itemListSchema } from '@/lib/schema';
 import { whatsappCustom } from '@/lib/whatsapp';
 
-const [faq, products, customised, collections, rates] = await Promise.all([
+const [faq, collections, heroProduct] = await Promise.all([
   getFaqGroup('custom-jewellery'),
-  getProducts(),
-  getProductsByCollection('customised'),
   getDesignCollections(),
-  getRates(),
+  firstVelvetProduct('customised'),
 ]);
 
 const collection = collections.find((c) => c.id === 'customised');
 const karatLine = (collection?.data.karats ?? []).map((k) => `${k}K`).join(' or ');
-const collectionName = new Map(collections.map((c) => [c.id, c.data.name]));
-
-/* Hero plate: the first piece in the Customised collection, else a typographic hero. */
-const heroProduct = customised[0];
 const heroImage = heroProduct?.data.images[0];
 
-/*
- * Examples: made-to-order pieces when there are at least three, else the Customised collection.
- * The tray is shown only with three or more pieces (spec §7.13); fewer would repeat the hero photo
- * in a near-empty tray.
- */
-const EXAMPLES_MIN = 3;
-const madeToOrder = products.filter((p) => p.data.availability === 'made-to-order');
-const examples = madeToOrder.length >= EXAMPLES_MIN ? madeToOrder : customised;
-const examplesAreMadeToOrder = examples === madeToOrder;
-const showExamples = examples.length >= EXAMPLES_MIN;
+const lead =
+  collection?.data.summary ??
+  `Bring a sketch, a photo or an heirloom to remake; we design and make it${karatLine ? ` in ${karatLine}` : ''}.`;
 
 const steps = [
   {
-    title: 'Brief',
-    detail:
-      'A sketch, a reference photo or a piece to remake. Bring it to a branch or send it on WhatsApp.',
+    title: 'Bring a sketch, a photo or an heirloom',
+    text: 'To a branch, or on WhatsApp. An old piece to remake is tested and weighed in front of you.',
   },
   {
-    title: 'Quote',
-    detail:
-      'Karat, estimated weight, making charge and timeline, in writing, before any work begins.',
+    title: 'Design, weight and making charge agreed in writing',
+    text: 'With the karat and the timeline, before any work begins.',
   },
   {
-    title: 'Make',
-    detail:
-      'You approve the design before anything is cast. We agree the timeline in writing with the quote, so you know when to expect the piece.',
+    title: 'Cast only when you approve the design',
+    text: 'Nothing is made until you have seen the design and said yes.',
   },
   {
-    title: 'Collect',
-    detail: 'Hallmarked, weighed in front of you and invoiced with the weight, karat and rate.',
+    title: karatLine ? `Made in ${karatLine}` : 'Made, hallmarked and weighed',
+    text: 'Hallmarked, weighed in front of you and invoiced with the weight, karat and rate.',
   },
 ];
 
-const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
-const jsonLd = showExamples
-  ? [
-      itemListSchema(
-        examples.map((p) => ({
-          name: p.data.name,
-          url: new URL(routes.product(p.data.category.id, p.id), origin).toString(),
-        })),
-        examplesAreMadeToOrder ? 'Made-to-order pieces' : 'Custom jewellery examples',
-      ),
-    ]
-  : [];
-
 const description = `Bring a sketch, a photo or an heirloom. Made${karatLine ? ` in ${karatLine}` : ''} with the karat, weight, making charge and timeline agreed in writing first. Send a photo on WhatsApp.`;
-const lead = `Bring a sketch, a photo or an heirloom. We agree the karat, the weight and the making charge before any work begins${karatLine ? `, and make it in ${karatLine}` : ''}.`;
 ---
 
 <BaseLayout
-  ground="ivory"
+  ground="stage"
   title="Custom Gold Jewellery in Dubai, Made to Order"
   description={description}
-  jsonLd={jsonLd}
 >
-  <div class="container">
-    <Breadcrumbs items={[{ name: 'Custom jewellery', href: routes.customJewellery }]} />
-  </div>
-
-  <Hero
+  <PageHead
+    tone="stage"
+    breadcrumbs={[{ name: 'Custom jewellery', href: routes.customJewellery }]}
     eyebrow="Made to order"
     title="Custom gold jewellery, made to order"
     lead={lead}
-    media={heroImage ? 'plate' : 'none'}
-    image={heroImage?.src}
-    imageAlt={heroImage?.alt}
-    caption={
-      heroProduct
-        ? `${heroProduct.data.name}, ${heroProduct.data.karat}K, from the ${collection?.data.name ?? 'Customised Jewellery'} collection.`
-        : undefined
-    }
+    layout={heroImage ? 'split' : 'text'}
+    mediaFirst
   >
     <Button href={whatsappCustom()} icon="whatsapp" external>
       Send a photo on WhatsApp
     </Button>
-    <Button href={`tel:${site.phone.landline.e164}`} variant="secondary" icon="phone">
-      Call {site.phone.landline.display}
+    <Button href={`${routes.contact}?reason=custom#visit`} variant="secondary" icon="calendar">
+      Book a consultation
     </Button>
-  </Hero>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <div class="intro">
-          <Eyebrow>How it works</Eyebrow>
-          <h2>Four steps, each agreed before the next.</h2>
-          <p class="lead">
-            Nothing is cast until you have approved the design and the quote. The weight, the karat
-            and the making charge are in writing from the start.
-          </p>
-        </div>
-        <ol class="steps rows" role="list">
-          {steps.map((step, i) => (
-            <li class="step">
-              <span class="step__no" aria-hidden="true">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <div class="step__text">
-                <h3 class="step__title">{step.title}</h3>
-                <p class="step__detail">{step.detail}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </div>
-  </section>
-
-  {showExamples && (
-    <section class="section section--ruled">
-      <div class="container container--wide">
-        <SectionHead
-          eyebrow="From the bench"
-          title={
-            examplesAreMadeToOrder
-              ? `${countWord(examples.length)} pieces made to order.`
-              : 'What the service produces.'
-          }
-        >
-          Designed with the customer, cast to an agreed weight and hallmarked like everything else
-          on the trays. Your own design starts with a conversation.
-        </SectionHead>
-        <TrayGrid>
-          {examples.map((p) => (
-            <ProductCard
-              product={p}
-              collectionName={
-                p.data.collection ? collectionName.get(p.data.collection.id) : undefined
-              }
-              rate={rates.latest}
-            />
-          ))}
-        </TrayGrid>
-      </div>
-    </section>
-  )}
-
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split split--reverse remake">
-        <div class="remake__text">
-          <Eyebrow>Old gold</Eyebrow>
-          <h2>Remaking old gold</h2>
-          <p class="lead">
-            A piece that no longer gets worn can become the one you would wear. Bring it in with the
-            brief.
-          </p>
-          <p>
-            We test and weigh the old gold in front of you and credit it by weight at the day’s rate
-            against the new piece; ask whether a promotion or the type of gold changes the terms.
-            The making charge and VAT for the new work are added. Stones can be reset if they are
-            sound.
-          </p>
-          <a class="link-quiet remake__link" href={routes.goldExchange}>
-            How exchange works <Icon name="arrow-right" />
-          </a>
-        </div>
-        <figure class="remake__media">
-          <Picture
-            src={remakeImage}
-            alt="Diamond-set oval pendant on a chain and matching earrings in white and rose gold, on a mint-green box"
-            formats={['avif', 'webp']}
-            widths={[480, 750]}
-            sizes="(min-width: 64em) 58vw, 100vw"
-            fit="cover"
-          />
-          <figcaption class="caption remake__caption">
-            Diamond-set pendant and earrings in white and rose gold. Sound stones from an old piece
-            can be reset into new work like this.
-          </figcaption>
-        </figure>
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <Faq heading={faq.data.heading} items={faq.data.items} />
-        <EnquiryBlock
-          heading="Start a custom piece"
-          text="Send a photo or a sketch on WhatsApp. We reply with the karat, the estimated weight and the making charge, in writing."
-          whatsappUrl={whatsappCustom()}
-          whatsappLabel="Send a photo on WhatsApp"
+    {heroImage && heroProduct && (
+      <figure class="made" slot="media">
+        <StageImage
+          image={heroImage.src}
+          alt={heroImage.alt}
+          mask="pool"
+          cap={Math.min(520, heroImage.src.width)}
+          stage={heroProduct.data.stage}
+          priority
         />
+        <figcaption class="made__caption">
+          <span class="made__name">{heroProduct.data.name}</span>
+          <span class="made__meta">
+            {heroProduct.data.karat}K · {collection?.data.shortName ?? 'Made to order'} ·{' '}
+            <span class="fig">{heroProduct.data.sku}</span>
+          </span>
+        </figcaption>
+      </figure>
+    )}
+  </PageHead>
+
+  <Section tone="ivory" labelledby="how-title">
+    <SectionHead
+      id="how-title"
+      eyebrow="How it works"
+      title="Four steps,"
+      accent="each agreed before the next"
+      shape="stack"
+    />
+    <StepStrip steps={steps} />
+  </Section>
+
+  <Section tone="parchment" id="brief" labelledby="brief-title">
+    <SectionHead
+      id="brief-title"
+      eyebrow="Start a piece"
+      title="Tell us"
+      accent="about it"
+      shape="split"
+    >
+      A few lines are enough. We reply with the karat, an estimated weight and the making charge, in
+      writing.
+    </SectionHead>
+    <ContactForm variant="brief" />
+  </Section>
+
+  <Section tone="ivory">
+    <Faq heading={faq.data.heading} items={faq.data.items} />
+    <div class="close">
+      <p class="close__line">Rather talk it through?</p>
+      <div class="actions actions--pair">
+        <Button href={whatsappCustom()} icon="whatsapp" external>
+          WhatsApp us
+        </Button>
+        <Button href={`tel:${site.phone.landline.e164}`} variant="secondary" icon="phone">
+          Call {site.phone.landline.display}
+        </Button>
       </div>
     </div>
-  </section>
+  </Section>
 </BaseLayout>
 
 <style>
-  .intro > * + * {
-    margin-block-start: var(--space-4);
-  }
-
-  .intro h2 {
-    margin-block-start: 0;
-  }
-
-  .step {
+  .made {
     display: grid;
-    grid-template-columns: auto 1fr;
+    justify-items: center;
     gap: var(--space-4);
-    align-items: start;
-    padding-block: var(--space-5);
+    margin: 0;
   }
 
-  .step__no {
-    font-family: var(--ff-display);
-    font-size: var(--t-h2);
-    font-weight: 400;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-    color: var(--gold-600);
-    min-inline-size: 2.2ch;
-  }
-
-  .step__text {
+  .made__caption {
     display: grid;
+    justify-items: center;
     gap: var(--space-1);
+    text-align: center;
   }
 
-  .step__detail {
-    max-inline-size: 40rem;
-    color: var(--ink-700);
+  .made__name {
+    font-family: var(--ff-display);
+    font-size: var(--t-name);
+    font-style: italic;
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--fg);
   }
 
-  .remake__text > * + * {
-    margin-block-start: var(--space-4);
+  .made__meta {
+    font-size: var(--t-caption);
+    color: var(--muted);
   }
 
-  .remake__text h2 {
-    margin-block-start: 0;
+  .close {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-5);
+    margin-block-start: var(--space-8);
+    padding-block-start: var(--space-6);
+    border-block-start: 1px solid var(--rule-strong);
   }
 
-  .remake__link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-block-size: var(--tap);
-    font-weight: 500;
-    color: var(--plum-700);
+  .close__line {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--fg);
   }
 
-  .remake__media {
-    min-inline-size: 0;
-  }
-
-  .remake__media :global(img) {
-    inline-size: 100%;
-    block-size: auto;
-    aspect-ratio: 3 / 2;
-    object-fit: cover;
-  }
-
-  .remake__caption {
-    margin-block-start: var(--space-3);
+  @media (min-width: 64em) {
+    .close {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+      column-gap: var(--grid-gap);
+      align-items: center;
+    }
   }
 </style>

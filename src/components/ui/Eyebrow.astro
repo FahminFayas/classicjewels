@@ -1,35 +1,32 @@
 ---
 /**
- * Section eyebrow: the only uppercase text on the site. A 24 px gold rule precedes it.
- * Renders as a <p> by default; pass `as="span"` inside headings or links.
+ * Eyebrow (docs/design-system-v2.md §3.4, §5.2): 12 px Plex 500, uppercase, tracked, in the tone's
+ * --eyebrow colour (gold on light grounds, bronze on the stage, champagne on plum). Optional: a
+ * heading never needs one. `ornament` prefixes the bronze hairline arch; keep that to major
+ * section starts (three per page at most). Renders a <p> by default; pass `as="span"` inside
+ * headings, links or other phrasing content.
  */
+import Ornament from '@/components/ui/Ornament.astro';
+
 export interface Props {
   as?: 'p' | 'span' | 'div';
+  ornament?: boolean;
   class?: string;
 }
 
-const { as: Tag = 'p', class: className } = Astro.props;
+const { as: Tag = 'p', ornament = false, class: className } = Astro.props;
 ---
 
-<Tag class:list={['eyebrow', className]}>
+<Tag class:list={['eyebrow', Tag !== 'span' && 'eyebrow--block', className]}>
+  {ornament && <Ornament />}
   <slot />
 </Tag>
 
 <style>
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    margin-block-end: var(--space-3);
-    font-family: var(--ff-text);
-    font-size: var(--t-eyebrow);
-    font-weight: 500;
-    line-height: 1;
-    letter-spacing: var(--track-eyebrow);
-    text-transform: uppercase;
-    color: var(--gold-700);
-  }
-
-  :global([data-surface='plum']) .eyebrow {
-    color: var(--gold-300);
+  /* A block eyebrow sits above what it labels; a span eyebrow runs inside its parent. */
+  .eyebrow--block {
+    display: flex;
+    inline-size: fit-content;
+    margin-block-end: var(--space-4);
   }
 </style>

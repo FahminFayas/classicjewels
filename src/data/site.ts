@@ -40,8 +40,14 @@ export interface Branch {
     region: string;
     countryCode: 'AE';
   };
-  /** Landline in display and E.164 form. Branches without their own number inherit the group line. */
+  /** The branch's own number in display and E.164 form, as published on its Google listing. */
   phone?: { display: string; e164: string };
+  /** A second number for the branch (Deira: the mobile its Google listing publishes). */
+  mobile?: { display: string; e164: string };
+  /** Google plus code, as shown on the listing. */
+  plusCode?: string;
+  /** The branch's own Google rating snapshot. Text only: never aggregateRating in JSON-LD. */
+  reviews?: { rating: number; count: number; asOf: string };
   /** Google Maps place link and coordinates, when known. */
   map?: { url: string; geo?: { latitude: number; longitude: number }; embedUrl?: string };
   hours?: {
@@ -110,18 +116,22 @@ export const branches: Branch[] = [
     isFlagship: true,
     address: deiraAddress,
     phone: { display: '+971 4 255 1288', e164: '+97142551288' },
+    /** The number on the Google listing (15 October 2026), also its WhatsApp. */
+    mobile: { display: '+971 50 551 5826', e164: '+971505515826' },
+    plusCode: '77FX+86 Dubai',
+    reviews: { rating: 4.9, count: 681, asOf: '2026-10-15' },
     map: {
       /** Stable place URL by Google CID. */
       url: 'https://www.google.com/maps?cid=14419653802905195883',
-      /** From the map embed on the previous contact page. TODO(owner): confirm against the Business Profile pin. */
-      geo: { latitude: 25.27335, longitude: 55.29807 },
+      /** The Google listing's pin (15 October 2026). */
+      geo: { latitude: 25.2733471, longitude: 55.2980687 },
       embedUrl:
         'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3607.917900121145!2d55.298068699999995!3d25.2733471!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e5f43a3d57699c9%3A0xc81ce6bc3246556b!2sClassic%20Jewels%20and%20Diamonds!5e0!3m2!1sen!2sae',
     },
     hours: {
-      /** As published on the store's Google listing (13 October 2026). TODO(owner): confirm. */
+      /** As published on the store's Google listing (re-checked 15 October 2026). TODO(owner): confirm. */
       confirmed: false,
-      source: 'Google listing, 13 October 2026',
+      source: 'Google listing, 15 October 2026',
       weekly: [
         {
           days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
@@ -152,15 +162,35 @@ export const branches: Branch[] = [
     city: 'Sharjah',
     emirate: 'Sharjah',
     status: 'open',
+    shortAddress: 'Safari Mall, Muwaileh',
     address: {
-      street: 'Safari Mall',
-      locality: 'Sharjah',
+      street: 'Safari Mall, Muwaileh Commercial, Industrial Area',
+      locality: 'Muwaileh',
       region: 'Sharjah',
       countryCode: 'AE',
     },
-    /** TODO(owner): shop number, phone, hours and map link. */
+    /** Everything below is from the branch's Google listing, 15 October 2026. TODO(owner): shop number; confirm hours. */
+    phone: { display: '+971 6 523 0916', e164: '+97165230916' },
+    plusCode: '8F32+QQ Sharjah',
+    reviews: { rating: 4.9, count: 153, asOf: '2026-10-15' },
     map: {
-      url: 'https://www.google.com/maps/search/?api=1&query=Classic+Jewels+and+Diamonds+Safari+Mall+Sharjah',
+      url: 'https://www.google.com/maps?cid=10452211343914334828',
+      geo: { latitude: 25.3043894, longitude: 55.4519658 },
+    },
+    hours: {
+      confirmed: false,
+      source: 'Google listing, 15 October 2026',
+      weekly: [
+        {
+          days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+          opens: '10:00:00',
+          closes: '23:00:00',
+        },
+      ],
+      breaks: [
+        { days: ['Friday'], from: '12:00:00', to: '14:30:00', label: 'Friday prayer break' },
+      ],
+      note: 'Call or WhatsApp to confirm Friday and Ramadan timings.',
     },
   },
   {
@@ -173,15 +203,35 @@ export const branches: Branch[] = [
     city: 'Sharjah',
     emirate: 'Sharjah',
     status: 'open',
+    shortAddress: 'Rolla Mall (Rolla Market), Al Ghuwair',
     address: {
-      street: 'Rolla Mall, Al Rolla',
-      locality: 'Sharjah',
+      street: 'Rolla Mall, Al Ghuwair, Hay Al Gharb',
+      locality: 'Al Ghuwair',
       region: 'Sharjah',
       countryCode: 'AE',
     },
-    /** TODO(owner): shop number, phone, hours and map link. */
+    /** Everything below is from the branch's Google listing, 15 October 2026. TODO(owner): shop number; confirm hours. */
+    phone: { display: '+971 6 534 4916', e164: '+97165344916' },
+    plusCode: '995Q+GM Sharjah',
+    reviews: { rating: 5.0, count: 135, asOf: '2026-10-15' },
     map: {
-      url: 'https://www.google.com/maps/search/?api=1&query=Classic+Jewels+and+Diamonds+Rolla+Mall+Sharjah',
+      url: 'https://www.google.com/maps?cid=11176834497388503007',
+      geo: { latitude: 25.3588024, longitude: 55.3892317 },
+    },
+    hours: {
+      confirmed: false,
+      source: 'Google listing, 15 October 2026',
+      weekly: [
+        {
+          days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+          opens: '10:00:00',
+          closes: '22:30:00',
+        },
+      ],
+      breaks: [
+        { days: ['Friday'], from: '11:30:00', to: '13:30:00', label: 'Friday prayer break' },
+      ],
+      note: 'Call or WhatsApp to confirm Friday and Ramadan timings.',
     },
   },
   {
@@ -189,22 +239,48 @@ export const branches: Branch[] = [
     name: 'Madinat Zayed, Abu Dhabi',
     shortName: 'Madinat Zayed',
     routeOrder: 1,
-    venue: 'Madinat Zayed',
+    venue: 'Best Address Gifts Building, Sanayya',
     venueType: 'district',
-    city: 'Abu Dhabi',
+    city: 'Madinat Zayed',
     emirate: 'Abu Dhabi',
     status: 'open',
+    shortAddress: 'Shop 10, Best Address Gifts Building, Sanayya',
     address: {
-      street: 'Madinat Zayed',
-      locality: 'Abu Dhabi',
+      street: 'Shop 10, Best Address Gifts Building, Sanayya',
+      locality: 'Madinat Zayed',
       region: 'Abu Dhabi',
       countryCode: 'AE',
     },
     instagram: 'https://www.instagram.com/classicjewels.badazayed/',
-    /** TODO(owner): shop number, phone, hours and map link. */
+    /** Everything below is from the branch's Google listing, 15 October 2026. TODO(owner): confirm hours. */
+    phone: { display: '+971 2 557 1994', e164: '+97125571994' },
+    reviews: { rating: 4.9, count: 205, asOf: '2026-10-15' },
     map: {
-      url: 'https://www.google.com/maps/search/?api=1&query=Classic+Jewels+and+Diamonds+Madinat+Zayed+Abu+Dhabi',
+      url: 'https://www.google.com/maps?cid=11883819255275255613',
+      geo: { latitude: 23.6616598, longitude: 53.7269212 },
     },
+    hours: {
+      confirmed: false,
+      source: 'Google listing, 15 October 2026',
+      weekly: [
+        {
+          days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+          opens: '10:00:00',
+          closes: '22:30:00',
+        },
+      ],
+      breaks: [
+        {
+          days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday'],
+          from: '13:30:00',
+          to: '16:00:00',
+          label: 'Afternoon break',
+        },
+      ],
+      note: 'Call or WhatsApp to confirm today’s timings.',
+    },
+    ownerNote:
+      'The Google pin (23.66 N, 53.73 E) is Madinat Zayed in Al Dhafra, about 150 km from Abu Dhabi city, not the Madinat Zayed Shopping Centre in the city. TODO(owner): confirm.',
   },
   {
     id: 'mohamed-bin-zayed-city-abu-dhabi',
@@ -304,13 +380,16 @@ export const site = {
 
   phone: {
     landline: { display: '+971 4 255 1288', e164: '+97142551288' },
-    /** TODO(owner): the Google listing shows 050 551 5826; the website has used 050 566 1416. */
-    mobile: { display: '+971 50 566 1416', e164: '+971505661416' },
+    /**
+     * The mobile on the Deira Google listing (15 October 2026), which also links wa.me to it.
+     * The previous website used 050 566 1416. TODO(owner): confirm which number staff answer.
+     */
+    mobile: { display: '+971 50 551 5826', e164: '+971505515826' },
   },
   whatsapp: {
-    /** International format without "+" as wa.me expects. TODO(owner): confirm (see phone.mobile). */
-    number: '971505661416',
-    display: '+971 50 566 1416',
+    /** International format without "+" as wa.me expects; the Google listing's own wa.me link. TODO(owner): confirm. */
+    number: '971505515826',
+    display: '+971 50 551 5826',
     greeting: 'Hello Classic Jewels,',
   },
   /** TODO(owner): the old site used hello@classicgroup.ae on the home page and c1@classicgrp.ae elsewhere. */
@@ -337,8 +416,8 @@ export const site = {
   /** Public rating snapshot from the flagship’s Google listing. Update the date when refreshed. */
   reviews: {
     rating: 4.9,
-    count: 680,
-    asOf: '2026-10-13',
+    count: 681,
+    asOf: '2026-10-15',
     url: 'https://www.google.com/maps?cid=14419653802905195883',
     /** Whose rating it is: "4.9 on Google, from 680 reviews of {of}". */
     of: 'our Deira branch',

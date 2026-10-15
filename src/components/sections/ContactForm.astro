@@ -1,152 +1,369 @@
 ---
 /**
- * The one contact form on the site. It posts natively to PUBLIC_FORM_ENDPOINT (by default the PHP
- * endpoint in public/api/contact.php, which redirects to /thank-you/); with src/scripts/form.ts it
- * submits in place and shows the reply under the button. Spam defences match the endpoint: a
- * honeypot named "website", and "fill_ms" (how long the form was open, measured on the device by
- * form.ts at submit; absent without JavaScript, in which case the endpoint skips the check).
+ * The site's one form (docs/design-system-v2.md §5.6, §6.10, §6.11, §6.13), made for plum: every
+ * field an underline (.field--line), every choice a square chip or card. Two shapes:
+ *
+ *   visit  Four numbered steps, all visible (no wizard script): 01 Branch (four radio cards in
+ *          route order, `branch` preselected), 02 Reason (radio chips, a piece reference), 03 When
+ *          (a day and a time window), 04 You (name, WhatsApp number, email optional). Two submit
+ *          buttons: "Send on WhatsApp" (form.ts composes a wa.me message from every field; without
+ *          JavaScript the form posts) and "Send by email" (posts to the endpoint).
+ *   brief  Custom jewellery: the piece described, "I'd like some guidance", how to reply (WhatsApp
+ *          preselected, Call, Email), who you are; photos follow on WhatsApp after you submit.
+ *
+ * It posts natively to PUBLIC_FORM_ENDPOINT (public/api/contact.php, which redirects to
+ * /thank-you/); form.ts submits in place and also reads ?piece=, ?reason= and ?branch= (the pages
+ * are static). Spam defences match the endpoint: the "website" honeypot and fill_ms. The endpoint
+ * requires an email address only when the reply method is email.
+ *
+ * A language step ships only once site.ts lists the languages each branch speaks (owner ask 11).
  */
 import { PUBLIC_FORM_ENDPOINT } from 'astro:env/client';
 
-import Button from '@/components/ui/Button.astro';
-import { openBranches } from '@/data/site';
+import Icon from '@/components/ui/Icon.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import { openBranches, site } from '@/data/site';
+import { whatsappCustom } from '@/lib/whatsapp';
 
 export interface Props {
-  /** Pre-fills the piece reference, e.g. when linked from a product page. */
+  /** Pre-fills the piece reference (and the "A piece I saw" reason), e.g. CJ-NK-003. */
   reference?: string;
   /** Pre-selects a branch by its id. */
   branch?: string;
-  class?: string;
+  /** Pre-selects a reason by its key (piece, old-gold, bridal, custom, coins, other) or label. */
+  topic?: string;
+  variant?: 'visit' | 'brief';
 }
 
-const { reference, branch, class: className } = Astro.props;
+const { reference, branch, topic, variant = 'visit' } = Astro.props;
 
-const topics = [
-  'General enquiry',
-  'A specific piece',
-  'Bridal or wedding order',
-  'Custom design',
-  'Gold exchange',
-  'Coins and bars',
-  'Current offer',
+/** Keys are what ?reason= and the `topic` prop use; labels are what is sent. */
+const REASONS = [
+  { key: 'piece', label: 'A piece I saw' },
+  { key: 'old-gold', label: 'Old gold' },
+  { key: 'bridal', label: 'Bridal' },
+  { key: 'custom', label: 'Made to order' },
+  { key: 'coins', label: 'Coins and bars' },
+  { key: 'other', label: 'Something else' },
 ];
+const wantedReason = reference
+  ? 'piece'
+  : REASONS.find((r) => r.key === topic || r.label === topic)?.key;
+
+const WINDOWS = ['Morning', 'Afternoon', 'Evening'];
+const doors = [...openBranches].sort((a, b) => (a.routeOrder ?? 99) - (b.routeOrder ?? 99));
+const two = (n: number) => String(n).padStart(2, '0');
+const p = `cf-${variant}`;
 ---
 
-<form class:list={['form', className]} method="post" action={PUBLIC_FORM_ENDPOINT} data-enhance>
-  <div class="form__fields" data-form-fields>
-    <div class="form__row">
-      <div class="field">
-        <label class="field__label" for="cf-name">
-          Name (required)
-        </label>
-        <input
-          class="field__input"
-          id="cf-name"
-          name="name"
-          type="text"
-          required
-          autocomplete="name"
-          maxlength="120"
-        />
-      </div>
-      <div class="field">
-        <label class="field__label" for="cf-email">
-          Email (required)
-        </label>
-        <input
-          class="field__input"
-          id="cf-email"
-          name="email"
-          type="email"
-          required
-          autocomplete="email"
-          maxlength="200"
-        />
-      </div>
-    </div>
+<form
+  class="cform"
+  data-variant={variant}
+  method="post"
+  action={PUBLIC_FORM_ENDPOINT}
+  data-enhance
+  data-wa={`https://wa.me/${site.whatsapp.number}?text=`}
+  data-greeting={site.whatsapp.greeting}
+>
+  <input type="hidden" name="form" value={variant} />
+  <div class="cform__fields" data-form-fields>
+    {variant === 'visit' ? (
+      <>
+        <fieldset class="step">
+          <legend class="step__legend">
+            <span class="step__n fig" aria-hidden="true">
+              {two(1)}
+            </span>
+            <span class="step__label">Branch</span>
+          </legend>
+          <div class="step__body">
+            <div class="picks">
+              {doors.map((b) => (
+                <label class="pick">
+                  <input
+                    class="pick__input"
+                    type="radio"
+                    name="branch"
+                    value={b.name}
+                    data-id={b.id}
+                    checked={b.id === branch}
+                  />
+                  <span class="pick__mark" aria-hidden="true" />
+                  <span class="pick__emirate">
+                    {b.emirate}
+                    {b.isFlagship && ' · Flagship'}
+                  </span>
+                  <span class="pick__name">{b.name}</span>
+                </label>
+              ))}
+            </div>
+            <p class="step__hint">Not sure yet? Leave it, and we will suggest one.</p>
+          </div>
+        </fieldset>
 
-    <div class="form__row">
-      <div class="field">
-        <label class="field__label" for="cf-phone">
-          Phone
-        </label>
-        <input
-          class="field__input"
-          id="cf-phone"
-          name="phone"
-          type="tel"
-          autocomplete="tel"
-          maxlength="40"
-          aria-describedby="cf-phone-hint"
-        />
-        <p class="field__hint" id="cf-phone-hint">
-          Optional. Include the country code, e.g. +971.
-        </p>
-      </div>
-      <div class="field">
-        <label class="field__label" for="cf-branch">
-          Branch
-        </label>
-        <select class="field__input" id="cf-branch" name="branch">
-          <option value="">Any branch</option>
-          {openBranches.map((b) => (
-            <option value={b.name} selected={b.id === branch}>
-              {b.name}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
+        <fieldset class="step">
+          <legend class="step__legend">
+            <span class="step__n fig" aria-hidden="true">
+              {two(2)}
+            </span>
+            <span class="step__label">Reason</span>
+          </legend>
+          <div class="step__body">
+            <div class="opts">
+              {REASONS.map((r) => (
+                <label class="opt">
+                  <input
+                    class="opt__input"
+                    type="radio"
+                    name="topic"
+                    value={r.label}
+                    data-key={r.key}
+                    checked={r.key === wantedReason}
+                  />
+                  <span>{r.label}</span>
+                </label>
+              ))}
+            </div>
+            <div class="field field--line cform__ref">
+              <label class="field__label" for={`${p}-reference`}>
+                Piece reference
+              </label>
+              <input
+                class="field__input"
+                id={`${p}-reference`}
+                name="reference"
+                type="text"
+                value={reference}
+                maxlength="40"
+                autocomplete="off"
+                spellcheck="false"
+                aria-describedby={`${p}-reference-hint`}
+              />
+              <p class="field__hint" id={`${p}-reference-hint`}>
+                Optional. It is on every piece page, e.g. CJ-NK-003.
+              </p>
+            </div>
+          </div>
+        </fieldset>
 
-    <div class="form__row">
-      <div class="field">
-        <label class="field__label" for="cf-topic">
-          Topic
-        </label>
-        <select class="field__input" id="cf-topic" name="topic">
-          {topics.map((t) => (
-            <option value={t}>{t}</option>
-          ))}
-        </select>
-      </div>
-      <div class="field">
-        <label class="field__label" for="cf-reference">
-          Piece reference
-        </label>
-        <input
-          class="field__input"
-          id="cf-reference"
-          name="reference"
-          type="text"
-          value={reference}
-          maxlength="40"
-          autocomplete="off"
-          aria-describedby="cf-reference-hint"
-        />
-        <p class="field__hint" id="cf-reference-hint">
-          Piece reference, e.g. CJ-NK-001
-        </p>
-      </div>
-    </div>
+        <fieldset class="step">
+          <legend class="step__legend">
+            <span class="step__n fig" aria-hidden="true">
+              {two(3)}
+            </span>
+            <span class="step__label">When</span>
+          </legend>
+          <div class="step__body step__body--pair">
+            <div class="field field--line">
+              <label class="field__label" for={`${p}-day`}>
+                Day
+              </label>
+              <input class="field__input" id={`${p}-day`} name="visit_day" type="date" />
+            </div>
+            <div class="field field--line">
+              <label class="field__label" for={`${p}-window`}>
+                Time of day
+              </label>
+              <select class="field__input" id={`${p}-window`} name="visit_window">
+                <option value="">Any time</option>
+                {WINDOWS.map((w) => (
+                  <option value={w}>{w}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </fieldset>
 
-    <div class="field">
-      <label class="field__label" for="cf-message">
-        Message (required)
-      </label>
-      <textarea
-        class="field__input"
-        id="cf-message"
-        name="message"
-        rows="6"
-        required
-        maxlength="4000"
-      ></textarea>
-    </div>
+        <fieldset class="step">
+          <legend class="step__legend">
+            <span class="step__n fig" aria-hidden="true">
+              {two(4)}
+            </span>
+            <span class="step__label">You</span>
+          </legend>
+          <div class="step__body step__body--trio">
+            <div class="field field--line">
+              <label class="field__label" for={`${p}-name`}>
+                Name
+              </label>
+              <input
+                class="field__input"
+                id={`${p}-name`}
+                name="name"
+                type="text"
+                required
+                autocomplete="name"
+                maxlength="120"
+              />
+            </div>
+            <div class="field field--line">
+              <label class="field__label" for={`${p}-phone`}>
+                WhatsApp number
+              </label>
+              <input
+                class="field__input fig"
+                id={`${p}-phone`}
+                name="phone"
+                type="tel"
+                data-need="Add a number, with the country code, so we can reply."
+                autocomplete="tel"
+                maxlength="40"
+                aria-describedby={`${p}-phone-hint`}
+              />
+              <p class="field__hint" id={`${p}-phone-hint`}>
+                With the country code, e.g. +971.
+              </p>
+            </div>
+            <div class="field field--line">
+              <label class="field__label" for={`${p}-email`}>
+                Email
+              </label>
+              <input
+                class="field__input"
+                id={`${p}-email`}
+                name="email"
+                type="email"
+                data-need="Add your email address so we can reply by email."
+                autocomplete="email"
+                maxlength="200"
+                aria-describedby={`${p}-email-hint`}
+              />
+              <p class="field__hint" id={`${p}-email-hint`}>
+                Optional, unless you send by email.
+              </p>
+            </div>
+          </div>
+        </fieldset>
+      </>
+    ) : (
+      <>
+        <input type="hidden" name="topic" value="Made to order" />
+        <fieldset class="step">
+          <legend class="step__legend">
+            <span class="step__n fig" aria-hidden="true">
+              {two(1)}
+            </span>
+            <span class="step__label">The piece</span>
+          </legend>
+          <div class="step__body">
+            <div class="field field--line">
+              <label class="field__label" for={`${p}-message`}>
+                What would you like made?
+              </label>
+              <textarea
+                class="field__input"
+                id={`${p}-message`}
+                name="message"
+                rows="4"
+                required
+                maxlength="4000"
+                aria-describedby={`${p}-message-hint`}
+              ></textarea>
+              <p class="field__hint" id={`${p}-message-hint`}>
+                What it is, who it is for, the karat and a budget if you have one. A piece to
+                remake? Say what it is.
+              </p>
+            </div>
+            <label class="check">
+              <input class="check__input" type="checkbox" name="guidance" value="yes" />
+              <span class="check__box" aria-hidden="true" />
+              <span>I’d like some guidance on the design</span>
+            </label>
+          </div>
+        </fieldset>
 
-    <div class="form__trap sr-only" aria-hidden="true">
-      <label for="cf-website">Website</label>
+        <fieldset class="step">
+          <legend class="step__legend">
+            <span class="step__n fig" aria-hidden="true">
+              {two(2)}
+            </span>
+            <span class="step__label">How to reply</span>
+          </legend>
+          <div class="step__body">
+            <div class="opts">
+              {['WhatsApp', 'Call', 'Email'].map((m, i) => (
+                <label class="opt">
+                  <input
+                    class="opt__input"
+                    type="radio"
+                    name="contact_method"
+                    value={m.toLowerCase()}
+                    checked={i === 0}
+                  />
+                  <span>{m}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="step">
+          <legend class="step__legend">
+            <span class="step__n fig" aria-hidden="true">
+              {two(3)}
+            </span>
+            <span class="step__label">You</span>
+          </legend>
+          <div class="step__body step__body--trio">
+            <div class="field field--line">
+              <label class="field__label" for={`${p}-name`}>
+                Name
+              </label>
+              <input
+                class="field__input"
+                id={`${p}-name`}
+                name="name"
+                type="text"
+                required
+                autocomplete="name"
+                maxlength="120"
+              />
+            </div>
+            <div class="field field--line">
+              <label class="field__label" for={`${p}-phone`}>
+                WhatsApp or phone
+              </label>
+              <input
+                class="field__input fig"
+                id={`${p}-phone`}
+                name="phone"
+                type="tel"
+                data-need="Add a number, with the country code, so we can reply."
+                autocomplete="tel"
+                maxlength="40"
+                aria-describedby={`${p}-phone-hint`}
+              />
+              <p class="field__hint" id={`${p}-phone-hint`}>
+                With the country code, e.g. +971.
+              </p>
+            </div>
+            <div class="field field--line">
+              <label class="field__label" for={`${p}-email`}>
+                Email
+              </label>
+              <input
+                class="field__input"
+                id={`${p}-email`}
+                name="email"
+                type="email"
+                data-need="Add your email address so we can reply by email."
+                autocomplete="email"
+                maxlength="200"
+                aria-describedby={`${p}-email-hint`}
+              />
+              <p class="field__hint" id={`${p}-email-hint`}>
+                Optional, unless you choose email.
+              </p>
+            </div>
+          </div>
+        </fieldset>
+      </>
+    )}
+
+    <div class="cform__trap" aria-hidden="true">
+      <label for={`${p}-website`}>Website</label>
       <input
-        id="cf-website"
+        id={`${p}-website`}
         name="website"
         type="text"
         tabindex="-1"
@@ -156,80 +373,382 @@ const topics = [
     </div>
     <input type="hidden" name="fill_ms" value="" data-fill-ms />
 
-    <p class="form__privacy small">We use your details only to reply.</p>
-    <div class="form__actions">
-      <Button type="submit" iconEnd="arrow-right">
-        Send message
-      </Button>
+    <div class="cform__send">
+      <div class="actions actions--pair">
+        {variant === 'visit' ? (
+          <>
+            <button class="btn btn--primary" type="submit" name="contact_method" value="whatsapp">
+              <Icon name="whatsapp" />
+              Send on WhatsApp
+            </button>
+            <button class="btn btn--secondary" type="submit" name="contact_method" value="email">
+              <Icon name="mail" />
+              Send by email
+            </button>
+          </>
+        ) : (
+          <button class="btn btn--primary" type="submit">
+            Send the brief
+            <Icon name="arrow-right" />
+          </button>
+        )}
+      </div>
+      <p class="cform__small">
+        {variant === 'visit'
+          ? 'WhatsApp opens with your message ready to send. We use your details only to reply.'
+          : 'Send photos or a sketch on WhatsApp after you submit. We use your details only to reply.'}
+      </p>
     </div>
   </div>
   <!-- Rendered (empty) from the start so assistive technology registers the live region before
        its text changes; an element revealed and filled in the same tick is often not announced. -->
-  <p class="form__status" data-form-status role="status" aria-live="polite" tabindex="-1"></p>
+  <p
+    class="cform__status"
+    data-form-status
+    data-ok="Thank you. We have your message and reply during shop hours."
+    data-err="We could not send your message. Please WhatsApp us instead."
+    data-sent="WhatsApp has opened with your message. Press send there to reach us."
+    role="status"
+    aria-live="polite"
+    tabindex="-1"
+  ></p>
+  {variant === 'brief' && (
+    <p class="cform__after" data-form-after hidden>
+      <MoreLink href={whatsappCustom()} external icon="whatsapp">
+        Send photos on WhatsApp
+      </MoreLink>
+    </p>
+  )}
 </form>
 
 <script src="@/scripts/form.ts"></script>
 
 <style>
-  .form {
+  .cform {
     display: grid;
-    gap: var(--space-5);
+    gap: var(--space-6);
   }
 
-  .form__fields {
+  .cform__fields {
     display: grid;
-    gap: var(--space-5);
+    border-block-start: 1px solid var(--rule-strong);
   }
 
-  .form__fields[hidden] {
+  .cform__fields[hidden] {
     display: none;
   }
 
-  .form__row {
+  /* ---------- A step: numeral and label on the left, the fields on the right ---------- */
+  .step {
     display: grid;
     gap: var(--space-5);
+    min-inline-size: 0;
+    margin: 0;
+    padding: var(--space-6) 0;
+    border: 0;
+    border-block-end: 1px solid var(--rule);
   }
 
-  select.field__input {
-    padding-inline-end: var(--space-6);
-  }
-
-  .form__privacy {
-    color: var(--ink-500);
-  }
-
-  .form__actions {
+  /* Floated, the legend becomes an ordinary grid item (no fieldset border to sit in). */
+  .step__legend {
+    float: inline-start;
     display: flex;
-    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-4);
+    padding: 0;
+  }
+
+  .step__n {
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral-xl);
+    font-weight: var(--fw-display);
+    line-height: var(--lh-numeral);
+    letter-spacing: var(--track-rate);
+    color: var(--numeral);
+  }
+
+  .step__label {
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    line-height: 1.3;
+    text-transform: uppercase;
+    color: var(--fg);
+  }
+
+  .step__body {
+    display: grid;
+    gap: var(--space-5);
+    min-inline-size: 0;
+  }
+
+  .step__body--pair,
+  .step__body--trio {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .step__hint {
+    font-size: var(--t-small);
+    color: var(--muted);
+  }
+
+  /* ---------- Branch cards ---------- */
+  .picks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-3);
   }
 
-  .form__status {
+  .pick {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: var(--space-2);
+    min-block-size: calc(var(--control-h) * 2);
+    padding: var(--space-4);
+    padding-inline-end: var(--space-6);
+    border: 1px solid var(--rule-strong);
+    cursor: pointer;
+    transition:
+      border-color var(--dur-quick) var(--ease-out),
+      background-color var(--dur-quick) var(--ease-out);
+  }
+
+  .pick:hover {
+    background: var(--btn-wash);
+  }
+
+  .pick__input,
+  .opt__input,
+  .check__input {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .pick__emirate {
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    line-height: 1.3;
+    text-transform: uppercase;
+    color: var(--eyebrow);
+  }
+
+  .pick__name {
+    font-family: var(--ff-display);
+    font-size: var(--t-name);
+    font-style: italic;
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--fg);
+  }
+
+  /* The selection mark: a hollow square turned 45 degrees that fills when chosen. */
+  .pick__mark {
+    position: absolute;
+    inset-block-start: var(--space-4);
+    inset-inline-end: var(--space-4);
+    inline-size: var(--space-3);
+    block-size: var(--space-3);
+    border: 1px solid var(--rule-strong);
+    rotate: 45deg;
+    transition:
+      background-color var(--dur-quick) var(--ease-out),
+      border-color var(--dur-quick) var(--ease-out);
+  }
+
+  .pick:has(.pick__input:checked) {
+    border-color: var(--accent);
+    background: var(--btn-wash);
+  }
+
+  .pick:has(.pick__input:checked) .pick__mark {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+
+  .pick:has(.pick__input:focus-visible),
+  .opt:has(.opt__input:focus-visible),
+  .check:has(.check__input:focus-visible) {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Reason and reply chips ---------- */
+  .opts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .opt {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--tap);
+    padding-inline: var(--space-4);
+    border: 1px solid var(--chip-line);
+    font-size: var(--t-small);
+    font-weight: var(--fw-text-strong);
+    color: var(--fg);
+    cursor: pointer;
+    transition:
+      background-color var(--dur-quick) var(--ease-out),
+      color var(--dur-quick) var(--ease-out);
+  }
+
+  .opt:hover {
+    background: var(--btn-wash);
+  }
+
+  .opt:has(.opt__input:checked) {
+    border-color: var(--chip-on-bg);
+    background: var(--chip-on-bg);
+    color: var(--chip-on-fg);
+  }
+
+  .cform__ref {
+    max-inline-size: 24rem;
+  }
+
+  /* ---------- Checkbox ---------- */
+  .check {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    inline-size: fit-content;
+    min-block-size: var(--tap);
+    color: var(--fg);
+    cursor: pointer;
+  }
+
+  .check__box {
+    position: relative;
+    flex: none;
+    inline-size: var(--space-5);
+    block-size: var(--space-5);
+    border: 1px solid var(--field-line);
+  }
+
+  .check__box::after {
+    content: '';
+    position: absolute;
+    inset: var(--space-1);
+    background: var(--accent);
+    scale: 0;
+    transition: scale var(--dur-quick) var(--ease-out);
+  }
+
+  .check:has(.check__input:checked) .check__box::after {
+    scale: 1;
+  }
+
+  /* ---------- Fields ---------- */
+  .cform :global(.field__label) {
+    font-weight: var(--fw-text-strong);
+  }
+
+  .cform select.field__input {
+    padding-inline-end: var(--space-6);
+  }
+
+  .cform textarea.field__input {
+    min-block-size: 7rem;
+    padding-block: var(--space-3);
+  }
+
+  /* The honeypot: off-screen for people, present for bots. Not display: none (bots skip that). */
+  .cform__trap {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: clip;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* ---------- Send ---------- */
+  .cform__send {
+    display: grid;
+    gap: var(--space-4);
+    padding-block-start: var(--space-6);
+  }
+
+  .cform__small {
+    max-inline-size: 48ch;
+    font-size: var(--t-small);
+    color: var(--muted);
+  }
+
+  .cform__status {
     padding: var(--space-4) var(--space-5);
-    border: 1px solid var(--rule-2);
-    background: var(--surface-2);
-    color: var(--ink-900);
+    border: 1px solid var(--rule-strong);
+    color: var(--fg);
   }
 
   /* Empty until there is something to say; stays in the accessibility tree either way. */
-  .form__status:empty {
+  .cform__status:empty {
     padding: 0;
     border: 0;
   }
 
-  .form__status[data-tone='ok'] {
-    border-color: var(--ok);
-    color: var(--ok);
+  .cform__status[data-state='ok'] {
+    border-color: var(--ok-tone);
+    color: var(--ok-tone);
   }
 
-  .form__status[data-tone='err'] {
-    border-color: var(--err);
-    color: var(--err);
+  .cform__status[data-state='err'] {
+    border-color: var(--err-tone);
+    color: var(--err-tone);
   }
 
-  @media (min-width: 40em) {
-    .form__row {
+  @media (min-width: 48em) {
+    .picks {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .step__body--pair {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--grid-gap);
+    }
+
+    .step__body--trio {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: var(--grid-gap);
+    }
+  }
+
+  @media (min-width: 64em) {
+    .step {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--grid-gap);
+      padding-block: var(--space-7);
+    }
+
+    .step__legend {
+      grid-column: 1 / span 3;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .step__body {
+      grid-column: 4 / span 9;
+    }
+
+    .cform__send {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--grid-gap);
+      align-items: center;
+    }
+
+    .cform__send > * {
+      grid-column: 4 / span 9;
     }
   }
 </style>

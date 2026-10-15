@@ -1,0 +1,467 @@
+---
+/**
+ * The old-gold estimator (docs/design-system-v2.md §5.4, §8.2 section 7), with
+ * src/scripts/estimator.ts.
+ *
+ * Two modes, decided at build from site.exchange.confirmed (TODO(owner), ask 1):
+ *   pending    until the owner confirms the exchange basis, the output is fine-gold weight,
+ *              which is a fact: "9.16 g of fine gold". No dirham figure anywhere.
+ *   confirmed  the dirham figure at the posted rate, or at the buying rate (posted rate less
+ *              site.exchange.buyingDiscount) when site.exchange.basis is "buying-rate".
+ *
+ *   panel  a form on the raised stage: weight between − and + steppers, karat chips with their stamps, the
+ *          branch, the output, the sum spelled out, the note and "Ask about exchanging it"
+ *   slim   a one-line parchment band with "Work out yours" (the piece page)
+ *
+ * The worked example (10 g of 22K, the flagship branch) is baked into the HTML, so the output,
+ * the sum and the WhatsApp message are correct without JavaScript; estimator.ts recomputes them
+ * as the inputs change, and shows the steppers (they hold their space until then, so nothing
+ * moves). The karat chips are [data-karat-input] radios inside [data-estimator]: karat.ts applies
+ * the visitor's chosen karat to them on load.
+ */
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import Section from '@/components/ui/Section.astro';
+import { flagship, openBranches, site } from '@/data/site';
+import { formatAed } from '@/lib/format';
+import type { GoldRate } from '@/lib/gold-rate';
+import { routes } from '@/lib/routes';
+import { DISPLAY_KARATS, KARAT_FACTS, type DisplayKarat } from '@/lib/tones';
+import { whatsappUrl } from '@/lib/whatsapp';
+
+export interface Props {
+  rate: GoldRate | null;
+  /** panel: form and output on the raised stage (bands and the exchange hero); slim: a one-line teaser band. */
+  variant?: 'panel' | 'slim';
+  id: string;
+  karat?: DisplayKarat; // default 22k; karat.ts may replace it with the visitor's choice
+  grams?: number; // default 10
+  /** The piece page's slim band names the piece's karat. */
+  title?: string;
+}
+
+const { rate, variant = 'panel', id, karat = '22k', grams = 10, title } = Astro.props;
+
+const confirmed = site.exchange.confirmed && rate !== null;
+const facts = KARAT_FACTS[karat];
+const min = 0.5;
+const max = site.exchange.maxGrams;
+
+/** 10 -> "10", 9.164 -> "9.16": grams as people write them. */
+const fmtGrams = (g: number) => g.toLocaleString('en-GB', { maximumFractionDigits: 2 });
+const fine = Math.round(grams * facts.fineness * 100) / 100;
+
+/** AED per gram below the posted rate, per karat, when credited at a buying rate. */
+const less = Object.fromEntries(
+  DISPLAY_KARATS.map((k) => [
+    k,
+    site.exchange.basis === 'buying-rate' ? (site.exchange.buyingDiscount[k] ?? 0) : 0,
+  ]),
+) as Record<DisplayKarat, number>;
+const creditRate = (k: DisplayKarat) => (rate ? rate.perGram[k] - less[k] : 0);
+const amount = grams * creditRate(karat);
+/** "4,682.50": the figure without its currency, which sits beside it in small capitals. */
+const amountFigure = formatAed(amount).replace(/^AED\s/, '');
+
+const posted = rate
+  ? JSON.stringify(Object.fromEntries(DISPLAY_KARATS.map((k) => [k, rate.perGram[k]])))
+  : '{}';
+
+/** The WhatsApp message; {g}, {k} and {b} are filled in by estimator.ts. */
+const template = `${site.whatsapp.greeting} I have about {g} g of {k} old gold and would like to bring it to {b} to be tested and weighed. What are the exchange terms?`;
+const branchPhrase = (name: string) => `the ${name} branch`;
+const anyBranch = 'one of your branches';
+const message = template
+  .replace('{g}', fmtGrams(grams))
+  .replace('{k}', facts.label)
+  .replace('{b}', branchPhrase(flagship.name));
+
+/** The sum line as a template (estimator.ts fills it as the inputs change), and the baked example. */
+const sumTemplate = confirmed
+  ? '{g} g × {r} a gram ({k}) = {a}'
+  : '{g} g of {k} is {p} gold: about {f} g of fine gold.';
+const sum = sumTemplate
+  .replace('{g}', fmtGrams(grams))
+  .replace('{k}', facts.label)
+  .replace('{p}', facts.percent)
+  .replace('{f}', fmtGrams(fine))
+  .replace('{r}', formatAed(creditRate(karat)))
+  .replace('{a}', formatAed(amount));
+const note = confirmed
+  ? 'An estimate, not an offer. The credit is set at the counter after testing, against a new piece.'
+  : 'We test it at the counter and credit it at the day’s rate for its karat. Ask us for the exchange terms before you come.';
+
+const onExchangePage = Astro.url.pathname === routes.goldExchange;
+const titleId = `${id}-title`;
+---
+
+{variant === 'slim' ? (
+  <Section tone="parchment" pad="slim" id={id}>
+    <div class="est-slim">
+      <p class="est-slim__line">
+        {confirmed
+          ? `${title ?? `Have old ${facts.label} gold?`} At today’s rate, ${fmtGrams(grams)} g is about ${formatAed(amount)} towards this piece.`
+          : `${title ?? 'Have old gold?'} We test it in front of you and credit it at the day’s rate against a new piece.`}
+      </p>
+      <MoreLink href={`${routes.goldExchange}#estimator`}>Work out yours</MoreLink>
+    </div>
+  </Section>
+) : (
+  <div class="est-panel" data-tone="stage-raised" id={id}>
+    <h3 class="est-panel__title" id={titleId}>
+      {title ?? 'Your old gold'}
+    </h3>
+    <form
+      class="est"
+      data-estimator
+      data-mode={confirmed ? 'confirmed' : 'pending'}
+      data-rates={posted}
+      data-less={JSON.stringify(less)}
+      data-wa={whatsappUrl('')}
+      data-msg={template}
+      data-sum={sumTemplate}
+      aria-labelledby={titleId}
+    >
+      <div class="est__row field field--line">
+        <label class="est__label eyebrow" for={`${id}-grams`}>
+          Weight<span class="sr-only"> in grams</span>
+        </label>
+        <div class="est__weight">
+          <button
+            type="button"
+            class="est__step"
+            data-step="-1"
+            aria-label="Less weight"
+            aria-controls={`${id}-grams`}
+          >
+            <Icon name="minus" />
+          </button>
+          <input
+            class="field__input est__grams"
+            id={`${id}-grams`}
+            name="grams"
+            type="number"
+            inputmode="decimal"
+            min={min}
+            max={max}
+            step="0.1"
+            value={grams}
+            aria-describedby={`${id}-grams-hint`}
+          />
+          <span class="est__unit" aria-hidden="true">
+            grams
+          </span>
+          <button
+            type="button"
+            class="est__step"
+            data-step="1"
+            aria-label="More weight"
+            aria-controls={`${id}-grams`}
+          >
+            <Icon name="plus" />
+          </button>
+        </div>
+        <p class="field__hint" id={`${id}-grams-hint`}>
+          From your receipt, or your best estimate
+        </p>
+      </div>
+
+      <fieldset class="est__row est__karat" aria-describedby={`${id}-karat-hint`}>
+        <legend class="est__label eyebrow">Karat</legend>
+        <p class="field__hint" id={`${id}-karat-hint`}>
+          Stamped inside the piece
+        </p>
+        <div class="chips est__chips">
+          {DISPLAY_KARATS.map((k) => (
+            <label class="chip">
+              <input
+                type="radio"
+                name={`${id}-karat`}
+                value={k}
+                checked={k === karat}
+                data-karat-input
+                data-fine={KARAT_FACTS[k].fineness}
+                data-pct={KARAT_FACTS[k].percent}
+              />
+              <span class="est__k">{KARAT_FACTS[k].label}</span>
+              <span class="est__stamp">{KARAT_FACTS[k].stamp}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <div class="est__row field field--line">
+        <label class="est__label eyebrow" for={`${id}-branch`}>
+          Bring it to
+        </label>
+        <select class="field__input est__branch" id={`${id}-branch`} name="branch">
+          {openBranches.map((b) => (
+            <option value={branchPhrase(b.name)} selected={b.id === flagship.id}>
+              {b.name}
+            </option>
+          ))}
+          <option value={anyBranch}>Not sure yet</option>
+        </select>
+      </div>
+
+      <div class="est__result">
+        <output
+          class="est__out"
+          for={`${id}-grams ${id}-branch`}
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {confirmed && <span class="est__cur">AED</span>}
+          <span class="est__fig" data-est-fig data-roll={confirmed ? '' : undefined}>
+            {confirmed ? amountFigure : fmtGrams(fine)}
+          </span>
+          {!confirmed && <span class="est__g">g</span>}
+          {!confirmed && <span class="est__of">of fine gold</span>}
+        </output>
+        <p class="est__sum" data-est-sum>
+          {sum}
+        </p>
+        <p class="est__note caption">{note}</p>
+      </div>
+
+      <div class="est__actions">
+        <Button href={whatsappUrl(message)} icon="whatsapp" external data-est-ask>
+          Ask about exchanging it
+        </Button>
+        {!onExchangePage && <MoreLink href={routes.goldExchange}>How the exchange works</MoreLink>}
+      </div>
+    </form>
+    <script src="@/scripts/estimator.ts"></script>
+  </div>
+)}
+
+<style>
+  /* ---------- slim ---------- */
+  .est-slim {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4) var(--space-7);
+  }
+
+  .est-slim__line {
+    max-inline-size: var(--container-narrow);
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1.25;
+    color: var(--fg);
+  }
+
+  /* ---------- panel ---------- */
+  .est-panel {
+    display: grid;
+    gap: var(--space-6);
+    padding: var(--space-5);
+    border: 1px solid var(--rule);
+  }
+
+  @media (min-width: 48em) {
+    .est-panel {
+      padding: var(--space-7);
+    }
+  }
+
+  .est-panel__title {
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+  }
+
+  .est {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .est__row {
+    gap: var(--space-2);
+  }
+
+  .est__label {
+    display: block;
+    color: var(--eyebrow);
+  }
+
+  /* Weight: the figure between the steppers, on one underline. */
+  .est__weight {
+    display: flex;
+    align-items: center;
+    border-block-end: 1px solid var(--field-line);
+  }
+
+  .est__weight:has(input:focus-visible) {
+    border-block-end-color: var(--focus-ring);
+  }
+
+  .est__grams.field__input {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    min-block-size: var(--control-h);
+    padding-block: var(--space-1);
+    border: 0;
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral-xl);
+    font-weight: var(--fw-display);
+    line-height: 1.1;
+    font-variant-numeric: lining-nums tabular-nums;
+    text-align: center;
+    appearance: textfield;
+  }
+
+  .est__grams::-webkit-inner-spin-button,
+  .est__grams::-webkit-outer-spin-button {
+    margin: 0;
+    appearance: none;
+  }
+
+  .est__unit {
+    padding-inline: var(--space-2) var(--space-3);
+    font-size: var(--t-small);
+    color: var(--muted);
+  }
+
+  .est__step {
+    display: grid;
+    place-items: center;
+    flex: none;
+    inline-size: var(--tap);
+    block-size: var(--tap);
+    color: var(--fg);
+    transition: color var(--dur-quick) var(--ease-out);
+  }
+
+  .est__step:hover {
+    color: var(--accent);
+  }
+
+  .est__step :global(.icon) {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+  }
+
+  /* The steppers need estimator.ts: they hold their space and appear once it runs. */
+  .est:not([data-live]) .est__step {
+    visibility: hidden;
+  }
+
+  /* Karat: four chips, each its label over its stamp. */
+  .est__karat {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-inline-size: 0;
+  }
+
+  .est__karat legend {
+    padding: 0;
+    margin-block-end: var(--space-2);
+  }
+
+  .est__chips {
+    margin-block-start: var(--space-2);
+  }
+
+  .est__k {
+    font-size: var(--t-small);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: 0.06em;
+    line-height: 1.1;
+  }
+
+  .est__stamp {
+    font-size: var(--t-caption);
+    line-height: 1.1;
+    font-variant-numeric: lining-nums tabular-nums;
+    color: var(--muted);
+  }
+
+  .chip:has(input:checked) .est__stamp {
+    color: inherit;
+  }
+
+  .est__branch.field__input {
+    padding-inline-end: var(--space-6);
+  }
+
+  .est__branch option {
+    background: var(--stage-1);
+    color: var(--on-stage);
+  }
+
+  /* The output: the largest thing in the panel. */
+  .est__result {
+    display: grid;
+    gap: var(--space-3);
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .est__out {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-2);
+    color: var(--numeral);
+  }
+
+  .est__fig {
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral-xl);
+    font-weight: var(--fw-display);
+    line-height: 1;
+    letter-spacing: var(--track-rate);
+    font-variant-numeric: lining-nums tabular-nums;
+    white-space: nowrap;
+  }
+
+  .est__cur {
+    align-self: flex-start;
+    margin-block-start: 0.6em;
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    color: var(--eyebrow);
+  }
+
+  .est__g {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+  }
+
+  .est__of {
+    font-size: var(--t-small);
+    color: var(--body);
+  }
+
+  .est__sum {
+    font-size: var(--t-small);
+    line-height: 1.5;
+    font-variant-numeric: lining-nums tabular-nums;
+    color: var(--fg);
+  }
+
+  .est__note {
+    max-inline-size: 34rem;
+  }
+
+  .est__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4) var(--space-6);
+  }
+
+  @media (max-width: 39.99em) {
+    .est__actions :global(.btn) {
+      inline-size: 100%;
+    }
+  }
+</style>

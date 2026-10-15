@@ -1,0 +1,25 @@
+# Cloudflare Pages project settings (docs/deployment.md, docs/hosting-decision.md).
+#
+# Wrangler reads this file as the project's source of truth: the dashboard shows these fields
+# read-only, and `npx wrangler pages deploy` (.github/workflows/deploy.yml) takes the project
+# name and the output folder from here. Secrets never live in this file: set RESEND_API_KEY in
+# the dashboard (the project > Settings > Variables and Secrets > Add > Encrypt) or with
+# `npx wrangler pages secret put RESEND_API_KEY --project-name classicjewels`.
+# The Apache host ignores this file.
+
+name = "classicjewels"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-09-01"
+
+# Plain settings read by functions/ at request time. None of them reaches the browser
+# (PUBLIC_* build-time values are set in deploy.yml, not here).
+[vars]
+# The store's rate script on the PHP host, reached by a name that is not the site itself.
+# TODO(owner): point feed.classicjewels.ae at the current cPanel host (docs/deployment.md, step 3).
+ORIGIN_FEED_URL = "https://feed.classicjewels.ae/gold-rates.php"
+FEED_CACHE_SECONDS = "300"
+# TODO(owner): confirm the inbox for enquiries (the same value as public/api/contact.php).
+CONTACT_TO = "hello@classicgroup.ae"
+# The sender must be on a domain verified in Resend (docs/deployment.md, step 5).
+CONTACT_FROM = "Classic Jewels Website <no-reply@classicjewels.ae>"
+SITE_ORIGIN = "https://classicjewels.ae"

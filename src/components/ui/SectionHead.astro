@@ -1,59 +1,164 @@
 ---
 /**
- * Heading block that opens most sections: eyebrow, H2 (or H1), optional standfirst,
- * and an optional link in the `aside` slot that sits at the end of the row on wide screens.
+ * The one way a section opens with a heading (docs/design-system-v2.md §3.4, §5.2, §8.3).
+ *
+ *   shape  split   title in columns 1 to 7; lead and aside in 8 to 12, bottom-aligned (64em+)
+ *          stack   eyebrow, title, lead and aside in one column, 40 rem at most
+ *          centre  centred, for bands and the styles line
+ *   size   h2 (default), display (one word or line per section) or h3
+ *
+ * `accent` is the one italic phrase a heading may carry (<em>, coloured --accent by the tone);
+ * `accentBreak` sets it on its own line. Slots: default = the lead (phrasing content, rendered
+ * in .lead), `aside` = a MoreLink. Vary the shape from section to section; add class="reveal"
+ * to let the head rise as it enters (never in a first viewport).
  */
 import Eyebrow from '@/components/ui/Eyebrow.astro';
 
 export interface Props {
   eyebrow?: string;
+  /** Plain heading text. */
   title: string;
-  /** Heading level. Pages that use this for their main heading pass "h1". */
+  /** Optional accent phrase, rendered after the title in <em>. */
+  accent?: string;
+  /** Put the accent on its own line (block) or run it on (inline, default). */
+  accentBreak?: boolean;
   as?: 'h1' | 'h2' | 'h3';
-  /** Use the larger display size (home and hub H1s). */
-  display?: boolean;
+  /** h2 (default), display (one word or line per section) or h3. */
+  size?: 'h2' | 'display' | 'h3';
+  shape?: 'split' | 'stack' | 'centre';
+  ornament?: boolean;
+  id?: string;
   class?: string;
 }
 
-const { eyebrow, title, as: Tag = 'h2', display = false, class: className } = Astro.props;
+const {
+  eyebrow,
+  title,
+  accent,
+  accentBreak = false,
+  as: Tag = 'h2',
+  size = 'h2',
+  shape = 'split',
+  ornament = false,
+  id,
+  class: className,
+} = Astro.props;
+
+const hasLead = Astro.slots.has('default');
+const hasAside = Astro.slots.has('aside');
+const sizeClass = size === 'display' ? 'display' : `head__title--${size}`;
 ---
 
-<div class:list={['head', className]}>
-  <div class="head__text">
-    {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-    <Tag class:list={['head__title', display && 'display']} set:text={title} />
-    {Astro.slots.has('default') && (
-      <div class="head__sub lead">
-        <slot />
-      </div>
-    )}
+<div class:list={['head', `head--${shape}`, className]}>
+  <div class="head__main">
+    {eyebrow && <Eyebrow ornament={ornament}>{eyebrow}</Eyebrow>}
+    <Tag id={id} class:list={['head__title', sizeClass]}>
+      {title}
+      {accent && (
+        <>
+          {' '}
+          <em class:list={[accentBreak && 'head__accent--block']}>{accent}</em>
+        </>
+      )}
+    </Tag>
   </div>
-  {Astro.slots.has('aside') && (
-    <div class="head__aside">
-      <slot name="aside" />
+  {(hasLead || hasAside) && (
+    <div class="head__side">
+      {hasLead && (
+        <div class="head__lead lead">
+          <slot />
+        </div>
+      )}
+      {hasAside && (
+        <div class="head__aside">
+          <slot name="aside" />
+        </div>
+      )}
     </div>
   )}
 </div>
 
 <style>
   .head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    justify-content: space-between;
-    gap: var(--space-4) var(--space-6);
-    margin-block-end: var(--space-7);
+    display: grid;
+    gap: var(--space-5);
+    margin-block-end: var(--space-6);
   }
 
-  .head__text {
+  .head__title--h2 {
+    font-size: var(--t-h2);
+    font-weight: var(--fw-display);
+    line-height: var(--lh-display);
+    letter-spacing: var(--track-h2);
+  }
+
+  .head__title--h3 {
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    letter-spacing: 0;
+  }
+
+  .head__accent--block {
+    display: block;
+  }
+
+  .head__side {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  /* Leads in heads are prose blocks; a slotted <p> needs no extra margin. */
+  .head__lead :global(p + p) {
+    margin-block-start: var(--space-3);
+  }
+
+  /* stack: one column. */
+  .head--stack {
     max-inline-size: 40rem;
   }
 
-  .head__sub {
-    margin-block-start: var(--space-4);
+  /* centre: bands, the styles line. */
+  .head--centre {
+    justify-items: center;
+    text-align: center;
   }
 
-  .head__aside {
-    flex: none;
+  .head--centre .head__main {
+    max-inline-size: 52rem;
+  }
+
+  .head--centre :global(.eyebrow) {
+    margin-inline: auto;
+  }
+
+  .head--centre .head__side {
+    justify-items: center;
+  }
+
+  .head--centre .head__lead {
+    margin-inline: auto;
+  }
+
+  @media (min-width: 64em) {
+    .head {
+      margin-block-end: var(--space-7);
+    }
+
+    /* split: title in 1 to 7, lead and aside in 8 to 12, bottom-aligned. */
+    .head--split {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--grid-gap);
+      align-items: end;
+    }
+
+    .head--split .head__main {
+      grid-column: 1 / span 7;
+    }
+
+    .head--split .head__side {
+      grid-column: 8 / span 5;
+    }
   }
 </style>

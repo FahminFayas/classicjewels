@@ -1,32 +1,98 @@
 ---
 /**
- * Fixed bottom bar on phones and tablets: WhatsApp, Call, Visit. The three ways the shop
- * actually converts. Hidden from the desktop breakpoint, where the header carries the same links.
+ * The phone action bar (docs/design-system-v2.md §5.3, §8.4): fixed at the bottom below 64em on
+ * the raised stage, 56 px plus the safe area, a bronze hairline on top, named "bar" for view
+ * transitions. Every cell is 56 px tall, an icon (or the rate) over a 12 px label.
+ *
+ *   Default  WhatsApp (filled bronze, stage ink) · Call · Branches · today's rate for the
+ *            visitor's karat (karat="follow": 22K unless they chose another on the instrument)
+ *   Piece    Ask about this piece (WhatsApp, prefilled with the piece) · Call · Visit (the visit
+ *            form with ?piece={sku})
+ *
+ * nav.ts hides it while a form field has focus, so it never covers the keyboard's field.
  */
 import Icon from '@/components/ui/Icon.astro';
+import RateFigure from '@/components/ui/RateFigure.astro';
 import { site } from '@/data/site';
+import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
-import { whatsappGeneral } from '@/lib/whatsapp';
+import { DISPLAY_KARATS, KARAT_FACTS } from '@/lib/tones';
+import { whatsappForProduct, whatsappGeneral } from '@/lib/whatsapp';
 
 export interface Props {
-  /** Piece pages: the bar becomes "Ask about this piece" (docs/design-system-v2.md §5.3, WP1). */
+  /** Piece pages: the bar becomes "Ask about this piece". */
   piece?: { name: string; sku: string; url: string } | undefined;
 }
+
+const { piece } = Astro.props;
+const { latest: rate } = await getRates();
+const tel = `tel:${site.phone.landline.e164}`;
+const visit = piece ? `${routes.contact}?piece=${encodeURIComponent(piece.sku)}` : '';
 ---
 
-<nav class="bar until-lg" aria-label="Quick contact" data-action-bar>
-  <a class="bar__item" href={whatsappGeneral()} target="_blank" rel="noopener">
-    <Icon name="whatsapp" />
-    <span>WhatsApp</span>
-  </a>
-  <a class="bar__item" href={`tel:${site.phone.landline.e164}`}>
-    <Icon name="phone" />
-    <span>Call</span>
-  </a>
-  <a class="bar__item" href={routes.stores}>
-    <Icon name="map-pin" />
-    <span>Stores</span>
-  </a>
+<nav
+  class="bar until-lg no-print"
+  data-tone="stage-raised"
+  data-variant={piece ? 'piece' : 'default'}
+  aria-label="Quick contact"
+  data-action-bar
+>
+  {piece ? (
+    <>
+      <a
+        class="bar__cell bar__cell--wa"
+        href={whatsappForProduct(piece)}
+        target="_blank"
+        rel="noopener"
+      >
+        <Icon name="whatsapp" />
+        <span class="bar__label">Ask about this piece</span>
+        <span class="sr-only"> (opens WhatsApp)</span>
+      </a>
+      <a class="bar__cell" href={tel}>
+        <Icon name="phone" />
+        <span class="bar__label">Call</span>
+      </a>
+      <a class="bar__cell" href={visit}>
+        <Icon name="map-pin" />
+        <span class="bar__label">Visit</span>
+      </a>
+    </>
+  ) : (
+    <>
+      <a class="bar__cell bar__cell--wa" href={whatsappGeneral()} target="_blank" rel="noopener">
+        <Icon name="whatsapp" />
+        <span class="bar__label">WhatsApp</span>
+        <span class="sr-only"> (opens WhatsApp)</span>
+      </a>
+      <a class="bar__cell" href={tel}>
+        <Icon name="phone" />
+        <span class="bar__label">Call</span>
+      </a>
+      <a class="bar__cell" href={routes.stores}>
+        <Icon name="map-pin" />
+        <span class="bar__label">Branches</span>
+      </a>
+      <a class="bar__cell bar__cell--rate" href={routes.goldRate}>
+        {rate ? <RateFigure rate={rate} karat="follow" class="bar__rate" /> : <Icon name="clock" />}
+        <span class="bar__label">
+          {rate ? (
+            <>
+              {DISPLAY_KARATS.map((k) => (
+                <span class="kv" data-k={k}>
+                  {KARAT_FACTS[k].label}
+                </span>
+              ))}{' '}
+              rate
+              <span class="sr-only">, AED per gram today</span>
+            </>
+          ) : (
+            'Gold rate'
+          )}
+        </span>
+      </a>
+    </>
+  )}
 </nav>
 
 <style>
@@ -36,36 +102,89 @@ export interface Props {
     inset-block-end: 0;
     z-index: var(--z-bar);
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    min-block-size: calc(var(--action-bar-h) + env(safe-area-inset-bottom));
+    grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
     padding-block-end: env(safe-area-inset-bottom);
-    background: var(--surface-1);
-    border-block-start: 1px solid var(--rule-1);
+    view-transition-name: bar;
   }
 
-  .bar[hidden] {
-    display: none;
+  .bar[data-variant='piece'] {
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
   }
 
-  .bar__item {
+  /* The bronze hairline, drawn over the cells so the bar stays exactly 56 px (plus safe area). */
+  .bar::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 0;
+    block-size: 1px;
+    background: var(--rule-gold);
+    z-index: var(--z-raised);
+    pointer-events: none;
+  }
+
+  .bar__cell {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: var(--space-1);
-    min-block-size: var(--action-bar-h);
-    font-size: var(--t-caption);
-    font-weight: 500;
-    color: var(--plum-700);
+    min-inline-size: var(--tap);
+    block-size: var(--action-bar-h);
+    padding-inline: var(--space-1);
+    color: var(--body);
     text-decoration: none;
+    transition:
+      background-color var(--dur-quick) var(--ease-out),
+      color var(--dur-quick) var(--ease-out);
   }
 
-  .bar__item + .bar__item {
-    border-inline-start: 1px solid var(--rule-1);
+  .bar__cell + .bar__cell {
+    border-inline-start: 1px solid var(--rule);
   }
 
-  .bar__item .icon {
-    inline-size: 1.375rem;
-    block-size: 1.375rem;
+  .bar__cell:hover {
+    background: var(--btn-wash);
+    color: var(--fg);
+  }
+
+  .bar__cell :global(.icon) {
+    inline-size: var(--space-5);
+    block-size: var(--space-5);
+  }
+
+  .bar__label {
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    text-align: center;
+  }
+
+  /* The person is the primary action: filled bronze with stage ink (§1.2 rule 7). */
+  .bar__cell--wa,
+  .bar__cell--wa:hover {
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+  }
+
+  .bar__cell--wa:active {
+    background: var(--btn-bg-hover);
+  }
+
+  .bar__cell--wa + .bar__cell {
+    border-inline-start: 0;
+  }
+
+  .bar :global(.bar__rate) {
+    font-family: var(--ff-display);
+    font-size: var(--t-name);
+    font-weight: var(--fw-display-small);
+    line-height: 1;
+    color: var(--numeral);
+  }
+
+  .bar__cell:focus-visible {
+    outline-offset: calc(var(--space-1) * -1);
   }
 </style>

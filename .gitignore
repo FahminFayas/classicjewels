@@ -28,3 +28,7 @@ lighthouse/
 # design audit screenshots (npm run audit:design)
 .shots/
 .eslintcache
+
+# Cloudflare Wrangler (npm run pages:dev)
+.wrangler/
+.dev.vars*

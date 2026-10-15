@@ -1,0 +1,125 @@
+---
+/**
+ * The only way a velvet photograph is drawn (docs/design-system-v2.md §1.2 rules 1 and 4, §3.6,
+ * §5.2). A <figure class="stage-img"> (base.css) holding an AVIF/WebP <Picture>:
+ *
+ *   - never wider than its source: `cap` is clamped to image.width (asking for more logs a build
+ *     warning naming the file; nothing is ever upscaled), and the srcset only offers widths up
+ *     to the source;
+ *   - the box has its size before the image loads (aspect-ratio from the file): CLS 0;
+ *   - overflow: clip, never hidden, so view() timelines keep working on it and inside it;
+ *   - one of three masks (spot, pool, edge; or none), never animated. The ground shows through:
+ *     the section's stage, or the piece's own sampled velvet when the page passes `stage`.
+ *
+ * Exactly one `priority` image per page (the LCP image): eager, sync, fetchpriority high, never
+ * faded or masked by an animation. A second one on the same page logs a build warning.
+ * Everything else is lazy with fetchpriority low. `light="scroll"` lets the case light come on as
+ * it enters (walls only); `recede` lets the home hero piece fall back as you leave it.
+ */
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+export interface Props {
+  image: ImageMetadata;
+  alt: string;
+  mask?: 'spot' | 'pool' | 'edge' | 'none';
+  /** CSS px; clamped to the source width. Default min(image.width, 600). */
+  cap?: number;
+  /** Sampled ground (#rrggbb) from the product's `stage` field, when the piece is shown alone. */
+  stage?: string;
+  /** Exactly one per page: the LCP image. */
+  priority?: boolean;
+  /** scroll: the case light comes on as it enters (walls only). */
+  light?: 'static' | 'scroll';
+  recede?: boolean;
+  /** target: this figure is the piece page's stage (view-transition-name: piece).
+      source: a listing card; piece-morph.ts names it on pageswap. */
+  morph?: 'target' | 'source';
+  /** Destination path for morph="source". */
+  href?: string;
+  sizes?: string;
+  class?: string;
+}
+
+const {
+  image,
+  alt,
+  mask = 'spot',
+  cap: wanted,
+  stage,
+  priority = false,
+  light = 'static',
+  recede = false,
+  morph,
+  href,
+  sizes,
+  class: className,
+} = Astro.props;
+
+const name = image.src.split('?')[0]?.split('/').pop() ?? image.src;
+const requested = Math.round(wanted ?? Math.min(image.width, 600));
+if (requested > image.width) {
+  console.warn(
+    `[StageImage] ${name} is ${image.width}px wide; a cap of ${requested}px was asked for. Drawn at ${image.width}px (never upscaled).`,
+  );
+}
+const cap = Math.min(requested, image.width);
+const widths = [...new Set([240, 360, 480, cap, image.width].filter((w) => w <= image.width))].sort(
+  (a, b) => a - b,
+);
+
+const ground = stage && /^#[0-9a-f]{6}$/i.test(stage) ? stage : undefined;
+if (stage && !ground) console.warn(`[StageImage] ignored stage "${stage}" on ${name}: not #rrggbb`);
+if (morph === 'source' && !href) console.warn(`[StageImage] morph="source" on ${name} needs href`);
+
+// One priority image per page (rule 4). Astro.locals lives for one page render.
+if (priority) {
+  const locals = Astro.locals as Record<string, unknown>;
+  const count = ((locals.cjPriorityImages as number | undefined) ?? 0) + 1;
+  locals.cjPriorityImages = count;
+  if (count > 1) {
+    console.warn(`[StageImage] ${Astro.url.pathname} has ${count} priority images (one allowed)`);
+  }
+}
+
+const style = [
+  `--cap:${cap}px`,
+  `--ar:${image.width}/${image.height}`,
+  ground && `--stage:${ground}`,
+  morph === 'target' && 'view-transition-name:piece',
+]
+  .filter(Boolean)
+  .join(';');
+---
+
+<figure
+  class:list={['stage-img', recede && 'recede', className]}
+  data-mask={mask}
+  data-light={light === 'scroll' ? 'scroll' : undefined}
+  data-morph-href={morph === 'source' ? href : undefined}
+  style={style}
+>
+  {priority ? (
+    <Picture
+      src={image}
+      alt={alt}
+      formats={['avif', 'webp']}
+      widths={widths}
+      sizes={sizes ?? `(min-width: 64em) ${cap}px, min(${cap}px, 100vw)`}
+      fit="cover"
+      priority
+    />
+  ) : (
+    <Picture
+      src={image}
+      alt={alt}
+      formats={['avif', 'webp']}
+      widths={widths}
+      sizes={sizes ?? `(min-width: 64em) ${cap}px, min(${cap}px, 100vw)`}
+      fit="cover"
+      loading="lazy"
+      decoding="async"
+      fetchpriority="low"
+    />
+  )}
+</figure>

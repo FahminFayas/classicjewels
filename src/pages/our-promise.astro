@@ -1,28 +1,53 @@
 ---
 /**
- * Our promise: the six commitments from site.ts, each with what it covers, what it does not and
- * how to claim it. Design-spec §7.10 collapsed into one page (the ledger rows link to #ids here).
- * Facts about the law come from docs/research/facts-and-sources.md; anything the owner has not
- * confirmed is phrased as "ask in store".
+ * Our promise (docs/design-system-v2.md §6.15). Ivory, a reading page.
+ *
+ *   1. Opener, then the full promise ledger: every commitment, each row linking to its terms.
+ *   2. Each promise's terms: what it covers, what it does not, how to claim it. The returns terms
+ *      print site.returnPolicy verbatim with its statutory line, as the terms page does.
+ *   3. Questions, then an enquiry band.
+ *
+ * The exchange promise keeps its site.ts title ("no weight deduction") only once the owner has
+ * confirmed the terms (site.exchange.confirmed). Until then it reads "Old gold exchanged at the
+ * day's rate", the "no weight deduction" line is left out of its terms, and FAQ entries that
+ * promise a 0% or no deduction are not shown. Facts about the law come from
+ * docs/research/facts-and-sources.md; anything the owner has not confirmed is phrased as "ask in
+ * store".
  */
 import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import EnquiryBand from '@/components/sections/EnquiryBand.astro';
 import Faq from '@/components/sections/Faq.astro';
-import Hero from '@/components/sections/Hero.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
 import Icon from '@/components/ui/Icon.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Section from '@/components/ui/Section.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
 import { site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getFaqGroup } from '@/lib/content';
 import { countWord } from '@/lib/format';
-import { KARAT_META, type Karat } from '@/lib/gold-rate';
 import { routes } from '@/lib/routes';
 import { itemListSchema } from '@/lib/schema';
+import { DISPLAY_KARATS, KARAT_FACTS } from '@/lib/tones';
+import { whatsappUrl } from '@/lib/whatsapp';
 
 const faq = await getFaqGroup('our-promise');
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 
 const days = site.returnPolicy.days;
+const confirmed = site.exchange.confirmed;
+
+/** The promises as shown: the exchange title waits for the owner's confirmation. */
+const promises = site.promises.map((p) =>
+  p.id === 'gold-exchange' && !confirmed
+    ? { ...p, title: 'Old gold exchanged at the day’s rate' }
+    : p,
+);
+
+/** FAQ entries that promise a deduction-free exchange wait for the same confirmation. */
+const faqItems = confirmed
+  ? faq.data.items
+  : faq.data.items.filter((item) => !/deduction/i.test(`${item.question} ${item.answer}`));
 
 interface Terms {
   covers: string[];
@@ -95,7 +120,11 @@ const terms: Record<string, Terms> = {
   'gold-exchange': {
     covers: [
       'Old gold is tested and weighed in front of you and credited by weight at the day’s rate for its karat against a new piece.',
-      'No weight deduction: the credit is the weight the scale shows, at the rate for the karat the test shows.',
+      ...(confirmed
+        ? [
+            'No weight deduction: the credit is the weight the scale shows, at the rate for the karat the test shows.',
+          ]
+        : []),
       `The Classic Group has been ${site.group.experience}; we price old gold the way traders do.`,
     ],
     excludes: [
@@ -152,21 +181,18 @@ const terms: Record<string, Terms> = {
   },
 };
 
-const rows = site.promises.map((p, i) => {
+const rows = promises.map((p, i) => {
   const t = terms[p.id];
   if (!t) throw new Error(`No terms written for promise "${p.id}" on /our-promise/`);
   return { p, t, no: String(i + 1).padStart(2, '0') };
 });
 
 /** Fineness table for the hallmark section: 24K to 18K, as stamped. */
-const stampRows = (['24k', '22k', '21k', '18k'] as Karat[]).map((k) => ({
-  ...KARAT_META[k],
-  purity: `${(Number.parseInt(KARAT_META[k].fineness, 10) / 10).toFixed(1)}%`,
-}));
+const stampRows = DISPLAY_KARATS.map((k) => KARAT_FACTS[k]);
 
 const jsonLd = [
   itemListSchema(
-    site.promises.map((p) => ({
+    promises.map((p) => ({
       name: p.title,
       url: `${new URL(routes.promise, origin).toString()}#${p.id}`,
     })),
@@ -174,53 +200,63 @@ const jsonLd = [
   ),
 ];
 
+const ask = whatsappUrl(
+  `${site.whatsapp.greeting} I have a question about your terms before I buy.`,
+);
+
 const title = 'Our Promises: Hallmark, Diamonds, Returns and Exchange';
 const description = `${countWord(site.promises.length)} written commitments: the UAE hallmark, tested diamonds, ${days}-day returns, cleaning for life and old gold credited by weight. Ask on WhatsApp.`;
 ---
 
 <BaseLayout ground="ivory" title={title} description={description} jsonLd={jsonLd}>
-  <div class="container">
-    <Breadcrumbs items={[{ name: 'Our promise', href: routes.promise }]} />
-  </div>
-
-  <Hero
+  <PageHead
+    tone="ivory"
+    breadcrumbs={[{ name: 'Our promise', href: routes.promise }]}
     eyebrow="Our promise"
-    title="Our terms, in writing"
-    lead={`${countWord(site.promises.length)} commitments, each with what it covers, what it does not and how to claim it. If a term is unclear for your piece, ask before you buy.`}
+    title="Our terms,"
+    accent="in writing"
+    lead={`${countWord(promises.length)} commitments, each with what it covers, what it does not and how to claim it. If a term is unclear for your piece, ask before you buy.`}
   />
 
-  <section class="section">
-    <div class="container">
-      <AssuranceLedger />
-    </div>
-  </section>
+  <Section tone="ivory" class="promise-ledger">
+    <h2 class="sr-only">The commitments</h2>
+    <AssuranceLedger variant="full" />
+  </Section>
 
-  {rows.map(({ p, t, no }) => (
-    <section class="section section--ruled promise" id={p.id}>
-      <div class="container">
+  <Section tone="ivory" ruled labelledby="full-title">
+    <SectionHead
+      id="full-title"
+      eyebrow="The terms in full"
+      title="What each one covers"
+      shape="split"
+    >
+      What is included, what is not, and what to bring when you claim it.
+    </SectionHead>
+    {rows.map(({ p, t, no }) => (
+      <article class="promise" id={p.id} aria-labelledby={`${p.id}-title`}>
         <div class="promise__head">
-          <span class="promise__no" aria-hidden="true">
+          <span class="promise__no fig" aria-hidden="true">
             {no}
           </span>
-          <div class="promise__text">
-            <h2>{p.title}</h2>
-            <p class="lead">{p.detail}</p>
-          </div>
+          <h3 class="promise__title" id={`${p.id}-title`}>
+            {p.title}
+          </h3>
+          <p class="promise__detail">{p.detail}</p>
         </div>
         <div class="terms">
           <div class="terms__block">
-            <h3>What it covers</h3>
+            <h4 class="terms__title">What it covers</h4>
             <ul class="terms__list" role="list">
               {t.covers.map((item) => (
                 <li>
-                  <Icon name="c-ring" class="terms__glyph" />
+                  <span class="terms__mark" aria-hidden="true" />
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
           </div>
           <div class="terms__block">
-            <h3>What it does not cover</h3>
+            <h4 class="terms__title">What it does not cover</h4>
             <ul class="terms__list" role="list">
               {t.excludes.map((item) => (
                 <li>
@@ -231,11 +267,11 @@ const description = `${countWord(site.promises.length)} written commitments: the
             </ul>
           </div>
           <div class="terms__block">
-            <h3>How to claim it</h3>
-            <ol class="terms__list terms__list--steps" role="list">
+            <h4 class="terms__title">How to claim it</h4>
+            <ol class="terms__list" role="list">
               {t.claim.map((item, i) => (
                 <li>
-                  <span class="terms__step tabular" aria-hidden="true">
+                  <span class="terms__step fig" aria-hidden="true">
                     {i + 1}
                   </span>
                   <span>{item}</span>
@@ -246,7 +282,7 @@ const description = `${countWord(site.promises.length)} written commitments: the
         </div>
         {p.id === 'hallmark-916' && (
           <div class="stamp">
-            <h3>Reading the stamp</h3>
+            <h4 class="terms__title">Reading the stamp</h4>
             <table class="stamp__table">
               <caption class="sr-only">Karat, fineness stamp and gold content</caption>
               <thead>
@@ -260,8 +296,8 @@ const description = `${countWord(site.promises.length)} written commitments: the
                 {stampRows.map((r) => (
                   <tr>
                     <th scope="row">{r.label}</th>
-                    <td class="tabular">{r.fineness}</td>
-                    <td class="tabular">{r.purity}</td>
+                    <td class="fig stamp__n">{r.stamp}</td>
+                    <td class="fig">{r.percent}</td>
                   </tr>
                 ))}
               </tbody>
@@ -273,138 +309,169 @@ const description = `${countWord(site.promises.length)} written commitments: the
           </div>
         )}
         {t.links && (
-          <p class="promise__links small">
+          <p class="promise__links">
             {t.links.map((l) => (
-              <a href={l.href}>
-                {l.label} <Icon name="arrow-right" />
-              </a>
+              <MoreLink href={l.href}>{l.label}</MoreLink>
             ))}
           </p>
         )}
-      </div>
-    </section>
-  ))}
+      </article>
+    ))}
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <Faq heading={faq.data.heading} items={faq.data.items} />
-        <EnquiryBlock
-          compact
-          text="Ask about any of these terms before you buy. WhatsApp is fastest during shop hours."
-        />
-      </div>
-    </div>
-  </section>
+  <Section tone="ivory" ruled>
+    <Faq heading={faq.data.heading} items={faqItems} />
+  </Section>
+
+  <EnquiryBand
+    title="Ask about a term"
+    accent="before you buy"
+    text="Tell us the piece and the question. We reply with the terms that apply to it."
+    whatsappUrl={ask}
+    secondary={{ href: routes.stores, label: 'Find a branch' }}
+  />
 </BaseLayout>
 
 <style>
+  :global(.sec.promise-ledger) {
+    padding-block-start: 0;
+  }
+
+  .promise {
+    scroll-margin-block-start: calc(var(--header-h) + var(--space-5));
+  }
+
+  .promise + .promise {
+    margin-block-start: var(--space-9);
+  }
+
   .promise__head {
     display: grid;
-    grid-template-columns: auto 1fr;
-    gap: var(--space-4);
-    align-items: start;
-    margin-block-end: var(--space-7);
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-2) var(--space-5);
+    align-items: baseline;
+    margin-block-end: var(--space-6);
   }
 
   .promise__no {
+    min-inline-size: 2ch;
     font-family: var(--ff-display);
-    font-size: var(--t-h2);
-    font-weight: 400;
-    line-height: 1.12;
-    font-variant-numeric: tabular-nums;
-    color: var(--gold-600);
-    min-inline-size: 2.2ch;
+    font-size: var(--t-numeral);
+    font-weight: var(--fw-display-small);
+    line-height: 1;
+    color: var(--numeral);
   }
 
-  .promise__text {
-    max-inline-size: 44rem;
+  .promise__title {
+    font-size: var(--t-h3);
   }
 
-  .promise__text .lead {
-    margin-block-start: var(--space-4);
+  .promise__detail {
+    grid-column: 2;
+    max-inline-size: 52ch;
+    color: var(--body);
   }
 
-  /* Three ruled sub-blocks: one column on phones, three with hairlines between on wide screens. */
+  @media (min-width: 64em) {
+    .promise__head {
+      grid-template-columns: auto minmax(0, 5fr) minmax(0, 6fr);
+      column-gap: var(--grid-gap);
+    }
+
+    .promise__detail {
+      grid-column: 3;
+    }
+  }
+
+  /* Three ruled blocks: one column on phones, three with hairlines between on wide screens. */
   .terms {
     display: grid;
-    border-block-start: 1px solid var(--rule-1);
+    border-block-start: 1px solid var(--rule-strong);
   }
 
   .terms__block {
     min-inline-size: 0;
     padding-block: var(--space-5);
-    border-block-end: 1px solid var(--rule-1);
+    border-block-end: 1px solid var(--rule);
   }
 
-  .terms__block h3 {
-    font-family: var(--ff-text);
-    font-size: var(--t-title);
-    font-weight: 500;
+  .terms__title {
     margin-block-end: var(--space-4);
+    font-family: var(--ff-text);
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    line-height: 1.4;
+    text-transform: uppercase;
+    color: var(--eyebrow);
   }
 
   .terms__list {
     display: grid;
     gap: var(--space-3);
-    color: var(--ink-700);
+    color: var(--body);
   }
 
   .terms__list li {
     display: grid;
-    grid-template-columns: auto 1fr;
-    gap: var(--space-3);
+    grid-template-columns: var(--space-5) minmax(0, 1fr);
+    gap: var(--space-2);
     align-items: start;
   }
 
-  .terms__glyph {
-    flex: none;
-    margin-block-start: 0.3em;
-    color: var(--gold-600);
-    inline-size: 0.875rem;
-    block-size: 0.875rem;
+  /* The covered mark: the small turned square used for stations and selections. */
+  .terms__mark {
+    inline-size: var(--space-2);
+    block-size: var(--space-2);
+    margin-block-start: 0.55em;
+    margin-inline-start: var(--space-1);
+    background: var(--wipe);
+    rotate: 45deg;
+  }
+
+  .terms :global(.terms__glyph) {
+    inline-size: var(--space-4);
+    block-size: var(--space-4);
+    margin-block-start: 0.2em;
+    color: var(--muted);
   }
 
   .terms__step {
     font-family: var(--ff-display);
-    font-size: var(--t-title);
-    line-height: 1.5;
-    color: var(--gold-700);
-    min-inline-size: 1.5ch;
+    font-size: var(--t-name);
+    font-style: italic;
+    font-weight: var(--fw-display-small);
+    line-height: 1.1;
+    color: var(--numeral);
   }
 
   .stamp {
-    margin-block-start: var(--space-6);
+    margin-block-start: var(--space-7);
     max-inline-size: 32rem;
-  }
-
-  .stamp h3 {
-    font-family: var(--ff-text);
-    font-size: var(--t-title);
-    font-weight: 500;
-    margin-block-end: var(--space-4);
   }
 
   .stamp__table {
     font-size: var(--t-small);
-    border-block: 1px solid var(--rule-2);
+    border-block: 1px solid var(--rule-strong);
   }
 
   .stamp__table th,
   .stamp__table td {
-    padding-block: var(--space-2);
+    padding-block: var(--space-3);
     padding-inline: var(--space-3);
     text-align: start;
-    border-block-end: 1px solid var(--rule-1);
+    border-block-end: 1px solid var(--rule);
   }
 
-  .stamp__table thead th {
-    background: var(--surface-2);
-    font-weight: 500;
+  .stamp__table th {
+    font-weight: var(--fw-text-strong);
+    color: var(--fg);
   }
 
-  .stamp__table tbody th {
-    font-weight: 500;
+  .stamp__n {
+    font-family: var(--ff-display);
+    font-size: var(--t-name);
+    color: var(--numeral);
   }
 
   .stamp .caption {
@@ -414,23 +481,8 @@ const description = `${countWord(site.promises.length)} written commitments: the
   .promise__links {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-4);
-    margin-block-start: var(--space-5);
-  }
-
-  .promise__links a {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    min-block-size: var(--tap);
-    font-weight: 500;
-    color: var(--plum-700);
-    text-decoration: none;
-  }
-
-  .promise__links a:hover {
-    text-decoration: underline;
-    text-decoration-color: var(--gold-600);
+    gap: var(--space-2) var(--space-6);
+    margin-block-start: var(--space-6);
   }
 
   @media (min-width: 64em) {
@@ -444,7 +496,7 @@ const description = `${countWord(site.promises.length)} written commitments: the
 
     .terms__block + .terms__block {
       padding-inline-start: var(--space-6);
-      border-inline-start: 1px solid var(--rule-1);
+      border-inline-start: 1px solid var(--rule);
     }
   }
 </style>

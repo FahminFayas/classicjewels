@@ -1,0 +1,222 @@
+---
+/**
+ * The piece on its stage (docs/design-system-v2.md §5.5, §6.4; replaces ProductGallery). The
+ * page's one priority image and the target of the view transition from a listing:
+ *
+ *   velvet  StageImage, mask "pool", at most 600 CSS px (never above the source), on the
+ *           photograph's own sampled velvet (`stage` from content) when it has one, figure
+ *           named view-transition-name: piece
+ *   studio  a lilac Plate at its native width, wrapped in the same transition name
+ *
+ * Desktop (64em): the column is sticky under the header beside the ticket. Under the photograph,
+ * the honest note "One photograph so far.", and only when the owner has said yes
+ * (site.services.morePhotos) an invitation to ask for another on WhatsApp. More photographs, when
+ * content has them: radio thumbnails swap the stage image with :has() (no script, no carousel).
+ *
+ * Only one element may carry a view-transition name at a time: when piece-morph.ts names a card
+ * on this page (a "From the same counter" case being opened), the rule at the foot of the styles
+ * takes the name off the stage, so the next page morphs from that card without a duplicate.
+ */
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+import Plate from '@/components/ui/Plate.astro';
+import StageImage from '@/components/ui/StageImage.astro';
+import { site } from '@/data/site';
+import { photoGround, productPath, type Product } from '@/lib/content';
+import { whatsappUrl } from '@/lib/whatsapp';
+
+export interface Props {
+  product: Product;
+  images: { src: ImageMetadata; alt: string }[];
+}
+
+const { product, images } = Astro.props;
+const { data } = product;
+const velvet = photoGround(product) === 'velvet';
+const many = images.length > 1;
+const url = new URL(productPath(product), Astro.site ?? Astro.url.origin).toString();
+const morePhotos = whatsappUrl(
+  `${site.whatsapp.greeting} could you send another photograph of the ${data.name} (ref ${data.sku})? ${url}`,
+);
+const thumbWidths = (img: ImageMetadata) => [72, 144].filter((w) => w <= img.width);
+---
+
+<div
+  class:list={['pstage', velvet ? 'pstage--velvet' : 'pstage--studio']}
+  data-count={images.length}
+>
+  <div class="pstage__frame">
+    {images.map((img, i) =>
+      velvet ? (
+        <div class="pstage__shot" data-i={i}>
+          <StageImage
+            image={img.src}
+            alt={img.alt}
+            mask="pool"
+            cap={600}
+            stage={data.stage}
+            priority={i === 0}
+            morph={i === 0 ? 'target' : undefined}
+            sizes="(min-width: 64em) 600px, 100vw"
+          />
+        </div>
+      ) : (
+        <div class:list={['pstage__shot', i === 0 && 'pstage__plate']} data-i={i}>
+          <Plate
+            image={img.src}
+            alt={img.alt}
+            cap={img.src.width}
+            priority={i === 0}
+            sizes={`(min-width: 64em) ${img.src.width}px, 100vw`}
+          />
+        </div>
+      ),
+    )}
+  </div>
+
+  {many && (
+    <fieldset class="pstage__thumbs">
+      <legend class="sr-only">Photographs of the {data.name}</legend>
+      {images.map((img, i) => (
+        <label class="pstage__thumb">
+          <input class="sr-only" type="radio" name="pstage-shot" value={i} checked={i === 0} />
+          <Picture
+            src={img.src}
+            alt=""
+            formats={['avif', 'webp']}
+            widths={thumbWidths(img.src)}
+            sizes="72px"
+            fit="cover"
+            loading="lazy"
+            decoding="async"
+          />
+          <span class="sr-only">Photograph {i + 1}</span>
+        </label>
+      ))}
+    </fieldset>
+  )}
+
+  <p class="pstage__note caption">
+    {many ? `${images.length} photographs so far.` : 'One photograph so far.'}
+    {site.services.morePhotos && (
+      <>
+        {' '}
+        <a href={morePhotos} target="_blank" rel="noopener">
+          Ask on WhatsApp for another photograph
+          <span class="sr-only"> (opens WhatsApp)</span>
+        </a>
+        .
+      </>
+    )}
+  </p>
+</div>
+
+<style>
+  .pstage {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-4);
+    min-inline-size: 0;
+  }
+
+  /* Every photograph shares one cell; only the chosen one shows. */
+  .pstage__frame {
+    display: grid;
+    inline-size: 100%;
+    justify-items: center;
+  }
+
+  .pstage__shot {
+    grid-area: 1 / 1;
+    display: grid;
+    justify-items: center;
+    inline-size: 100%;
+  }
+
+  .pstage__shot + .pstage__shot {
+    visibility: hidden;
+  }
+
+  .pstage__plate {
+    view-transition-name: piece;
+  }
+
+  /* studio: the cut-out at its native size in a lilac field of the stage's size (its own ground,
+     so no edge shows): a piece on the counter, not a thumbnail on a page. */
+  .pstage--studio .pstage__frame {
+    place-items: center;
+    inline-size: min(100%, var(--cap-velvet));
+    aspect-ratio: 1;
+    padding: var(--space-5);
+    background: var(--plate-lilac);
+  }
+
+  .pstage__thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .pstage__thumb {
+    position: relative;
+    inline-size: var(--tap);
+    cursor: pointer;
+    outline: 1px solid var(--rule);
+    outline-offset: calc(var(--space-1) / 2);
+  }
+
+  .pstage__thumb:has(input:checked) {
+    outline-color: var(--accent);
+  }
+
+  .pstage__thumb:has(input:focus-visible) {
+    outline: 2px solid var(--focus-ring);
+  }
+
+  .pstage__thumb :global(img) {
+    inline-size: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+
+  .pstage__note {
+    max-inline-size: 26rem;
+    text-align: center;
+  }
+
+  /* :has() swaps the shown photograph (six at most, the schema's limit). */
+  .pstage:has(input[value='1']:checked) .pstage__shot[data-i='0'],
+  .pstage:has(input[value='2']:checked) .pstage__shot[data-i='0'],
+  .pstage:has(input[value='3']:checked) .pstage__shot[data-i='0'],
+  .pstage:has(input[value='4']:checked) .pstage__shot[data-i='0'],
+  .pstage:has(input[value='5']:checked) .pstage__shot[data-i='0'] {
+    visibility: hidden;
+  }
+
+  .pstage:has(input[value='1']:checked) .pstage__shot[data-i='1'],
+  .pstage:has(input[value='2']:checked) .pstage__shot[data-i='2'],
+  .pstage:has(input[value='3']:checked) .pstage__shot[data-i='3'],
+  .pstage:has(input[value='4']:checked) .pstage__shot[data-i='4'],
+  .pstage:has(input[value='5']:checked) .pstage__shot[data-i='5'] {
+    visibility: visible;
+  }
+
+  @media (min-width: 64em) {
+    .pstage {
+      position: sticky;
+      inset-block-start: calc(var(--header-h) + var(--space-5));
+      align-self: start;
+    }
+  }
+
+  /* One transition name at a time: a named card elsewhere on the page takes it from the stage. */
+  :global(body:has([data-morph-href][style*='view-transition-name'])) .pstage :global(.stage-img),
+  :global(body:has([data-morph-href][style*='view-transition-name'])) .pstage__plate {
+    view-transition-name: none !important;
+  }
+</style>

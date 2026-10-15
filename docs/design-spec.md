@@ -6,6 +6,8 @@ Build-ready merge of the three design directions (editorial-luxury, souq-heritag
 
 ## 0. Decisions log
 
+> **Superseded.** The visual direction below was replaced by `docs/design-system-v2.md` (Night vitrine, 13 October 2026). This section is kept as history.
+
 **Spine.** Combined judge totals: souq-heritage 64, editorial-luxury 63, conversion-minimal 61. Both judges said souq-heritage "set in Bodoni, scrim removed, would tie or beat spec 1". So: **souq-heritage is the spine** (thesis = the counter: ivory page, white tray, gold hairline, plum velvet; IA; SEO formulas; rate board as plum signboard; old gold as an offer; C-ring motif; honest empty states), **set in editorial-luxury's typographic and compositional grammar** (Bodoni Moda + IBM Plex Sans, plates on a contact-sheet tray, numbered 01–06 ledger, typographic 5/7 hero, numbered collections index, margin notes), **on conversion-minimal's plumbing** (baked rates + idle refetch, CORS/proxy, H1-first mobile DOM, card-as-single-link with `data-wa` button, client-side filter on one canonical URL, ship-gates).
 
 Taken, by source:
@@ -52,11 +54,15 @@ Rejected, with reason:
 
 ## 1. Thesis
 
+> **Superseded** by `docs/design-system-v2.md` §1.
+
 Classic Jewels & Diamonds is a two-year-old counter standing on the Classic Group's decades of gold trading, scrap buying and refining in Dubai. The site behaves like that counter at Shop 6, Mariyam Plaza: an ivory page (the shop), white trays with hairline dividers (where the pieces lie), plum velvet only where something is presented (the rate board, the old-gold offer, the footer), and one bronze hairline as the thread back to the fascia. Hierarchy comes from Bodoni Moda's stem/hairline contrast against IBM Plex Sans, from 1 px rules, from numbered lists and from asymmetric 5/7 placements, never from boxes, shadows, washes or motion. Every section states a gold fact a Deira buyer checks before walking in: karat, hallmark, grams, today's AED rate, exchange terms, Shop 6. The daily rate is the masthead number of the site. Material precision is the luxury; there is no mood-board luxury.
 
 ---
 
 ## 2. Colour tokens
+
+> **Superseded** by `docs/design-system-v2.md` §2 and `src/styles/tokens.css`.
 
 `#4B2849` is kept verbatim as `--plum-700` (fascia and logo). `#BE8658` is kept verbatim as `--gold-600` but demoted to rules, glyphs, eyebrow rules and ≥ 24 px display use; its text role moves to `--gold-700`. `#C2AF68` / `#BDAA67` are retired (brassy beside photographed 22K). Champagne `--gold-300` is the on-plum accent.
 
@@ -139,6 +145,8 @@ Rules: body text never in gold-600 or gold-500. Focus rings never gold on light.
 
 ## 3. Typography
 
+> **Superseded** by `docs/design-system-v2.md` §2.3 and §4 (Cormorant Garamond and IBM Plex Sans; Bodoni Moda is no longer used).
+
 **Display: Bodoni Moda** (variable, OFL; axes `wght` 400–900, `opsz` 6–96). Roman only. Didone stem/hairline contrast is the grammar of printed jewellery catalogues; the `opsz` axis, left on `auto`, keeps hairlines solid at 20 px on 1× Android and razor-thin at 72 px.
 **Text/UI: IBM Plex Sans** (variable, OFL; `wght` 100–700; `wdth` axis instanced to 100 and dropped). Continuity with the current identity; tabular lining figures for every rate, weight and table.
 **Reserved for `/ar`:** IBM Plex Sans Arabic (not shipped on `/en`). Bodoni has no Arabic; `/ar` display sizes use Plex Sans Arabic 500 until an Arabic display face is chosen.
@@ -175,6 +183,8 @@ Margin note: Bodoni 400 `--t-note`, colour `--ink-500`, preceded by the C-ring g
 ---
 
 ## 4. Spacing, layout, grid, radius, hairlines, aspect ratios, image treatment
+
+> **Superseded** by `docs/design-system-v2.md` §2, §3 and §5.2 (`StageImage`, `Plate`, `Panorama`).
 
 **Spacing** (4 px base): `--space-1: .25rem; -2: .5rem; -3: .75rem; -4: 1rem; -5: 1.5rem; -6: 2rem; -7: 3rem; -8: 4rem; -9: 6rem; -10: 8rem`. Section rhythm `--section-y: clamp(3.5rem, 2.5rem + 5vw, 7rem)`. Within a section, head → content gap `--space-7`; content → section link `--space-6`.
 
@@ -308,6 +318,8 @@ Alt-text template (products): `{name}, {karat}K gold {category}, {grossWeightG} 
 
 ## 6. Component inventory with states
 
+> **Superseded** by `docs/design-system-v2.md` §5.
+
 All interactive elements: `:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px }` (`--focus-on-plum` on plum); minimum 44 × 44 px hit area; `cursor: pointer` only on real controls. Icons: one inline SVG sprite (`/src/assets/icons.svg`, 12 monoline glyphs at 1.25 px stroke, `currentColor`): whatsapp, phone, map-pin, arrow-right, arrow-up-right, plus, minus, menu, close, copy, check, external. The C-ring glyph: `<circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.25" pathLength="100" stroke-dasharray="89 11" transform="rotate(50 8 8)"/>` (40° gap centred at 4 o'clock; designer matches the gap angle to the logo's C aperture).
 
 1. **SkipLink** — `--surface-0`, plum text, visible on focus at top-start. States: hidden, focused.
@@ -347,6 +359,8 @@ All interactive elements: `:focus-visible { outline: 2px solid var(--focus); out
 ---
 
 ## 7. Page compositions
+
+> **Superseded** by `docs/design-system-v2.md` §6 and §8 (the URL structure in §5 of this file still stands).
 
 Copy below is final unless marked **[owner]**. `{years}` = `site.claims.yearsInGold`. Rate figures in examples are placeholders for the baked value and must never be hard-coded.
 
@@ -448,6 +462,8 @@ Per §6.32.
 ---
 
 ## 8. Motion, interaction, accessibility
+
+> **Superseded in part** by `docs/design-system-v2.md` §3.8 (motion policy): every motion ban below is replaced; the accessibility rules stand.
 
 - Every transition is wrapped in `@media (prefers-reduced-motion: no-preference)`; otherwise it is instant. Allowed transitions: `opacity` and `transform` only. Durations: 150 ms (underline, button fill), 200 ms (mega panel opacity), 240 ms (drawer `translateX`). Easing `cubic-bezier(.2,.7,.2,1)`.
 - Never: scroll reveals, parallax, counters/number count-ups, autoplay sliders, hover image transforms, cursor effects, skeleton shimmer, loading spinners.

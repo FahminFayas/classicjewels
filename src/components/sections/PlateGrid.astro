@@ -1,0 +1,178 @@
+---
+/**
+ * Studio cut-outs on their own ground (docs/design-system-v2.md §5.5). Lilac photographs only: a
+ * velvet photograph passed here fails the build (it belongs in a CaseWall, on the stage). Renders
+ * ProductCard layout="plate" cells for an ivory section the page supplies.
+ *
+ * Each card's media is a lilac square with the cut-out centred in it at its own size (half its
+ * source width at most, so a ring is smaller than a bangle, as on a counter). The cells meet with
+ * 1 px gaps, so the row reads as one continuous --plate-lilac field split by ivory hairlines and
+ * no photograph shows an edge. Desktop: `columns` (4 or 3) from 64em, 3 from 48em. Phones: a rail
+ * of 44 % cards running edge to edge, the next plate peeking, the bronze progress hairline and the
+ * previous / next buttons (shown by motion.ts only while the rail overflows).
+ *
+ * Loads piece-morph.ts, so the clicked plate grows into its piece page. With `filterable` and an
+ * `id` the list is a filter grid (src/scripts/filter.ts reads the cards inside each cell).
+ */
+import ProductCard from '@/components/sections/ProductCard.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { photoGround, type Product } from '@/lib/content';
+import type { GoldRate } from '@/lib/gold-rate';
+
+export interface Props {
+  products: Product[]; // lilac only (build error otherwise)
+  rate: GoldRate | null;
+  collectionNames: Record<string, string>;
+  columns?: 3 | 4;
+  cap?: number;
+  headingLevel?: 'h2' | 'h3';
+  id?: string;
+  filterable?: boolean;
+}
+
+const {
+  products,
+  rate,
+  collectionNames,
+  columns = 4,
+  cap,
+  headingLevel = 'h3',
+  id,
+  filterable = false,
+} = Astro.props;
+
+const velvet = products.filter((p) => photoGround(p) !== 'lilac');
+if (velvet.length) {
+  throw new Error(
+    `PlateGrid takes studio cut-outs only; ${velvet.map((p) => p.id).join(', ')} ${velvet.length === 1 ? 'is a velvet photograph' : 'are velvet photographs'}: use CaseWall.`,
+  );
+}
+/** One plate is a card, not a counter: no rail, no buttons. */
+const single = products.length === 1;
+---
+
+<div class:list={['plates-wrap', 'rail-wrap', single && 'plates-wrap--single']}>
+  <ul
+    class="plates rail"
+    role="list"
+    id={id}
+    data-columns={columns}
+    data-filter-grid={filterable || undefined}
+  >
+    {products.map((p) => (
+      <li class="plates__cell">
+        <ProductCard
+          product={p}
+          collectionName={p.data.collection ? collectionNames[p.data.collection.id] : undefined}
+          rate={rate}
+          layout="plate"
+          cap={cap}
+          headingLevel={headingLevel}
+        />
+      </li>
+    ))}
+  </ul>
+  {!single && (
+    <div class="plates__foot" aria-hidden="true">
+      <div class="rail__progress" />
+    </div>
+  )}
+  {!single && (
+    <div class="plates__nav">
+      <button type="button" class="plates__btn" data-rail-prev hidden>
+        <Icon name="arrow-left" label="Previous pieces" />
+      </button>
+      <button type="button" class="plates__btn" data-rail-next hidden>
+        <Icon name="arrow-right" label="Next pieces" />
+      </button>
+    </div>
+  )}
+</div>
+
+<script src="@/scripts/piece-morph.ts"></script>
+
+<style>
+  .plates-wrap {
+    min-inline-size: 0;
+  }
+
+  /* Phones: the rail runs from edge to edge of the screen. */
+  .plates {
+    --rail-card: 44%;
+    gap: 1px;
+    margin-inline: calc(var(--gutter) * -1);
+    align-items: stretch;
+  }
+
+  .plates__cell {
+    min-inline-size: 0;
+  }
+
+  .plates__foot .rail__progress {
+    margin-inline: 0;
+  }
+
+  .plates__nav {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-block-start: var(--space-3);
+  }
+
+  .plates__nav:not(:has(:not([hidden]))) {
+    display: none;
+  }
+
+  .plates__btn {
+    display: grid;
+    place-items: center;
+    inline-size: var(--tap);
+    block-size: var(--tap);
+    border: 1px solid var(--btn-line);
+    color: var(--btn-line-fg);
+    transition: background-color var(--dur-quick) var(--ease-out);
+  }
+
+  .plates__btn:hover:not(:disabled) {
+    background: var(--btn-wash);
+  }
+
+  .plates__btn:disabled {
+    border-color: var(--rule);
+    color: var(--muted);
+    cursor: default;
+  }
+
+  /* A single plate: no rail, a card of its own width. */
+  .plates-wrap--single .plates {
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 22rem);
+    margin-inline: 0;
+    padding-inline: 0;
+    overflow: visible;
+  }
+
+  /* From 48em: a grid, the lilac squares meeting at 1 px ivory joins, rows apart. */
+  @media (min-width: 48em) {
+    .plates {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-7) 1px;
+      margin-inline: 0;
+      padding-inline: 0;
+      overflow: visible;
+      scroll-snap-type: none;
+    }
+
+    .plates__foot,
+    .plates__nav {
+      display: none;
+    }
+  }
+
+  @media (min-width: 64em) {
+    .plates[data-columns='4'] {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>

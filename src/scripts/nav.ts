@@ -1,114 +1,112 @@
 /**
- * Header behaviour: mobile drawer (<dialog>), mega-panel keyboard and hover-intent handling,
- * the hairline under the sticky header once the page has scrolled, hiding the mobile action bar
- * while a field is focused, and highlighting today's row in opening-hours tables.
+ * Header behaviour (docs/design-system-v2.md §5.3, §7). Loaded by BaseLayout. Budget 1.6 KB min.
  *
- * The mega panel follows the disclosure-navigation pattern: the "Jewellery" link goes to the
- * jewellery index, the toggle beside it opens the panel, Escape closes it and Tab moves through
- * its links. There are deliberately no menu roles or arrow-key handling.
+ * The menus are declarative: the Jewellery button and the rate chip open their popovers with
+ * popovertarget, the Menu button opens the drawer (a modal <dialog>) with commandfor, and
+ * Escape and light dismiss are native. This script adds:
  *
- * Without this script the Menu button does nothing, but every page stays reachable through the
- * footer links and the Jewellery index.
+ *  1. aria-expanded on every popover invoker, mirrored from the popover's toggle event;
+ *  2. hover intent for the mega panel (mouse only: opens 150 ms after the pointer rests on
+ *     Jewellery; if hover opened it, closes 200 ms after the pointer leaves button and panel;
+ *     a click just after hover confirms it), focus back to Jewellery when it closes with focus
+ *     inside or nowhere, and the last previewed style kept lit (data-active);
+ *  3. the drawer where commandfor is missing (iOS before 26.2), a backdrop click that closes it
+ *     where closedby="any" is missing, and any menu closing once one of its links is chosen (so
+ *     the back button never brings a page back with a menu open);
+ *  4. the phone action bar hidden while a form field has focus;
+ *  5. today's row marked in opening-hours tables ([data-hours-days]).
+ *
+ * Without it every menu still opens by click or tap and every page stays reachable from the
+ * footer.
  */
+const doc = document;
+const on = <E extends Event>(target: EventTarget, type: string, fn: (e: E) => unknown) =>
+  target.addEventListener(type, fn as EventListener);
 
-const HOVER_INTENT_MS = 120;
-const HOVER_CLOSE_MS = 200;
-const CLICK_AFTER_HOVER_MS = 500;
-
-// ---------- Mobile drawer ----------
-const drawer = document.querySelector<HTMLDialogElement>('#site-drawer');
-const openButton = document.querySelector<HTMLButtonElement>('[data-drawer-open]');
-if (drawer && openButton) {
-  openButton.addEventListener('click', () => {
-    drawer.showModal();
-    openButton.setAttribute('aria-expanded', 'true');
-  });
-  drawer.addEventListener('close', () => openButton.setAttribute('aria-expanded', 'false'));
-  for (const el of drawer.querySelectorAll<HTMLElement>('[data-drawer-close]')) {
-    el.addEventListener('click', () => drawer.close());
-  }
-  // Click on the backdrop closes.
-  drawer.addEventListener('click', (event) => {
-    if (event.target === drawer) drawer.close();
-  });
+// 1. Popover invokers mirror their popover's state (each popover has one invoker).
+for (const pop of doc.querySelectorAll('[popover][id]')) {
+  const invoker = doc.querySelector(`[popovertarget="${pop.id}"]`);
+  if (!invoker) continue;
+  invoker.ariaExpanded = 'false';
+  on<ToggleEvent>(pop, 'toggle', (e) => (invoker.ariaExpanded = `${e.newState == 'open'}`));
 }
 
-// ---------- Mega panel ----------
-for (const trigger of document.querySelectorAll<HTMLButtonElement>('[data-mega-trigger]')) {
-  const panelId = trigger.getAttribute('aria-controls');
-  const panel = panelId ? document.getElementById(panelId) : null;
-  const item = trigger.closest<HTMLElement>('[data-mega-item]');
-  if (!panel || !item) continue;
-
-  let openTimer: number | undefined;
-  let closeTimer: number | undefined;
-  let openedByHoverAt = 0;
-  const setOpen = (open: boolean) => {
-    trigger.setAttribute('aria-expanded', String(open));
-    panel.hidden = !open;
-    item.dataset.open = open ? 'true' : 'false';
+// 2. The mega panel.
+const mega = doc.getElementById('mega');
+const jewel = doc.querySelector<HTMLElement>('[popovertarget="mega"]');
+if (mega && jewel) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  /** When hover opened the panel; 0 when a click or a key did. */
+  let hover = 0;
+  let lit: HTMLElement | null = null;
+  const intent = (open: boolean) => (e: PointerEvent) => {
+    if (e.pointerType != 'mouse') return;
+    clearTimeout(timer);
+    if (open || hover)
+      timer = setTimeout(
+        () =>
+          !open
+            ? mega.hidePopover()
+            : mega.matches(':popover-open') || (mega.showPopover(), (hover = Date.now())),
+        open ? 150 : 200,
+      );
   };
-  const isOpen = () => trigger.getAttribute('aria-expanded') === 'true';
-
-  trigger.addEventListener('click', () => {
-    // A click that lands just after hover opened the panel should not close it again.
-    if (isOpen() && Date.now() - openedByHoverAt < CLICK_AFTER_HOVER_MS) return;
-    setOpen(!isOpen());
+  for (const el of [jewel, mega]) {
+    on(el, 'pointerenter', intent(true));
+    on(el, 'pointerleave', intent(false));
+  }
+  jewel.onclick = (e) => {
+    if (Date.now() - hover < 600) e.preventDefault();
+    hover = 0;
+  };
+  // Closing with focus inside, or with nothing focused after a click or a key, focuses
+  // Jewellery first (so the hide keeps it there); a panel the pointer merely left does not.
+  on<ToggleEvent>(mega, 'beforetoggle', (e) => {
+    if (e.newState == 'open') return;
+    const active = doc.activeElement;
+    if (mega.contains(active) || (active == doc.body && !hover)) jewel.focus();
+    hover = 0;
   });
-  item.addEventListener('pointerenter', (event) => {
-    if ((event as PointerEvent).pointerType !== 'mouse') return;
-    window.clearTimeout(closeTimer);
-    if (isOpen()) return;
-    openTimer = window.setTimeout(() => {
-      setOpen(true);
-      openedByHoverAt = Date.now();
-    }, HOVER_INTENT_MS);
-  });
-  item.addEventListener('pointerleave', (event) => {
-    if ((event as PointerEvent).pointerType !== 'mouse') return;
-    window.clearTimeout(openTimer);
-    // A short grace period lets the pointer travel from the trigger into the panel.
-    closeTimer = window.setTimeout(() => setOpen(false), HOVER_CLOSE_MS);
-  });
-  item.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && isOpen()) {
-      setOpen(false);
-      trigger.focus();
-    }
-  });
-  item.addEventListener('focusout', (event) => {
-    if (!item.contains(event.relatedTarget as Node | null)) setOpen(false);
-  });
+  // The last previewed style stays lit.
+  const light = (e: Event) => {
+    const li = (e.target as Element).closest<HTMLElement>('[data-styles] li');
+    if (!li) return;
+    lit?.removeAttribute('data-active');
+    (lit = li).dataset.active = '';
+  };
+  on(mega, 'pointerover', light);
+  on(mega, 'focusin', light);
 }
 
-// ---------- Sticky header hairline ----------
-const header = document.querySelector<HTMLElement>('[data-site-header]');
-const sentinel = document.querySelector<HTMLElement>('[data-scroll-sentinel]');
-if (header && sentinel && 'IntersectionObserver' in window) {
-  new IntersectionObserver(([entry]) => {
-    header.dataset.scrolled = entry && !entry.isIntersecting ? 'true' : 'false';
-  }).observe(sentinel);
-}
+// 3. Dialogs and menus.
+on(doc, 'click', (e) => {
+  const t = e.target as Element;
+  const invoker = t.closest('[commandfor]');
+  const dialog = doc.getElementById(invoker?.getAttribute('commandfor') ?? '');
+  // Checked per click, so the fallback can be tried by deleting commandForElement in DevTools.
+  if (dialog instanceof HTMLDialogElement && !('commandForElement' in HTMLButtonElement.prototype))
+    // Menu is inert while the drawer is open and Close is hidden while it is shut: a toggle.
+    if (dialog.open) dialog.close();
+    else dialog.showModal();
+  // The drawer's content fills the dialog, so a click on the dialog itself is on the backdrop;
+  // and a link chosen inside a menu closes the menu.
+  const menu = t.localName == 'dialog' ? t : t.closest('a[href]')?.closest('dialog,[popover]');
+  if (menu instanceof HTMLDialogElement) menu.close();
+  else (menu as HTMLElement | undefined)?.hidePopover();
+});
 
-// ---------- Mobile action bar: hide while typing ----------
-const bar = document.querySelector<HTMLElement>('[data-action-bar]');
+// 4. The phone action bar steps aside while a field has focus.
+const bar = doc.querySelector<HTMLElement>('[data-action-bar]');
 if (bar) {
-  const isField = (el: Element | null) =>
-    el instanceof HTMLInputElement ||
-    el instanceof HTMLTextAreaElement ||
-    el instanceof HTMLSelectElement;
-  document.addEventListener('focusin', (e) => {
-    if (isField(e.target as Element)) bar.hidden = true;
-  });
-  document.addEventListener('focusout', () => {
-    bar.hidden = false;
-  });
+  on(doc, 'focusin', (e) => (bar.hidden = (e.target as Element).matches('input,textarea,select')));
+  on(doc, 'focusout', () => (bar.hidden = false));
 }
 
-// ---------- Opening hours: mark today ----------
-const today = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'Asia/Dubai' }).format(
-  new Date(),
-);
-for (const row of document.querySelectorAll<HTMLElement>('[data-hours-days]')) {
+// 5. Opening hours: mark today (Dubai time).
+const today = new Date().toLocaleDateString('en-US', { weekday: 'long', timeZone: 'Asia/Dubai' });
+for (const row of doc.querySelectorAll<HTMLElement>('[data-hours-days]')) {
   if (row.dataset.hoursDays?.split(',').includes(today)) row.dataset.today = 'true';
 }
+
+// A module, so its top-level names stay local (scripts without imports share one scope).
+export {};

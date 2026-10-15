@@ -1,86 +1,142 @@
 ---
 /**
- * Article card: 3:2 cover, date and reading time, title, two-line standfirst.
+ * An article card (docs/design-system-v2.md §5.6, §6.16): the cover at most 375 CSS px wide
+ * (half its source, so sharp on 2x screens) in a 3:2 crop, the first tag as an eyebrow, the title
+ * in Cormorant 400 at --t-h3 and a two-line standfirst. No date and no reading time on the card;
+ * the article page carries the date. Tone-aware; the whole card is one link.
  */
 import { Picture } from 'astro:assets';
 
 import type { Article } from '@/lib/content';
-import { formatDate } from '@/lib/format';
 import { routes } from '@/lib/routes';
 
 export interface Props {
   article: Article;
+  /** Heading level of the title. */
+  headingLevel?: 'h2' | 'h3';
   class?: string;
 }
 
-const { article, class: className } = Astro.props;
+const { article, headingLevel: Tag = 'h2', class: className } = Astro.props;
 const { data } = article;
-const words = (article.body ?? '').split(/\s+/).filter(Boolean).length;
-const minutes = Math.max(1, Math.round(words / 200));
-const widths = [480, 800, 1200].filter((w) => w <= data.cover.width);
-if (widths.length === 0) widths.push(data.cover.width);
+const cover = data.cover;
+const cap = Math.min(375, cover.width);
+const widths = [...new Set([240, 320, cap, Math.min(cap * 2, cover.width)])]
+  .filter((w) => w <= cover.width)
+  .sort((a, b) => a - b);
+const tag = data.tags[0];
 ---
 
-<a class:list={['journal-card', className]} href={routes.article(article.id)}>
-  <span class="journal-card__media">
+<article class:list={['jcard', className]} style={`--cap:${cap}px`}>
+  <div class="jcard__cover">
     <Picture
-      src={data.cover}
+      src={cover}
       alt=""
       formats={['avif', 'webp']}
       widths={widths}
-      sizes="(min-width: 64em) 33vw, 100vw"
+      sizes={`(min-width: 64em) ${cap}px, min(${cap}px, calc(100vw - 2rem))`}
       fit="cover"
+      loading="lazy"
+      decoding="async"
+      fetchpriority="low"
     />
-  </span>
-  <span class="journal-card__meta small">
-    <time datetime={data.pubDate.toISOString().slice(0, 10)}>{formatDate(data.pubDate)}</time>
-    <span aria-hidden="true"> · </span>
-    {minutes} min read
-  </span>
-  <span class="journal-card__title">{data.headline ?? data.title}</span>
-  <span class="journal-card__standfirst">{data.description}</span>
-</a>
+  </div>
+  <div class="jcard__text">
+    {tag && <p class="jcard__tag eyebrow">{tag}</p>}
+    <Tag class="jcard__title">
+      <a class="jcard__link" href={routes.article(article.id)}>
+        {data.headline ?? data.title}
+      </a>
+    </Tag>
+    <p class="jcard__standfirst">{data.description}</p>
+  </div>
+</article>
 
 <style>
-  .journal-card {
+  .jcard {
+    position: relative;
     display: grid;
-    min-inline-size: 0;
-    gap: var(--space-2);
     align-content: start;
-    color: var(--ink-900);
-    text-decoration: none;
-  }
-
-  .journal-card__media {
+    gap: var(--space-5);
+    inline-size: min(100%, var(--cap));
     min-inline-size: 0;
   }
 
-  .journal-card__media :global(img) {
+  .jcard__cover {
+    padding: var(--space-2);
+    border: 1px solid var(--rule-strong);
+    transition: border-color var(--dur-quick) var(--ease-out);
+  }
+
+  .jcard__cover :global(picture) {
+    display: block;
+  }
+
+  .jcard__cover :global(img) {
+    display: block;
     inline-size: 100%;
     block-size: auto;
     aspect-ratio: 3 / 2;
     object-fit: cover;
-    margin-block-end: var(--space-2);
   }
 
-  .journal-card__title {
-    font-family: var(--ff-display);
+  .jcard__text {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .jcard__tag {
+    margin: 0;
+  }
+
+  .jcard__title {
     font-size: var(--t-h3);
-    font-weight: 600;
-    line-height: 1.25;
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    letter-spacing: 0;
   }
 
-  .journal-card:hover .journal-card__title {
+  .jcard__link {
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  /* The title's link covers the card: one target, no nested links. */
+  .jcard__link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .jcard:hover .jcard__cover,
+  .jcard:focus-within .jcard__cover {
+    border-color: var(--accent);
+  }
+
+  .jcard:hover .jcard__link {
     text-decoration: underline;
-    text-decoration-color: var(--gold-700);
-    text-underline-offset: 0.15em;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--wipe);
+    text-underline-offset: 0.16em;
   }
 
-  .journal-card__standfirst {
+  @supports selector(:has(*)) {
+    .jcard__link:focus-visible {
+      outline: none;
+    }
+
+    .jcard:has(.jcard__link:focus-visible) {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: var(--space-2);
+    }
+  }
+
+  .jcard__standfirst {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-    overflow: hidden;
-    color: var(--ink-700);
+    line-clamp: 2;
+    overflow: clip;
+    color: var(--body);
   }
 </style>

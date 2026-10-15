@@ -1,222 +1,247 @@
 ---
 /**
- * Gold exchange. docs/design-spec.md §7.14 adapted to the four-branch brand: typographic hero,
- * the four-step ledger (built here as ruled rows), the terms beside the group's reason for
- * offering them, the rate band, the exchange FAQ and the enquiry block. The test method, the
- * cash-sale terms and the scope (gold bought elsewhere, promotions) are deliberately left as
- * "ask us" until the owner confirms them (launch checklist item 9).
+ * Exchanging old gold (docs/design-system-v2.md §6.9). A plum opener under the stage header (a
+ * bronze seam between them) with the H1 beside the estimator, then the three steps at the counter
+ * (stage), the hallmarks to look for (ivory), what to bring (parchment), the questions (ivory) and
+ * the four doors (stage).
+ *
+ * Honest by construction: until site.exchange.confirmed is true (TODO(owner), ask 1) the title
+ * and the H1 say "at today's rate", the estimator shows fine-gold weight rather than dirhams, and
+ * no "0% deduction" or "no weight deduction" wording reaches the page, the FAQ answers included.
  */
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import BranchDoors from '@/components/sections/BranchDoors.astro';
+import Estimator from '@/components/sections/Estimator.astro';
 import Faq from '@/components/sections/Faq.astro';
-import Hero from '@/components/sections/Hero.astro';
-import RateBoard from '@/components/sections/RateBoard.astro';
+import KaratStamps from '@/components/sections/KaratStamps.astro';
+import StepStrip from '@/components/sections/StepStrip.astro';
 import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
-import Button from '@/components/ui/Button.astro';
 import Eyebrow from '@/components/ui/Eyebrow.astro';
-import Icon from '@/components/ui/Icon.astro';
-import { site } from '@/data/site';
+import Section from '@/components/ui/Section.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import { emirates, openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { getFaqGroup } from '@/lib/content';
+import { getDesignCollections, getFaqGroup } from '@/lib/content';
+import { countWord, listWords } from '@/lib/format';
 import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
-import { whatsappExchange } from '@/lib/whatsapp';
 
-const [faq, rates] = await Promise.all([getFaqGroup('gold-exchange'), getRates()]);
+const [faq, collections, { latest }] = await Promise.all([
+  getFaqGroup('gold-exchange'),
+  getDesignCollections(),
+  getRates(),
+]);
+
+const branchCount = countWord(openBranches.length).toLowerCase();
+const lead = site.promises.find((p) => p.id === 'gold-exchange')?.detail;
+
+/** Unconfirmed exchange terms stay off the page until the owner confirms them. */
+const unconfirmed = /0\s?% deduction|no weight deduction|full weight/i;
+const questions = site.exchange.confirmed
+  ? faq.data.items
+  : faq.data.items.filter((item) => !unconfirmed.test(`${item.question} ${item.answer}`));
+
 const steps = [
   {
-    title: 'Bring it',
-    detail:
-      'Old gold jewellery in any karat, with the receipt if you still have it. Ask first whether a promotion or the type of gold changes the terms.',
+    title: 'Tested at the counter, in front of you',
+    text: 'Before anything is weighed. The test gives the karat of each piece.',
   },
   {
-    title: 'We test it',
-    detail:
-      'At the counter, in front of you, before anything is weighed. The test gives the karat of each piece.',
+    title: 'Weighed, with stones, springs and other parts set aside',
+    text: 'On the counter scale, where you can see it. Only the gold counts towards the weight.',
   },
   {
-    title: 'We weigh it',
-    detail:
-      'On the scale at the counter. Stones and non-gold parts are set aside and excluded from the gold weight.',
-  },
-  {
-    title: 'We credit it',
-    detail:
-      'Gold weight × the day’s rate for its karat, credited against a new piece with no weight deduction.',
+    title: 'Credited at the day’s rate for its karat, against a new piece',
+    text: 'Making charges and VAT apply to the new piece, as on any purchase.',
   },
 ];
 
-const terms = [
-  'The credit goes against a new piece.',
-  'Making charges and VAT apply to the new piece, as on any purchase.',
-  'Ask whether a promotion or the type of gold changes the terms, for example for gold bought elsewhere.',
-  'Terms for a cash sale differ from exchange; ask before you come.',
-  'Bring your Emirates ID or passport with the gold.',
-];
+const bring = ['The pieces', 'Any receipts you have', 'Your Emirates ID or passport'];
+
+/* §6.9: the "0% deduction" wording may come back only once the owner confirms the terms. */
+const title = 'Exchange Old Gold in Dubai at Today’s Rate';
+const description = `Bring old gold to any of our ${branchCount} branches: tested in front of you, weighed, and credited at the day’s rate against a new piece. ${
+  site.exchange.confirmed ? 'Work out an estimate first.' : 'Work out its fine gold first.'
+}`;
 ---
 
-<BaseLayout
-  ground="ivory"
-  title="Exchange Old Gold in Dubai at 0% Deduction"
-  description="Old gold tested and weighed in front of you, then credited by weight at the day’s rate against a new piece, with no weight deduction. Ask on WhatsApp."
->
-  <div class="container">
+<BaseLayout ground="stage" title={title} description={description}>
+  <Section tone="stage" class="xhead" labelledby="exchange-title">
     <Breadcrumbs items={[{ name: 'Gold exchange', href: routes.goldExchange }]} />
-  </div>
+    <div class="xhead__grid">
+      <div class="xhead__text">
+        <Eyebrow>Old gold</Eyebrow>
+        <h1 id="exchange-title">
+          Exchange old gold <em>at today’s rate</em>
+        </h1>
+        {lead && <p class="xhead__lead lead">{lead}</p>}
+        <p class="xhead__note small">
+          {site.exchange.confirmed ? 'Work out an estimate here' : 'Work out its fine gold here'},
+          then message us with the weight and the branch you will bring it to.
+        </p>
+      </div>
+      <div class="xhead__panel">
+        <Estimator rate={latest} id="estimator" />
+      </div>
+    </div>
+  </Section>
 
-  <Hero
-    eyebrow="Old gold"
-    title="Exchange old gold at 0% deduction"
-    lead="We test and weigh your old gold in front of you and credit it by weight at the day’s rate against a new piece, with no weight deduction."
-  >
-    <Button href={whatsappExchange()} icon="whatsapp" external>
-      Ask about exchange
-    </Button>
-    <Button href={routes.goldRate} variant="secondary">
-      Today’s rate
-    </Button>
-    <Fragment slot="note">Bring old gold. Leave with its full weight.</Fragment>
-  </Hero>
+  <Section tone="stage" seam id="at-the-counter" labelledby="counter-title">
+    <SectionHead
+      eyebrow="At the counter"
+      title="Tested"
+      accent="in front of you"
+      id="counter-title"
+      shape="split"
+      class="reveal"
+    >
+      Nothing leaves your sight: the test, the weighing and the credit are worked out on the
+      counter.
+    </SectionHead>
+    <StepStrip steps={steps} />
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <div class="intro">
-          <Eyebrow>At the counter</Eyebrow>
-          <h2>Four steps. Nothing leaves your sight.</h2>
-          <p class="lead">
-            Testing and weighing happen on the counter in front of you, and the credit is worked out
-            from the figures you have just watched.
-          </p>
-        </div>
-        <ol class="steps rows" role="list">
-          {steps.map((step, i) => (
-            <li class="step">
-              <span class="step__no" aria-hidden="true">
+  <Section tone="ivory" id="hallmarks" labelledby="hallmarks-title">
+    <SectionHead
+      title="Read your"
+      accent="own hallmark"
+      id="hallmarks-title"
+      shape="stack"
+      class="reveal"
+    >
+      Look inside the clasp or the band for one of these numbers.
+    </SectionHead>
+    <KaratStamps rate={latest} collections={collections} variant="compact" />
+  </Section>
+
+  <Section tone="parchment" id="what-to-bring" labelledby="bring-title">
+    <div class="bring">
+      <h2 class="bring__title" id="bring-title">
+        What to bring
+      </h2>
+      <div class="bring__body">
+        <ol class="bring__list rows" role="list">
+          {bring.map((item, i) => (
+            <li class="bring__item">
+              <span class="bring__n fig" aria-hidden="true">
                 {String(i + 1).padStart(2, '0')}
               </span>
-              <div class="step__text">
-                <h3 class="step__title">{step.title}</h3>
-                <p class="step__detail">{step.detail}</p>
-              </div>
+              <span>{item}</span>
             </li>
           ))}
         </ol>
+        <p class="bring__note">
+          Ask us for the exchange terms before you come; an offer running at the time can change
+          them.
+        </p>
       </div>
     </div>
-  </section>
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <div class="terms">
-          <h2>The terms</h2>
-          <ul class="terms__list rows" role="list">
-            {terms.map((term) => (
-              <li class="terms__item">{term}</li>
-            ))}
-          </ul>
-          <a class="link-quiet terms__link" href={`${routes.promise}#gold-exchange`}>
-            Our six promises, in writing <Icon name="arrow-right" />
-          </a>
-        </div>
-        <div class="why prose">
-          <h2>Why we can do this</h2>
-          <p class="lead">
-            The Classic Group began in bullion trading, buying and refining scrap gold, and has been{' '}
-            {site.group.experience}. Classic Jewels &amp; Diamonds is its jewellery house, opened in{' '}
-            {site.founded.brandYear}.
-          </p>
-          <p>
-            Old gold taken in exchange is refined back into new gold. Its design, its wear and its
-            age change nothing about what it is worth as metal, which is why we credit it by weight
-            rather than discounting it: the weight the scale shows, at the day’s rate for the karat
-            the test shows.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
+  <Section tone="ivory" id="questions" width="narrow" ruled>
+    <Faq heading={faq.data.heading} items={questions} />
+  </Section>
 
-  <RateBoard
-    variant="band"
-    rate={rates.latest}
-    stale={rates.stale}
-    history={rates.history}
-    id="rate"
-  />
-
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <Faq heading={faq.data.heading} items={faq.data.items} />
-        <EnquiryBlock
-          heading="Ask about your old gold"
-          text="Send a photo of the pieces on WhatsApp and we will tell you what to bring. Calls go straight to the counter."
-          whatsappUrl={whatsappExchange()}
-          whatsappLabel="Ask about exchange on WhatsApp"
-        />
-      </div>
-    </div>
-  </section>
+  <Section tone="stage" id="branches" labelledby="branches-title">
+    <SectionHead
+      eyebrow="Branches"
+      title="Bring it"
+      accent="to a branch"
+      id="branches-title"
+      shape="split"
+      class="reveal"
+    >
+      {countWord(openBranches.length)} branches in {listWords(emirates)}. Message the one nearest
+      you before you come.
+    </SectionHead>
+    <BranchDoors variant="compact" />
+  </Section>
 </BaseLayout>
 
 <style>
-  .intro > * + * {
-    margin-block-start: var(--space-4);
+  /* ---------- Opener: H1 and lead 5, the estimator 7 ---------- */
+  :global(.sec.xhead) {
+    padding-block-start: var(--space-5);
   }
 
-  .intro h2 {
-    margin-block-start: 0;
-  }
-
-  .step {
+  .xhead__grid {
     display: grid;
-    grid-template-columns: auto 1fr;
-    gap: var(--space-4);
-    align-items: start;
-    padding-block: var(--space-5);
+    gap: var(--space-7) var(--grid-gap);
+    margin-block-start: var(--space-6);
   }
 
-  .step__no {
-    font-family: var(--ff-display);
-    font-size: var(--t-h2);
-    font-weight: 400;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-    color: var(--gold-600);
-    min-inline-size: 2.2ch;
-  }
-
-  .step__text {
+  .xhead__text {
     display: grid;
-    gap: var(--space-1);
+    align-content: start;
+    gap: var(--space-5);
   }
 
-  .step__detail {
-    max-inline-size: 40rem;
-    color: var(--ink-700);
+  .xhead__text :global(.eyebrow) {
+    margin-block-end: 0;
   }
 
-  .terms h2 {
-    margin-block-end: var(--space-5);
+  /* Two levels: the action, then the italic terms on their own line. */
+  .xhead__text h1 em {
+    display: block;
   }
 
-  .terms__item {
+  .xhead__note {
+    max-inline-size: var(--measure);
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--rule);
+  }
+
+  @media (min-width: 64em) {
+    .xhead__grid {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: calc(var(--grid-gap) * 2);
+      margin-block-start: var(--space-8);
+    }
+
+    .xhead__text {
+      position: sticky;
+      inset-block-start: calc(var(--header-h) + var(--space-6));
+      align-self: start;
+    }
+  }
+
+  /* ---------- What to bring ---------- */
+  .bring {
+    display: grid;
+    gap: var(--space-6) var(--grid-gap);
+  }
+
+  .bring__item {
+    display: grid;
+    grid-template-columns: var(--space-8) minmax(0, 1fr);
+    align-items: baseline;
+    gap: var(--space-3);
     padding-block: var(--space-4);
-    color: var(--ink-700);
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--fg);
   }
 
-  .terms__link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-block-size: var(--tap);
-    margin-block-start: var(--space-4);
-    font-weight: 500;
-    color: var(--plum-700);
+  .bring__n {
+    font-family: var(--ff-text);
+    font-size: var(--t-small);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    color: var(--eyebrow);
   }
 
-  .why > h2 {
-    margin-block-start: 0;
+  .bring__note {
+    margin-block-start: var(--space-5);
+    max-inline-size: var(--measure);
+    color: var(--body);
+  }
+
+  @media (min-width: 64em) {
+    .bring {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: calc(var(--grid-gap) * 2);
+      align-items: start;
+    }
   }
 </style>

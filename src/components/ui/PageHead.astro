@@ -1,0 +1,238 @@
+---
+/**
+ * The inner-page opener (docs/design-system-v2.md §5.2, §6); replaces Hero. A Section holding the
+ * breadcrumbs, then the page's only <h1>, its lead, actions, media and facts. Never animated:
+ * nothing in it fades, rises or waits for a script.
+ *
+ *   layout  text    one column
+ *           split   text and media 7/5 on the 12-column width (5/7 with mediaFirst); without
+ *                   media, the `aside` takes the media column
+ *           centre  centred text; the media slot sits above the eyebrow as a crest (a
+ *                   GroupLockup, the 404 ring)
+ *   size    h1 (default) or display (one word: a style, branch or category name); `italic` sets
+ *           the display name in Cormorant italic
+ *
+ * Slots: default = actions (a .actions row of Buttons), `media` = a StageImage, Plate,
+ * TypesetPlate, portrait window or route miniature, `aside` = facts. On phones the order is H1 and
+ * lead, then media, then actions, then the aside.
+ */
+import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import Section from '@/components/ui/Section.astro';
+import type { BreadcrumbItem } from '@/lib/seo';
+import type { Tone } from '@/lib/tones';
+
+export interface Props {
+  tone: Tone;
+  breadcrumbs: BreadcrumbItem[];
+  eyebrow?: string;
+  title: string;
+  accent?: string;
+  lead?: string;
+  /** text: one column; split: text and media 7/5 (or 5/7 with mediaFirst); centre: centred text. */
+  layout?: 'text' | 'split' | 'centre';
+  mediaFirst?: boolean;
+  /** h1 (default) or display (one word: a style, branch or category name). */
+  size?: 'h1' | 'display';
+  /** Italic display for style and category names. */
+  italic?: boolean;
+  id?: string;
+}
+
+const {
+  tone,
+  breadcrumbs,
+  eyebrow,
+  title,
+  accent,
+  lead,
+  layout = 'text',
+  mediaFirst = false,
+  size = 'h1',
+  italic = false,
+  id,
+} = Astro.props;
+
+const hasMedia = Astro.slots.has('media');
+const hasActions = Astro.slots.has('default');
+const hasAside = Astro.slots.has('aside');
+const titleId = `${id ?? 'page'}-title`;
+/** What fills the second column of a split: the media, else the aside. */
+const side = layout !== 'split' ? 'none' : hasMedia ? 'media' : hasAside ? 'aside' : 'none';
+---
+
+<Section tone={tone} pad="section" class="phead" id={id} labelledby={titleId}>
+  <Breadcrumbs items={breadcrumbs} class="phead__crumbs" />
+  <div
+    class="phead__grid"
+    data-layout={layout}
+    data-side={side}
+    data-media-first={mediaFirst && side !== 'none' ? '' : undefined}
+  >
+    <div class="phead__text">
+      {layout === 'centre' && hasMedia && (
+        <div class="phead__crest">
+          <slot name="media" />
+        </div>
+      )}
+      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+      <h1
+        id={titleId}
+        class:list={[
+          'phead__title',
+          size === 'display' && 'display',
+          italic && 'phead__title--italic',
+        ]}
+      >
+        {title}
+        {accent && (
+          <>
+            {' '}
+            <em>{accent}</em>
+          </>
+        )}
+      </h1>
+      {lead && <p class="phead__lead lead">{lead}</p>}
+    </div>
+    {layout !== 'centre' && hasMedia && (
+      <div class="phead__media">
+        <slot name="media" />
+      </div>
+    )}
+    {hasActions && (
+      <div class="phead__actions actions">
+        <slot />
+      </div>
+    )}
+    {hasAside && (
+      <div class="phead__aside">
+        <slot name="aside" />
+      </div>
+    )}
+  </div>
+</Section>
+
+<style>
+  /* The root is Section's element: style it globally (scoped styles stop at a child component). */
+  :global(.sec.phead) {
+    padding-block-start: var(--space-5);
+  }
+
+  :global(.phead .phead__crumbs) {
+    padding-block: 0;
+  }
+
+  .phead__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-6);
+    margin-block-start: var(--space-7);
+  }
+
+  .phead__text {
+    max-inline-size: 52rem;
+  }
+
+  .phead__title {
+    max-inline-size: 22ch;
+  }
+
+  .phead__title.display {
+    max-inline-size: none;
+  }
+
+  .phead__title--italic {
+    font-style: italic;
+  }
+
+  .phead__lead {
+    margin-block-start: var(--space-5);
+  }
+
+  .phead__media {
+    min-inline-size: 0;
+  }
+
+  .phead__actions {
+    align-items: center;
+  }
+
+  .phead__aside {
+    min-inline-size: 0;
+  }
+
+  /* centre */
+  .phead__grid[data-layout='centre'] {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .phead__grid[data-layout='centre'] .phead__text {
+    display: grid;
+    justify-items: center;
+  }
+
+  .phead__grid[data-layout='centre'] .phead__title {
+    margin-inline: auto;
+  }
+
+  .phead__grid[data-layout='centre'] .phead__actions {
+    justify-content: center;
+  }
+
+  .phead__crest {
+    margin-block-end: var(--space-5);
+  }
+
+  @media (min-width: 64em) {
+    .phead__grid {
+      margin-block-start: var(--space-9);
+      row-gap: var(--space-7);
+    }
+
+    /* split: text 7 / media 5, the text block centred against the media. */
+    .phead__grid:not([data-side='none']) {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      grid-template-rows: 1fr auto auto auto 1fr;
+      grid-template-areas:
+        '. side'
+        'text side'
+        'actions side'
+        'aside side'
+        '. side';
+      column-gap: calc(var(--grid-gap) * 2);
+      row-gap: 0;
+    }
+
+    .phead__grid[data-media-first] {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      grid-template-areas:
+        'side .'
+        'side text'
+        'side actions'
+        'side aside'
+        'side .';
+    }
+
+    .phead__grid:not([data-side='none']) .phead__text {
+      grid-area: text;
+    }
+
+    .phead__grid:not([data-side='none']) .phead__actions {
+      grid-area: actions;
+      margin-block-start: var(--space-7);
+    }
+
+    .phead__grid:not([data-side='none']) .phead__aside {
+      grid-area: aside;
+      margin-block-start: var(--space-7);
+    }
+
+    .phead__grid[data-side='media'] .phead__media,
+    .phead__grid[data-side='aside'] .phead__aside {
+      grid-area: side;
+      align-self: center;
+      margin-block-start: 0;
+    }
+  }
+</style>

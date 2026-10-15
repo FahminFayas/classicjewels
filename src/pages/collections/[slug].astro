@@ -1,43 +1,50 @@
 ---
 /**
- * Collection detail (design-spec §7.6). One page per entry in src/content/collections.
+ * A collection (/collections/{slug}/), docs/design-system-v2.md §6.6: a chapter page.
  *
- * The hero media is built locally rather than through <Hero media="plate">: the collection
- * photographs are necklaces on busts against velvet (nine of twelve) or cut-outs on a pale
- * lavender ground (three), not white-ground product shots, so a white plate would frame them as
- * a dark square. Per §4 non-white photographs sit directly on the ivory at their own ratio.
+ *   1  Opener (stage): media first. The collection's first velvet piece lit at 520 px (the
+ *      priority image), or its first studio cut-out on a lilac plate (Diamonds, Kids), or a
+ *      typeset plate where no photograph may be shown (Kuwaiti, Singapore). A photographed piece
+ *      is named under its image with a link to its page. Text: the origin as eyebrow, the name at
+ *      display size in italic, the summary, the mini styles line lit at this style (place-based
+ *      styles only), the hallmarks to look for and today's rate for each karat.
+ *   2  The story (ivory band): the collection's text, narrow and centred, its first sentence in
+ *      Cormorant italic.
+ *   3  The pieces: the other velvet pieces in a lit wall (stage) and the other cut-outs on their
+ *      lilac counter (ivory). The opener's piece is not repeated, so a photograph never appears
+ *      twice on the page; with nothing more to show the section is left out.
+ *   4  Ask us for pieces in this style (plum, seam).
  *
- * Each collection photograph is also the photograph of one listed piece. With one piece or none
- * the page uses the typographic <Hero>, so the same photograph never appears twice in a screen
- * (and a collection with nothing listed never borrows another collection's piece).
+ * No FAQ on collection pages.
  */
-import type { ImageMetadata } from 'astro';
-import { Picture } from 'astro:assets';
-import { Image } from 'astro:assets';
 import { render } from 'astro:content';
 
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
-import Faq from '@/components/sections/Faq.astro';
-import Hero from '@/components/sections/Hero.astro';
-import PlumBand from '@/components/sections/PlumBand.astro';
-import ProductCard from '@/components/sections/ProductCard.astro';
-import TrayGrid from '@/components/sections/TrayGrid.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
-import Button from '@/components/ui/Button.astro';
-import Eyebrow from '@/components/ui/Eyebrow.astro';
-import Icon from '@/components/ui/Icon.astro';
+import CaseWall from '@/components/sections/CaseWall.astro';
+import EnquiryBand from '@/components/sections/EnquiryBand.astro';
+import PlateGrid from '@/components/sections/PlateGrid.astro';
+import StylesLine from '@/components/sections/StylesLine.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Plate from '@/components/ui/Plate.astro';
+import RateFigure from '@/components/ui/RateFigure.astro';
+import Section from '@/components/ui/Section.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
+import StageImage from '@/components/ui/StageImage.astro';
+import TypesetPlate from '@/components/ui/TypesetPlate.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import {
+  collectionShortNames,
   getDesignCollections,
-  getFaqGroup,
   getProductsByCollection,
+  photoGround,
+  productPath,
   type DesignCollection,
 } from '@/lib/content';
-import { countWord, formatKarat, karatToFineness } from '@/lib/format';
+import { countWord, formatKarat } from '@/lib/format';
 import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
 import { itemListSchema } from '@/lib/schema';
+import { KARAT_FACTS, toDisplayKarat } from '@/lib/tones';
 import { whatsappForRange } from '@/lib/whatsapp';
 
 export async function getStaticPaths() {
@@ -52,76 +59,38 @@ interface Props {
 const { entry } = Astro.props;
 const { data } = entry;
 
-const [collections, products, faq, rates, { Content }] = await Promise.all([
+const [collections, products, rates, { Content }] = await Promise.all([
   getDesignCollections(),
   getProductsByCollection(entry.id),
-  getFaqGroup('collections'),
   getRates(),
   render(entry),
 ]);
 
-/** "Kolkata Collection" -> "Kolkata"; "Gemstone Jewellery" stays as the H1 but shortens for prose. */
-const h1 = data.name.replace(/ Collection$/i, '');
-const shortName = data.name.replace(/ (Collection|Jewellery)$/i, '');
-const karats = data.karats.map(formatKarat).join(' / ');
+const rate = rates.latest;
+const names = collectionShortNames(collections);
+const short = data.shortName;
 const whatsapp = whatsappForRange(data.name);
+const reason = entry.id === 'customised' ? 'custom' : 'other';
 
 /**
- * Literal descriptions of the photographs as supplied by the old site, keyed by collection id.
- * The content files carry their own imageAlt; these take precedence where the file's text does
- * not match what is in the frame. Unknown ids fall back to the content value.
+ * The opener's media: no photograph may be shown (no `image` in content: Kuwaiti, Singapore) →
+ * a typeset plate; else the first velvet piece; else the first studio cut-out.
  */
-const literalAlt: Record<string, string> = {
-  antique: 'Gold choker with a fringe of small drops on a white display bust against purple velvet',
-  customised:
-    'Gold necklace with a teardrop pendant and a pink stone flower on a white bust against navy velvet',
-  diamonds: 'Yellow-gold crown ring set with a row of small diamonds, on a pale lavender ground',
-  gemstone:
-    'Fine gold chain with beaded clusters, pink stones and a round pendant on a white bust against purple velvet',
-  italian: 'Three-row gold disc collar necklace on a white bust against navy velvet',
-  kids: 'Gold pendant necklace with an eye-shaped charm and a teardrop bead, on a pale lavender ground',
-  kolkata:
-    'Gold choker of bar links and granulated bead clusters on a white bust against purple velvet',
-  kuwait:
-    'Three-row gold necklace with red stones and a flower pendant with tassels on a white bust against navy velvet',
-  rajkot:
-    'Tri-colour gold necklace of graduated textured scales on a teal bust against purple velvet',
-  singapore:
-    'Two long gold chains strung with amber-coloured beads, laid in a loop on a pale lavender ground',
-  temple:
-    'Gold long necklace with kundan-set plaques and a bell-shaped pendant with pearl drops on a white bust against navy velvet',
-  turkish: 'Triple-row gold necklace of small cushion links on a white bust against navy velvet',
-};
-/** A collection may have no photograph (Kuwaiti, Singapore): the typographic hero is used. */
-const image = data.image;
-const heroAlt = literalAlt[entry.id] ?? data.imageAlt ?? '';
-const heroWidths = image ? [480, 600, 800].filter((w) => w <= image.width) : [];
-if (image && heroWidths.length === 0) heroWidths.push(image.width);
-/** The photograph is shown only beside two or more cards; see the note at the top. */
-const showPhoto = products.length > 1;
-/** The facts row counts pieces only when there is more than one to count. */
-const showCount = products.length > 1;
+const velvetPieces = products.filter((p) => photoGround(p) === 'velvet');
+const lilacPieces = products.filter((p) => photoGround(p) === 'lilac');
+const featured = data.image ? (velvetPieces[0] ?? lilacPieces[0]) : undefined;
+const featuredVelvet = featured ? photoGround(featured) === 'velvet' : false;
+const cover = featured?.data.images[0];
+const wall = velvetPieces.filter((p) => p !== featured);
+const plates = lilacPieces.filter((p) => p !== featured);
+const morePieces = wall.length + plates.length;
 
-/** Three other collections, preferring those that share this collection's first karat. */
-const firstKarat = data.karats[0];
-const others = collections.filter((c) => c.id !== entry.id);
-const sameKarat = others.filter((c) => c.data.karats[0] === firstKarat);
-const related = [...sameKarat, ...others.filter((c) => !sameKarat.includes(c))].slice(0, 3);
-
-/** Wordmark PNGs for the related-collection stamps. */
-const wordmarks = import.meta.glob<{ default: ImageMetadata }>(
-  '@/assets/collections/wordmarks/*.png',
-  { eager: true },
-);
-const wordmarkFor = (id: string) =>
-  Object.entries(wordmarks).find(([path]) => path.endsWith(`/${id}.png`))?.[1].default;
-
-const steps = [
-  'We weigh the piece in front of you.',
-  'We apply the day’s rate per gram for its karat.',
-  'We quote the making charge for the work.',
-  'You leave with the hallmark on the piece and the weight, fineness and rate on the invoice.',
-];
+/** The story: plain paragraphs set by hand so the first sentence can open in italic. */
+const body = (entry.body ?? '').trim();
+const plain = body.length > 0 && !/[*_#`[\]<>]/.test(body);
+const paragraphs = plain ? body.split(/\n\s*\n/).map((p) => p.replace(/\s+/g, ' ').trim()) : [];
+const firstSentence = paragraphs[0]?.match(/^.+?[.!?](?=\s|$)/)?.[0] ?? '';
+const firstRest = paragraphs[0]?.slice(firstSentence.length).trim() ?? '';
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 /** No ItemList when nothing is listed: a list of zero items tells a search engine nothing. */
@@ -139,515 +108,307 @@ const jsonLd =
     : [];
 ---
 
-<BaseLayout ground="ivory" title={data.title} description={data.description} jsonLd={jsonLd}>
-  <div class="container">
-    <Breadcrumbs
-      items={[
-        { name: 'Collections', href: routes.collections },
-        { name: h1, href: routes.collection(entry.id) },
-      ]}
-    />
-  </div>
-
-  {showPhoto && image ? (
-    <section class="chero">
-      <div class="container container--wide chero__grid">
-        <div class="chero__text">
-          <Eyebrow>Collection · {karats}</Eyebrow>
-          <h1 class="chero__title" set:text={h1} />
-          <p class="chero__lead lead" set:text={data.summary} />
-          <div class="chero__actions">
-            <Button href={whatsapp} icon="whatsapp" external>
-              Ask what is on the tray
-            </Button>
-            <Button href={routes.collections} variant="secondary">
-              All collections
-            </Button>
-          </div>
-        </div>
-        <figure class="chero__media">
-          <Picture
-            class="chero__img"
-            src={image}
-            alt={heroAlt}
-            formats={['avif', 'webp']}
-            widths={heroWidths}
-            sizes="(min-width: 64em) 58vw, 100vw"
-            fit="cover"
-            priority
-          />
-        </figure>
-      </div>
-    </section>
-  ) : (
-    <Hero eyebrow={`Collection · ${karats}`} title={h1} lead={data.summary}>
-      <Button href={whatsapp} icon="whatsapp" external>
-        Ask what is on the tray
-      </Button>
-      <Button href={routes.collections} variant="secondary">
-        All collections
-      </Button>
-    </Hero>
-  )}
-
-  <section class="facts-wrap">
-    <div class="container">
-      <dl class="facts">
-        <div class="facts__cell">
-          <dt class="facts__label small">Karat</dt>
-          <dd class="facts__value tabular">{data.karats.map(formatKarat).join(' · ')}</dd>
-        </div>
-        <div class="facts__cell">
-          <dt class="facts__label small">Hallmark fineness</dt>
-          <dd class="facts__value tabular">{data.karats.map(karatToFineness).join(' · ')}</dd>
-        </div>
-        <div class="facts__cell facts__cell--style">
-          <dt class="facts__label small">Style</dt>
-          <dd class="facts__value facts__value--text">{data.origin}</dd>
-        </div>
-        {showCount && (
-          <div class="facts__cell">
-            <dt class="facts__label small">Pieces listed</dt>
-            <dd class="facts__value tabular">{products.length}</dd>
-          </div>
-        )}
-      </dl>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="container container--wide">
-      <SectionHead
-        eyebrow="From the trays"
-        title={
-          products.length > 0
-            ? `${countWord(products.length)} ${shortName} ${products.length === 1 ? 'piece' : 'pieces'}, weighed and ready to quote.`
-            : `${shortName} pieces are on the trays, not yet on the site.`
-        }
-      >
-        <Fragment slot="aside">
-          <a class="link-quiet section__link" href={routes.jewellery}>
-            All jewellery <Icon name="arrow-right" />
+<BaseLayout ground="stage" title={data.title} description={data.description} jsonLd={jsonLd}>
+  <PageHead
+    tone="stage"
+    id="collection"
+    layout="split"
+    mediaFirst
+    size="display"
+    italic
+    breadcrumbs={[
+      { name: 'Collections', href: routes.collections },
+      { name: short, href: routes.collection(entry.id) },
+    ]}
+    eyebrow={data.origin}
+    title={data.name}
+    lead={data.summary}
+  >
+    <figure slot="media" class="cmedia">
+      {featured && cover ? (
+        featuredVelvet ? (
+          <a class="cmedia__link" href={productPath(featured)} tabindex="-1" aria-hidden="true">
+            <StageImage
+              image={cover.src}
+              alt={cover.alt}
+              mask="pool"
+              cap={520}
+              priority
+              morph="source"
+              href={productPath(featured)}
+              sizes="(min-width: 64em) 520px, 100vw"
+            />
           </a>
-        </Fragment>
-      </SectionHead>
-      {products.length > 0 ? (
-        <TrayGrid>
-          {products.map((p) => (
-            <ProductCard product={p} collectionName={data.name} rate={rates.latest} />
-          ))}
-        </TrayGrid>
+        ) : (
+          <a
+            class="cmedia__link cmedia__plate"
+            href={productPath(featured)}
+            tabindex="-1"
+            aria-hidden="true"
+            data-morph-href={productPath(featured)}
+          >
+            <Plate image={cover.src} alt={cover.alt} cap={cover.src.width} priority />
+          </a>
+        )
       ) : (
-        <div class="empty">
-          <p class="empty__title">The {shortName} trays hold more than the site does.</p>
-          <p class="empty__text">
-            Message us and we will send photos of what is on the counter today, with the gross
-            weight of each piece, from whichever of our branches has the collection in.
-          </p>
-          <Button href={whatsapp} icon="whatsapp" external>
-            Ask on WhatsApp
-          </Button>
+        <TypesetPlate name={short} whatsappUrl={whatsapp} cap={520} />
+      )}
+      {featured && (
+        <figcaption class="cmedia__cap">
+          <a class="cmedia__name" href={productPath(featured)}>
+            {featured.data.name}
+          </a>
+          <span class="small fig">
+            {formatKarat(featured.data.karat)} · {featured.data.sku}
+          </span>
+          {morePieces === 0 && (
+            <span class="small">One piece photographed so far. Ask us for more.</span>
+          )}
+        </figcaption>
+      )}
+    </figure>
+
+    <div slot="aside" class="cfacts">
+      {typeof data.longitude === 'number' && (
+        <div class="cfacts__line">
+          <p class="eyebrow">West to east</p>
+          <StylesLine collections={collections} variant="mini" lit={entry.id} />
         </div>
       )}
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <div class="prose">
-          <h2>About the {shortName} collection</h2>
-          <Content />
-        </div>
-        <div class="marks-wrap">
-          <h3 class="marks__title">What to look for on the tray</h3>
-          <ul class="marks rows" role="list">
+      <div class="cfacts__grid">
+        <div>
+          <p class="eyebrow">What to look for</p>
+          <ul class="cfacts__marks" role="list">
             {data.hallmarks.map((mark) => (
-              <li class="marks__row">
-                <Icon name="c-ring" class="marks__glyph" />
-                <span>{mark}</span>
-              </li>
+              <li>{mark}</li>
             ))}
           </ul>
-          <p class="marks__karat small">
-            {data.karats.length === 1 ? 'Stamped' : 'Stamped per karat:'}{' '}
-            {data.karats.map((k) => `${karatToFineness(k)} for ${formatKarat(k)}`).join(', ')}.
-          </p>
+        </div>
+        <div>
+          <p class="eyebrow">Today, per gram</p>
+          <ul class="cfacts__rates" role="list">
+            {data.karats.map((k) => {
+              const key = toDisplayKarat(k);
+              return (
+                <li>
+                  <span class="cfacts__k">
+                    {KARAT_FACTS[key].label}
+                    <span class="cfacts__stamp fig">{KARAT_FACTS[key].stamp}</span>
+                  </span>
+                  <RateFigure rate={rate} karat={key} format="aed" class="cfacts__fig" />
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </div>
     </div>
-  </section>
+  </PageHead>
 
-  <PlumBand>
-    <Eyebrow>At the counter</Eyebrow>
-    <h2 class="steps__title">Weighed, rated, hallmarked, invoiced.</h2>
-    <ol class="steps" role="list">
-      {steps.map((step, i) => (
-        <li class="steps__cell">
-          <span class="steps__no" aria-hidden="true">
-            {String(i + 1).padStart(2, '0')}
-          </span>
-          <p class="steps__text">{step}</p>
-        </li>
-      ))}
-    </ol>
-  </PlumBand>
-
-  {related.length > 0 && (
-    <section class="section">
-      <div class="container">
-        <SectionHead eyebrow="Also on the counter" title="Three collections to see beside it.">
-          <Fragment slot="aside">
-            <a class="link-quiet section__link" href={routes.collections}>
-              All collections <Icon name="arrow-right" />
-            </a>
-          </Fragment>
-        </SectionHead>
-        <ul class="related rows" role="list">
-          {related.map((c) => {
-            const mark = wordmarkFor(c.id);
-            return (
-              <li>
-                <a class="related__link" href={routes.collection(c.id)}>
-                  <span class="related__stamp">
-                    {mark ? (
-                      <Image
-                        src={mark}
-                        alt=""
-                        width={120}
-                        height={Math.round((mark.height / mark.width) * 120)}
-                        densities={[1, 2]}
-                      />
-                    ) : (
-                      <span class="related__stamp-text">{c.data.name}</span>
-                    )}
-                  </span>
-                  <span class="related__text">
-                    <span class="related__name">{c.data.name.replace(/ Collection$/i, '')}</span>
-                    <span class="related__meta small tabular">
-                      {c.data.karats.map(formatKarat).join(' · ')} · {c.data.origin}
-                    </span>
-                  </span>
-                  <Icon name="arrow-right" class="related__arrow" />
-                </a>
-              </li>
-            );
-          })}
-        </ul>
+  {body.length > 0 && (
+    <Section tone="ivory" pad="band" width="narrow" labelledby="story-title">
+      <div class="story">
+        <h2 id="story-title" class="eyebrow story__title">
+          The {short} story
+        </h2>
+        {plain ? (
+          <>
+            <p class="story__open">{firstSentence}</p>
+            {firstRest && <p class="story__text">{firstRest}</p>}
+            {paragraphs.slice(1).map((p) => (
+              <p class="story__text">{p}</p>
+            ))}
+          </>
+        ) : (
+          <div class="story__text">
+            <Content />
+          </div>
+        )}
       </div>
-    </section>
+    </Section>
   )}
 
-  <section class="section section--ruled">
-    <div class="container">
-      <Faq heading={faq.data.heading} items={faq.data.items} />
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <EnquiryBlock
-        heading="Not on the tray today: we make to order."
-        text={`Name the ${shortName} piece you have in mind, or send a photo. We quote the karat, estimated weight and making charge in writing before any work begins.`}
-        whatsappUrl={whatsapp}
-        whatsappLabel={`Ask about ${shortName} pieces`}
+  {wall.length > 0 && (
+    <Section tone="stage" labelledby="pieces-title">
+      <SectionHead
+        id="pieces-title"
+        title={featured ? `More from the ${short} counter` : `The ${short} pieces`}
+        shape="split"
+        class="reveal"
+      >
+        <Fragment slot="aside">
+          <MoreLink href={routes.jewellery}>All jewellery</MoreLink>
+        </Fragment>
+      </SectionHead>
+      <CaseWall
+        products={wall}
+        rate={rate}
+        collectionNames={names}
+        layout="grid"
+        columns={3}
+        light="static"
       />
-    </div>
-  </section>
+    </Section>
+  )}
+
+  {plates.length > 0 && (
+    <Section tone="ivory" ruled={wall.length === 0 && body.length > 0} labelledby="plates-title">
+      <SectionHead
+        id="plates-title"
+        title={wall.length > 0 || featured ? `${short}, from the studio` : `The ${short} pieces`}
+        shape="split"
+        class="reveal"
+      >
+        {`${countWord(plates.length)} ${plates.length === 1 ? 'piece' : 'pieces'} photographed on their own ground.`}
+      </SectionHead>
+      <PlateGrid products={plates} rate={rate} collectionNames={names} columns={3} />
+    </Section>
+  )}
+
+  <EnquiryBand
+    title="Ask us for pieces in the"
+    accent={`${short} style`}
+    text={`Tell us the piece you have in mind, or send a photo, and we will reply with what the ${short} counter has today, with weights.`}
+    whatsappUrl={whatsapp}
+    secondary={{ href: `${routes.contact}?reason=${reason}`, label: 'Book a visit' }}
+  />
 </BaseLayout>
 
 <style>
-  .section__link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-weight: 500;
-    color: var(--plum-700);
-  }
-
-  /* ---- Hero: text 5 / photo 7, photo at its own ratio on the ivory ---- */
-  .chero {
-    padding-block: var(--space-6) var(--space-7);
-  }
-
-  .chero__grid {
+  /* ---------- 1. Opener media ---------- */
+  .cmedia {
     display: grid;
-    gap: var(--space-6);
-    align-items: center;
+    justify-items: center;
+    gap: var(--space-4);
+    margin: 0;
   }
 
-  .chero__text {
-    max-inline-size: 40rem;
-  }
-
-  .chero__lead {
-    margin-block-start: var(--space-5);
-  }
-
-  .chero__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    margin-block-start: var(--space-6);
-  }
-
-  .chero__media {
-    min-inline-size: 0;
-  }
-
-  /* <Picture class> lands on the <img>, so target it directly. */
-  .chero__media :global(img.chero__img) {
+  .cmedia__link {
+    display: block;
     inline-size: 100%;
-    block-size: auto;
   }
 
-  /*
-   * Facts strip: three or four ruled cells. On phones two to a row; the Style cell takes the whole
-   * second row when there is no piece count beside it. Rows are divided by a rule on top of
-   * every cell after the first two, so a three-cell strip never loses a line.
-   */
-  .facts {
+  .cmedia__plate {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    border-block: 1px solid var(--rule-2);
+    place-items: center;
+    inline-size: min(100%, var(--cap-velvet));
+    aspect-ratio: 1;
+    padding: var(--space-5);
+    background: var(--plate-lilac);
   }
 
-  .facts__cell {
+  .cmedia__cap {
     display: grid;
+    justify-items: center;
     gap: var(--space-1);
-    align-content: start;
-    min-inline-size: 0;
-    padding: var(--space-4) var(--space-4) var(--space-4) 0;
+    text-align: center;
+    color: var(--muted);
   }
 
-  .facts__cell:nth-child(2n) {
-    padding-inline-start: var(--space-4);
-    border-inline-start: 1px solid var(--rule-1);
-  }
-
-  .facts__cell:nth-child(n + 3) {
-    border-block-start: 1px solid var(--rule-1);
-  }
-
-  .facts__cell--style:last-child {
-    grid-column: 1 / -1;
-  }
-
-  .facts__value {
+  .cmedia__name {
     font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 500;
-    line-height: 1.25;
-    color: var(--ink-900);
-  }
-
-  /* Style values are phrases, not figures: body type, so a long one wraps quietly. */
-  .facts__value--text {
-    font-family: var(--ff-text);
-    font-size: var(--t-body);
-    line-height: 1.45;
-  }
-
-  /* ---- Empty tray ---- */
-  .empty {
-    display: grid;
-    gap: var(--space-4);
-    justify-items: start;
-    max-inline-size: 44rem;
-    padding: var(--space-6);
-    background: var(--surface-0);
-    border: 1px solid var(--rule-1);
-  }
-
-  .empty__title {
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 600;
-    line-height: 1.25;
-  }
-
-  .empty__text {
-    color: var(--ink-700);
-  }
-
-  /* ---- Hallmarks list ---- */
-  .marks-wrap {
-    min-inline-size: 0;
-  }
-
-  .marks__title {
-    margin-block-end: var(--space-4);
-  }
-
-  .marks__row {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-3);
-    min-block-size: var(--tap);
-    padding-block: var(--space-3);
-  }
-
-  .marks__glyph {
-    flex: none;
-    color: var(--gold-600);
-    transform: translateY(0.15em);
-  }
-
-  .marks__karat {
-    margin-block-start: var(--space-4);
-  }
-
-  /* ---- How buying works (plum) ---- */
-  .steps__title {
-    max-inline-size: 24ch;
-    margin-block-end: var(--space-6);
-  }
-
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1px;
-    background: var(--rule-on-plum);
-    border-block: 1px solid var(--rule-on-plum);
-  }
-
-  .steps__cell {
-    display: grid;
-    gap: var(--space-3);
-    align-content: start;
-    min-inline-size: 0;
-    padding: var(--space-5) var(--space-4) var(--space-5) 0;
-    background: var(--surface-plum);
-  }
-
-  .steps__cell:nth-child(2n) {
-    padding-inline-start: var(--space-4);
-  }
-
-  .steps__no {
-    font-family: var(--ff-display);
-    font-size: var(--t-h2);
-    font-variant-numeric: tabular-nums lining-nums;
-    line-height: 1;
-    color: var(--gold-300);
-  }
-
-  .steps__text {
-    color: var(--ink-on-plum);
-    max-inline-size: 28ch;
-  }
-
-  /* ---- Related collections ---- */
-  .related__link {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    gap: var(--space-4);
-    align-items: center;
-    min-block-size: var(--tap);
-    padding-block: var(--space-3);
-    color: var(--ink-900);
+    font-size: var(--t-name);
+    font-style: italic;
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--fg);
     text-decoration: none;
   }
 
-  .related__stamp {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: 8rem;
-    min-block-size: 3rem;
-    padding: var(--space-2);
-    background: var(--surface-0);
-    border: 1px solid var(--rule-1);
-  }
-
-  .related__stamp :global(img) {
-    max-inline-size: 6rem;
-    block-size: auto;
-  }
-
-  .related__stamp-text {
-    font-family: var(--ff-display);
-    font-size: var(--t-small);
-    color: var(--plum-700);
-    text-align: center;
-  }
-
-  .related__text {
-    display: grid;
-    gap: var(--space-1);
-    min-inline-size: 0;
-  }
-
-  .related__name {
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 600;
-    line-height: 1.25;
-  }
-
-  .related__link:hover .related__name {
+  .cmedia__name:hover {
+    color: var(--fg);
     text-decoration: underline;
-    text-decoration-color: var(--gold-700);
-    text-underline-offset: 0.15em;
+    text-decoration-color: var(--wipe);
   }
 
-  .related__arrow {
-    color: var(--gold-600);
+  /* ---------- 1. Opener facts ---------- */
+  .cfacts {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  .cfacts .eyebrow {
+    margin-block-end: var(--space-3);
+  }
+
+  .cfacts__grid {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .cfacts__marks,
+  .cfacts__rates {
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .cfacts__marks > li,
+  .cfacts__rates > li {
+    padding-block: var(--space-2);
+    border-block-end: 1px solid var(--rule);
+    font-size: var(--t-small);
+    color: var(--body);
+  }
+
+  .cfacts__rates > li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .cfacts__k {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    color: var(--eyebrow);
+  }
+
+  .cfacts__stamp {
+    color: var(--muted);
+  }
+
+  .cfacts__rates :global(.cfacts__fig) {
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral);
+    font-weight: var(--fw-display-small);
+    line-height: 1.1;
+    color: var(--numeral);
   }
 
   @media (min-width: 48em) {
-    .facts {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .facts__cell,
-    .facts__cell:nth-child(n + 3) {
-      padding-inline-start: var(--space-4);
-      border-block-start: 0;
-      border-inline-start: 1px solid var(--rule-1);
-    }
-
-    .facts__cell:first-child {
-      padding-inline-start: 0;
-      border-inline-start: 0;
-    }
-
-    .facts__cell--style:last-child {
-      grid-column: auto / span 2;
-    }
-
-    .steps {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
-    .steps__cell,
-    .steps__cell:nth-child(2n) {
-      padding-inline: var(--space-4);
-    }
-
-    .steps__cell:first-child {
-      padding-inline-start: 0;
+    .cfacts__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: calc(var(--grid-gap) * 1.5);
     }
   }
 
-  @media (min-width: 64em) {
-    .chero {
-      padding-block: var(--space-7) var(--space-8);
-    }
+  /* ---------- 2. The story ---------- */
+  .story {
+    display: grid;
+    gap: var(--space-5);
+    justify-items: center;
+    text-align: center;
+  }
 
-    .chero__grid {
-      grid-template-columns: 5fr 7fr;
-      column-gap: calc(var(--grid-gap) * 2);
-    }
+  .story__title {
+    margin: 0;
+  }
 
-    .related {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      column-gap: var(--grid-gap);
-    }
+  .story__open {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-style: italic;
+    font-weight: var(--fw-display);
+    line-height: 1.3;
+    color: var(--fg);
+  }
 
-    .related > li {
-      border-block-end: 1px solid var(--rule-1);
-    }
+  .story__text {
+    font-size: var(--t-lead);
+    line-height: 1.6;
+    color: var(--body);
   }
 </style>

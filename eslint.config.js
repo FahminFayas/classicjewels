@@ -6,7 +6,17 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  { ignores: ['dist/**', '.astro/**', 'node_modules/**', 'public/**', 'lighthouse/**'] },
+  {
+    ignores: [
+      'dist/**',
+      '.astro/**',
+      'node_modules/**',
+      'public/**',
+      'lighthouse/**',
+      // Design prototypes (moved out of public/ in WP6): reference only, never built.
+      'docs/design/prototypes/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...astro.configs.recommended,

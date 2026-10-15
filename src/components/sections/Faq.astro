@@ -1,10 +1,16 @@
 ---
 /**
- * Questions and answers as native <details> rows. No FAQPage JSON-LD on purpose: Google retired
- * that rich result in May 2026, and the HTML is already fully indexable.
+ * Questions and answers (docs/design-system-v2.md §5.6). Native, exclusive accordions: every row
+ * is a <details name="faq-{id}">, so opening one closes the others with no script, and the
+ * content height animates where the browser can (base.css) and snaps elsewhere. The question is
+ * set in Cormorant 400 at --t-h3 with a plus that turns into a minus; the answer in --body, at
+ * most --prose wide. Tone-aware: it reads the section's variables, never a colour of its own.
+ *
+ * When the block is wide enough (a full section, about 60 rem), the heading takes a left column
+ * and the questions the right; in narrower places it stacks.
+ *
+ * No FAQPage JSON-LD on purpose: Google retired that rich result, and the HTML is indexable.
  */
-import Icon from '@/components/ui/Icon.astro';
-
 export interface Props {
   heading?: string;
   items: { question: string; answer: string }[];
@@ -14,43 +20,69 @@ export interface Props {
 }
 
 const { heading, items, as: Tag = 'h2', class: className } = Astro.props;
+
+const slug = (heading ?? items[0]?.question ?? 'questions')
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-|-$/g, '')
+  .slice(0, 40);
+const group = `faq-${slug}`;
 ---
 
 <div class:list={['faq', className]}>
-  {heading && <Tag class="faq__heading">{heading}</Tag>}
-  <div class="rows">
-    {items.map((item) => (
-      <details class="faq__item">
-        <summary class="faq__q">
-          <span>{item.question}</span>
-          <Icon name="plus" class="faq__glyph" />
-        </summary>
-        <div class="faq__a">
-          <p>{item.answer}</p>
-        </div>
-      </details>
-    ))}
+  <div class="faq__grid">
+    {heading && (
+      <Tag class="faq__heading" id={`${group}-title`}>
+        {heading}
+      </Tag>
+    )}
+    <div class="faq__rows rows">
+      {items.map((item) => (
+        <details class="faq__item" name={group}>
+          <summary class="faq__q">
+            <span class="faq__text">{item.question}</span>
+            <span class="faq__sign" aria-hidden="true" />
+          </summary>
+          <div class="faq__a">
+            <p>{item.answer}</p>
+          </div>
+        </details>
+      ))}
+    </div>
   </div>
 </div>
 
 <style>
+  .faq {
+    container-type: inline-size;
+    min-inline-size: 0;
+  }
+
+  .faq__grid {
+    display: grid;
+    gap: var(--space-6);
+  }
+
   .faq__heading {
-    margin-block-end: var(--space-6);
+    font-size: var(--t-h2);
+    max-inline-size: 16ch;
   }
 
   .faq__q {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-4);
+    gap: var(--space-5);
     min-block-size: var(--control-h);
-    padding-block: var(--space-4);
+    padding-block: var(--space-5);
     font-family: var(--ff-display);
     font-size: var(--t-h3);
-    font-weight: 600;
-    line-height: 1.25;
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--fg);
     list-style: none;
     cursor: pointer;
+    transition: color var(--dur-quick) var(--ease-out);
   }
 
   .faq__q::-webkit-details-marker {
@@ -58,24 +90,61 @@ const { heading, items, as: Tag = 'h2', class: className } = Astro.props;
   }
 
   .faq__q:hover {
-    color: var(--plum-700);
+    color: var(--accent);
   }
 
-  .faq__glyph {
+  .faq__text {
+    text-wrap: pretty;
+  }
+
+  /* A plus drawn from two hairlines; the upright folds away when the row is open. */
+  .faq__sign {
+    position: relative;
     flex: none;
-    color: var(--gold-600);
-    transition: transform var(--dur-fast) var(--ease);
+    inline-size: var(--space-4);
+    block-size: var(--space-4);
+    color: var(--wipe);
   }
 
-  .faq__item[open] .faq__glyph {
-    transform: rotate(45deg);
+  .faq__sign::before,
+  .faq__sign::after {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto;
+    block-size: 1px;
+    background: currentColor;
+  }
+
+  .faq__sign::after {
+    rotate: 90deg;
+    transition: scale var(--dur-ui) var(--ease-out);
+  }
+
+  .faq__item[open] .faq__sign::after {
+    scale: 0 1;
   }
 
   .faq__a {
-    padding: var(--space-5);
-    margin-block-end: var(--space-4);
-    background: var(--surface-2);
     max-inline-size: var(--prose);
-    color: var(--ink-700);
+    padding-block-end: var(--space-6);
+    padding-inline-end: var(--space-7);
+    color: var(--body);
+  }
+
+  @container (min-width: 60rem) {
+    .faq__grid {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+      column-gap: var(--grid-gap);
+      align-items: start;
+    }
+
+    .faq__heading {
+      position: sticky;
+      inset-block-start: calc(var(--header-h) + var(--space-6));
+    }
+
+    .faq__rows {
+      grid-column: 2;
+    }
   }
 </style>

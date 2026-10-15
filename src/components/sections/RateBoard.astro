@@ -1,363 +1,172 @@
 ---
 /**
- * The gold-rate board: a plum signboard with champagne numerals, "as it reads in the shop".
- * Values are baked at build time (so they are indexable and correct without JavaScript) and
- * refreshed in place by src/scripts/rate.ts. Figure cells are fixed width so nothing shifts.
+ * The rate record table (docs/design-system-v2.md §5.4 RateBoard): one row per recorded posting,
+ * newest first, with the four karats we print and the change in 22K since the previous posting,
+ * in neutral ink (never red or green). Rendered inside RateRecord on /gold-rate/. Every figure
+ * comes from src/content/rates (or the live feed at build); nothing is interpolated.
  *
- * Variants: band (home page section with its own heading), full (rate page, caption visible),
- * mini (the panel inside the mega navigation).
+ * The old band and mini variants are retired. Their props are still accepted, and ignored, so
+ * a page that has not been rebuilt yet keeps compiling until WP6 removes them.
  */
-import Eyebrow from '@/components/ui/Eyebrow.astro';
-import { site } from '@/data/site';
 import { formatDate } from '@/lib/format';
-import { KARATS, KARAT_META, type GoldRate, type Karat } from '@/lib/gold-rate';
-import { rateDelta, type RateSnapshot } from '@/lib/rates';
-import { routes } from '@/lib/routes';
+import type { GoldRate } from '@/lib/gold-rate';
+import { getRates, type RateSnapshot } from '@/lib/rates';
+import { DISPLAY_KARATS, KARAT_FACTS } from '@/lib/tones';
 
 export interface Props {
-  rate: GoldRate | null;
-  variant?: 'band' | 'full' | 'mini';
-  stale?: boolean;
-  /** Snapshot history, newest first; enables the change-since-yesterday column. */
+  /** Snapshots, newest first. Defaults to every snapshot recorded at build. */
   history?: RateSnapshot[];
+  /** How many of the newest postings to list (all by default). */
+  rows?: number;
+  /** @deprecated Retired with the band and mini variants; ignored. */
+  rate?: GoldRate | null;
+  /** @deprecated Retired: the board is now only the record table; ignored. */
+  variant?: string;
+  /** @deprecated Ignored. */
+  stale?: boolean;
   id?: string;
 }
 
-const { rate, variant = 'band', stale = false, history = [], id } = Astro.props;
-const karats: Karat[] = variant === 'mini' ? ['22k', '24k', '21k', '18k'] : [...KARATS];
-const deltas = Object.fromEntries(karats.map((k) => [k, rateDelta(history, k)])) as Record<
-  Karat,
-  number | null
->;
-const showDelta = variant !== 'mini' && karats.some((k) => deltas[k] !== null);
-const dateLabel = rate ? formatDate(rate.date, { year: undefined }) : '';
+const { history: given, rows, id } = Astro.props;
+const history = given ?? (await getRates()).history;
+const shown = rows ? history.slice(0, rows) : history;
+
+/** "Down 5.50", "Up 2.50", "Unchanged"; the oldest posting on record has nothing to compare. */
+function change(i: number): { text: string; first: boolean } {
+  const now = history[i];
+  const before = history[i + 1];
+  if (!now || !before) return { text: 'Start of record', first: true };
+  const d = Math.round((now.perGram['22k'] - before.perGram['22k']) * 100) / 100;
+  if (d === 0) return { text: 'Unchanged', first: false };
+  return { text: `${d > 0 ? 'Up' : 'Down'} ${Math.abs(d).toFixed(2)}`, first: false };
+}
 ---
 
-<div class:list={['board', `board--${variant}`]} data-surface="plum" id={id}>
-  {variant === 'band' && (
-    <div class="board__head">
-      <Eyebrow>Today's rate · Dubai · AED per gram</Eyebrow>
-      <h2>The board, as it reads in the shop.</h2>
-    </div>
-  )}
-
-  {rate ? (
-    <table class="board__table" data-rate-board data-state={stale ? 'stale' : 'baked'}>
-      <caption class:list={variant === 'full' ? 'board__caption' : 'sr-only'}>
-        Gold rate in Dubai, AED per gram,{' '}
-        <span data-rate-date={rate.date}>
-          <span data-rate-date-text data-format="full">
-            {formatDate(rate.date)}
-          </span>
-        </span>
-      </caption>
-      <thead class="sr-only">
+<table class="record" id={id}>
+  <caption class="sr-only">
+    Posted gold rates, AED per gram, newest first, with the change in 22K since the previous posting
+  </caption>
+  <thead>
+    <tr>
+      <th scope="col">Posted</th>
+      {DISPLAY_KARATS.map((k) => (
+        <th scope="col" class="record__num">
+          {KARAT_FACTS[k].label}
+        </th>
+      ))}
+      <th scope="col" class="record__num">
+        22K change
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    {shown.map((s, i) => {
+      const c = change(i);
+      return (
         <tr>
-          <th scope="col">Karat</th>
-          <th scope="col">Rate</th>
-          <th scope="col">Unit</th>
-          {showDelta && <th scope="col">Change since previous posting</th>}
-        </tr>
-      </thead>
-      <tbody>
-        {karats.map((k) => (
-          <tr>
-            <th scope="row" class="board__karat">
-              <span class="board__karat-inner">
-                <span class="board__k">{KARAT_META[k].label}</span>
-                <span class="board__fineness small">{KARAT_META[k].fineness}</span>
-                {variant !== 'mini' && <span class="board__note small">{KARAT_META[k].note}</span>}
+          <th scope="row">
+            <time datetime={s.date}>
+              <span class="record__long">{formatDate(s.date, { year: undefined })}</span>
+              <span class="record__short">
+                {formatDate(s.date, { year: undefined, month: 'short' })}
               </span>
-            </th>
-            <td class="board__figure">
-              <span data-rate={k}>{rate.perGram[k].toFixed(2)}</span>
-            </td>
-            <td class="board__unit small">
-              <abbr title="United Arab Emirates dirham">AED</abbr> / g
-            </td>
-            {showDelta && (
-              <td
-                class:list={[
-                  'board__delta small tabular',
-                  deltas[k] !== null && deltas[k] < 0 ? 'is-down' : 'is-up',
-                ]}
-              >
-                {deltas[k] === null
-                  ? ''
-                  : `${deltas[k] > 0 ? '+' : deltas[k] < 0 ? '−' : ''}${Math.abs(deltas[k]).toFixed(2)}`}
-              </td>
-            )}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  ) : (
-    <p class="board__empty">
-      Today's rate: call{' '}
-      <a href={`tel:${site.phone.landline.e164}`}>{site.phone.landline.display}</a>
-    </p>
-  )}
-
-  {rate && variant !== 'mini' && (
-    <div class="board__foot small">
-      <p>
-        <time datetime={rate.date} data-rate-date={rate.date}>
-          {stale ? 'Last posted ' : 'Updated '}
-          <span data-rate-date-text>{dateLabel}</span>
-        </time>
-        <span aria-hidden="true"> · </span>
-        Dubai Jewellery Group suggested retail rate, as posted on the boards in our branches.
-      </p>
-      <p>
-        These are gold rates only. Your price = rate × net gold weight + making charge + 5% VAT,
-        quoted per piece.
-      </p>
-    </div>
-  )}
-
-  {rate && variant === 'mini' && (
-    <p class="board__foot small">
-      <time datetime={rate.date} data-rate-date={rate.date}>
-        <span data-rate-date-text>{dateLabel}</span>
-      </time>
-      <span aria-hidden="true"> · </span>
-      <a href={routes.goldRate}>Today's rate</a>
-    </p>
-  )}
-
-  {variant === 'band' && (
-    <p class="board__links">
-      <a href={`${routes.goldRate}#pricing`}>
-        How a piece is priced <span aria-hidden="true">&rarr;</span>
-      </a>
-      <a href={routes.goldExchange}>
-        Exchange old gold <span aria-hidden="true">&rarr;</span>
-      </a>
-    </p>
-  )}
-</div>
+            </time>
+          </th>
+          {DISPLAY_KARATS.map((k) => (
+            <td class="record__num fig">{s.perGram[k].toFixed(2)}</td>
+          ))}
+          <td class:list={['record__num', 'record__change', c.first && 'record__change--first']}>
+            {c.text}
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
 
 <style>
-  .board {
-    background: var(--surface-plum);
-    color: var(--ink-on-plum);
-  }
-
-  .board--band {
-    padding-block: var(--section-y);
-    padding-inline: var(--gutter);
-  }
-
-  /* Content lines up with every other section: the container width minus its gutters. */
-  .board--band > * {
-    max-inline-size: calc(var(--container) - 2 * var(--gutter));
-    margin-inline: auto;
-  }
-
-  .board--full {
-    padding: var(--space-6) var(--gutter);
-  }
-
-  .board--mini {
-    padding: var(--space-4);
-    background: var(--plum-050);
-    color: var(--ink-900);
-  }
-
-  .board__head {
-    margin-block-end: var(--space-7);
-  }
-
-  .board__head h2 {
-    color: var(--ink-on-plum);
-  }
-
-  .board__table {
-    border-block: 1px solid var(--rule-gold);
-  }
-
-  .board__caption {
-    padding-block-end: var(--space-3);
-    text-align: start;
-    font-size: var(--t-small);
-    color: var(--ink-on-plum-muted);
-  }
-
-  .board__table tr + tr > * {
-    border-block-start: 1px solid var(--rule-on-plum);
-  }
-
-  .board--mini .board__table {
-    border-color: var(--rule-2);
-  }
-
-  .board--mini .board__table tr + tr > * {
-    border-color: var(--rule-1);
-  }
-
-  .board__table th,
-  .board__table td {
-    padding-block: var(--space-4);
-    vertical-align: baseline;
-    text-align: start;
-  }
-
-  .board--mini .board__table th,
-  .board--mini .board__table td {
-    padding-block: var(--space-2);
-  }
-
-  .board__karat {
+  .record {
     inline-size: 100%;
-    font-weight: 400;
-  }
-
-  /* Block, not flex: a flex container gives the table cell no first-line baseline to share, so
-     "24K" would float above the figure. Inline runs keep the label on the figure baseline. */
-  .board__karat-inner {
-    display: block;
-  }
-
-  .board__fineness {
-    margin-inline-start: var(--space-3);
-  }
-
-  .board__k {
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 500;
-    color: inherit;
-  }
-
-  .board__fineness,
-  .board__unit {
-    color: var(--gold-300);
-  }
-
-  .board--mini .board__fineness,
-  .board--mini .board__unit {
-    color: var(--gold-700);
-  }
-
-  .board__note {
-    display: block;
-    margin-block-start: var(--space-1);
-    color: var(--ink-on-plum-muted);
-  }
-
-  .board__figure {
-    min-inline-size: 7ch;
-    padding-inline: var(--space-4) var(--space-3);
-    font-family: var(--ff-display);
-    font-size: var(--t-numeral-xl);
-    font-weight: 500;
-    line-height: 1;
-    font-variant-numeric: tabular-nums lining-nums;
-    color: var(--gold-300);
-    text-align: end;
-    white-space: nowrap;
-  }
-
-  .board--mini .board__figure {
-    font-family: var(--ff-text);
-    font-size: var(--t-numeral);
-    color: var(--plum-700);
-  }
-
-  .board__unit {
-    white-space: nowrap;
-  }
-
-  .board__delta {
-    text-align: end;
-    white-space: nowrap;
-  }
-
-  .board__delta.is-up {
-    color: var(--ok-on-plum);
-  }
-
-  .board__delta.is-down {
-    color: var(--err-on-plum);
-  }
-
-  .board__foot {
-    margin-block-start: var(--space-5);
-    color: var(--ink-on-plum-muted);
-    max-inline-size: var(--prose);
-  }
-
-  .board__foot p + p {
-    margin-block-start: var(--space-2);
-  }
-
-  .board--mini .board__foot {
-    margin-block-start: var(--space-3);
-    color: var(--ink-500);
-  }
-
-  .board--mini a {
-    color: var(--plum-700);
-  }
-
-  .board__table[data-state='stale'] time {
-    color: var(--ink-on-plum-muted);
-  }
-
-  .board__empty {
-    font-size: var(--t-lead);
-  }
-
-  .board__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-5);
-    margin-block-start: var(--space-6);
-  }
-
-  .board__links a {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
     font-size: var(--t-small);
-    font-weight: 500;
-    color: var(--ink-on-plum);
-    text-decoration: underline;
-    text-decoration-color: var(--rule-gold);
-    text-underline-offset: 0.25em;
-    transition:
-      color var(--dur-fast) var(--ease),
-      text-decoration-color var(--dur-fast) var(--ease);
+    color: var(--body);
+    border-block: 1px solid var(--rule-strong);
   }
 
-  .board__links a:hover {
-    color: var(--gold-300);
-    text-decoration-color: var(--gold-300);
+  .record th,
+  .record td {
+    padding-block: var(--space-3);
+    padding-inline: var(--space-2);
+    text-align: start;
+    vertical-align: baseline;
+    white-space: nowrap;
   }
 
-  @media (max-width: 29.99em) {
-    .board__note {
+  .record :is(th, td):first-child {
+    padding-inline-start: 0;
+  }
+
+  .record :is(th, td):last-child {
+    padding-inline-end: 0;
+  }
+
+  .record thead th {
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    text-transform: uppercase;
+    color: var(--eyebrow);
+  }
+
+  .record tbody tr {
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .record tbody th {
+    font-weight: var(--fw-text-strong);
+    color: var(--fg);
+  }
+
+  .record .record__num {
+    text-align: end;
+  }
+
+  .record td.record__num {
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  .record__change {
+    color: var(--muted);
+  }
+
+  .record__change--first {
+    font-style: italic;
+  }
+
+  .record__short {
+    display: none;
+  }
+
+  /* Phones: "15 Oct", tighter cells, so six columns fit 358 px without scrolling. */
+  @media (max-width: 39.99em) {
+    .record {
+      font-size: var(--t-caption);
+    }
+
+    .record th,
+    .record td {
+      padding-inline: var(--space-1);
+    }
+
+    .record thead th {
+      letter-spacing: 0.08em;
+    }
+
+    .record__long {
       display: none;
     }
 
-    .board__figure {
-      font-size: clamp(1.75rem, 1.2rem + 3vw, 2.5rem);
-    }
-  }
-
-  @media print {
-    .board {
-      background: #fff;
-      color: #000;
-      border: 1px solid #000;
-    }
-
-    .board__figure,
-    .board__fineness,
-    .board__unit,
-    .board__foot,
-    .board__note {
-      color: #000;
+    .record__short {
+      display: inline;
     }
   }
 </style>

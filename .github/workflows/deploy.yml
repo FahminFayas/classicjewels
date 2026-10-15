@@ -1,0 +1,67 @@
+name: Deploy to Cloudflare Pages
+
+# Builds dist/ and uploads it to the Pages project with Wrangler (Direct Upload), so the GitHub
+# integration in the Cloudflare dashboard must stay disconnected: a project is one or the other.
+# Runs on a push to main, by hand, and after every run of "Gold rate snapshot" (rates.yml): the
+# snapshot commits with GITHUB_TOKEN, and a push made with that token never starts a workflow
+# by itself, whereas a workflow_run event does. Each deploy bakes the current feed value into
+# every page. Settings: docs/deployment.md.
+#
+# Secrets (repository > Settings > Secrets and variables > Actions):
+#   CLOUDFLARE_API_TOKEN    a custom token with Account > Cloudflare Pages > Edit
+#   CLOUDFLARE_ACCOUNT_ID   from the dashboard's account overview
+# Variables (same page, Variables tab): PUBLIC_GTM_ID (optional, leave unset to keep tracking off).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['Gold rate snapshot']
+    types: [completed]
+    branches: [main]
+
+# One deploy at a time, in order; a queued run is never cancelled.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    name: Build and deploy
+    # After a snapshot run, only when it succeeded (a failed snapshot leaves main unchanged).
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://classicjewels.ae/
+    env:
+      PUBLIC_GTM_ID: ${{ vars.PUBLIC_GTM_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run audit
+      - name: Leave the Apache-only files out of the upload
+        # The PHP endpoint and .htaccess belong to the Apache host; on Pages the functions in
+        # functions/ answer /api/contact.php and /gold-rates.php, and _headers/_redirects apply.
+        run: |
+          rm -f dist/.htaccess dist/api/contact.php
+          rmdir --ignore-fail-on-non-empty dist/api 2>/dev/null || true
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Project name and output folder come from wrangler.toml; the functions/ folder next to
+          # it is compiled into the deployment. --branch=main marks it as production.
+          command: pages deploy --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

@@ -1,142 +1,431 @@
 ---
 /**
- * One branch in a ruled list or grid: name, venue, emirate, hours line and the two links that
- * matter (directions, WhatsApp). Opening-soon branches render without links.
+ * One door (docs/design-system-v2.md §5.6, §8.2 section 9): a branch as a way in, never a dead
+ * end. BranchDoors places four of these on the schematic route; nothing else renders it.
+ *
+ *   - the emirate as an eyebrow ("Dubai · Flagship"), the name as an <h3> linking to the branch
+ *     page, then the facts site.ts has for it (on /stores/ the short address, the metro and the
+ *     parking lines; on the home page the short address only) or "Call or message for the shop
+ *     number and today's hours.";
+ *   - the hours the branch publishes, whenever `hours.weekly` exists: the week collapsed into runs
+ *     ("Saturday to Thursday 10:00 to 22:30; Friday 10:00 to 12:00 and 14:30 to 22:30") as a
+ *     day-by-day list on /stores/ and as one line elsewhere, today's run marked by nav.ts, the
+ *     open-now line written by open-now.ts in Dubai time, and the caption "As listed on Google,
+ *     checked {date}" until the company confirms the timetable (on the home page BranchDoors
+ *     prints that caption once, under the four doors);
+ *   - on /stores/ (`full`), the branch's own Google rating as one dated line of text, linked to
+ *     its listing (the home hero's FactStrip already carries the flagship's);
+ *   - the actions, each at least 44 px tall: Call (the branch's own number, or the group line,
+ *     labelled as such), Mobile (Deira), Directions (Google Maps, new tab) and WhatsApp this
+ *     branch (prefilled with the branch name);
+ *   - the station that sits on the route: a square turned 45 degrees, the C-ring for the
+ *     flagship, filled champagne when the door is lit (its own branch page).
+ *
+ * `variant="compact"` leaves out the facts and rating lines, sets the hours as one line and the
+ * name smaller, in italic. On phones every variant sets the actions as one row of cells, icon
+ * over a short label. Each action carries an aria-label holding its visible label, so the name
+ * never depends on which label the width shows.
  */
 import Icon from '@/components/ui/Icon.astro';
 import type { Branch } from '@/data/site';
 import { site } from '@/data/site';
-import { hoursSummary } from '@/lib/hours';
+import { formatDate } from '@/lib/format';
+import { hoursCaption, hoursLine, hoursRuns, openNowData } from '@/lib/hours';
 import { routes } from '@/lib/routes';
 import { whatsappUrl } from '@/lib/whatsapp';
 
 export interface Props {
   branch: Branch;
-  /** Render as a compact row (home page strip) rather than a card. */
-  compact?: boolean;
+  /** full and home: facts and long action labels; compact: name, hours line and actions. */
+  variant?: 'full' | 'home' | 'compact';
+  /** This door's own branch page: the station lights and the name links to the current page. */
+  lit?: boolean;
   class?: string;
 }
 
-const { branch, compact = false, class: className } = Astro.props;
-const open = branch.status === 'open';
-const hoursLine = branch.hours
-  ? `${hoursSummary(branch)}${branch.hours.confirmed ? '' : ' (as listed on Google)'}`
-  : 'Hours: call ahead';
-/** The venue line is dropped when the branch name already says it ("Safari Mall, Sharjah"). */
-const showVenue = open && !branch.name.toLowerCase().includes(branch.venue.toLowerCase());
-const phone = branch.phone ?? site.phone.landline;
-const whatsapp = whatsappUrl(
-  `${site.whatsapp.greeting} I’d like to visit the ${branch.name} branch. Could you confirm today’s hours?`,
+const { branch: b, variant = 'home', lit = false, class: className } = Astro.props;
+
+const own = Boolean(b.phone);
+const phone = b.phone ?? site.phone.landline;
+const callLong = own ? `Call ${phone.display}` : `Group line ${phone.display}`;
+const callShort = own ? 'Call' : 'Group line';
+const callName = own
+  ? `${callLong}, ${b.name}`
+  : `Call the ${callLong.toLowerCase()} about ${b.name}`;
+
+/* Every door has directions: the branch's own Maps link, else a Maps search for it. */
+const mapUrl =
+  b.map?.url ??
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${site.name} ${b.name}`)}`;
+const ask = whatsappUrl(
+  `${site.whatsapp.greeting} I’d like to visit the ${b.name} branch. Could you confirm today’s hours?`,
 );
+
+const parking = b.facilities?.find((f) => /parking/i.test(f));
+/* full: every fact; home: the short address only (metro and parking wait on the branch page). */
+const allFacts = [b.shortAddress, b.metro, parking].filter((line): line is string => Boolean(line));
+const facts = variant === 'full' ? allFacts : allFacts.slice(0, b.shortAddress ? 1 : 0);
+const showFacts = variant !== 'compact';
+/* The day-by-day list only on /stores/; home and compact doors print the week as one line. */
+const weekList = variant === 'full';
+/* Home: BranchDoors prints one "as listed on Google" caption under the four doors instead. */
+const showCaption = variant !== 'home';
+
+const runs = hoursRuns(b);
+const caption = hoursCaption(b);
+const nowData = openNowData(b);
+/* The rating line only on /stores/: the home hero's FactStrip already carries the flagship's. */
+const rating = variant === 'full' ? b.reviews : undefined;
 ---
 
-<article class:list={['store', compact && 'store--compact', className]}>
-  <div class="store__text">
-    <p class="store__emirate small">
-      {branch.emirate}
-      {branch.isFlagship ? ' · Flagship' : ''}
-    </p>
-    <h3 class="store__name">
-      {open ? (
-        <a class="link-quiet" href={routes.store(branch.id)}>
-          {branch.name}
-        </a>
-      ) : (
-        branch.name
-      )}
-    </h3>
-    {showVenue && <p class="store__venue">{branch.venue}</p>}
-    {!open && <p class="store__venue">{branch.publicNote ?? 'Opening soon.'}</p>}
-    {open && <p class="store__hours small">{hoursLine}</p>}
-  </div>
-  {open && (
-    <ul class="store__links small" role="list">
-      {branch.map?.url && (
-        <li>
-          <a href={branch.map.url} target="_blank" rel="noopener">
-            <Icon name="map-pin" /> Directions
-            <span class="sr-only"> to {branch.name} (opens Google Maps)</span>
-          </a>
-        </li>
-      )}
-      <li>
-        <a href={`tel:${phone.e164}`}>
-          <Icon name="phone" /> {phone.display}
-        </a>
-      </li>
-      <li>
-        <a href={whatsapp} target="_blank" rel="noopener">
-          <Icon name="whatsapp" /> WhatsApp
-          <span class="sr-only"> about the {branch.name} branch (opens in a new tab)</span>
-        </a>
-      </li>
-    </ul>
+<article
+  class:list={['door', className]}
+  data-variant={variant}
+  data-lit={lit ? '' : undefined}
+  data-flag={b.isFlagship ? '' : undefined}
+>
+  {b.isFlagship ? (
+    <Icon name="c-ring" class="door__ring" />
+  ) : (
+    <span class="door__station" aria-hidden="true" />
   )}
-  {!open && <p class="store__soon small">Opening soon</p>}
+  <p class="eyebrow door__emirate">
+    {b.emirate}
+    {b.isFlagship && ' · Flagship'}
+  </p>
+  <h3 class="door__name">
+    <a class="door__link" href={routes.store(b.id)} aria-current={lit ? 'page' : undefined}>
+      {b.name}
+    </a>
+  </h3>
+  {showFacts &&
+    (facts.length > 0 ? (
+      <ul class="door__facts" role="list">
+        {facts.map((line) => (
+          <li>{line}</li>
+        ))}
+      </ul>
+    ) : (
+      <p class="door__facts">Call or message for the shop number and today’s hours.</p>
+    ))}
+  {runs.length > 0 && (
+    <div class="door__hours">
+      {weekList ? (
+        <dl class="door__week">
+          {runs.map((run) => (
+            <div class="door__run" data-hours-days={run.days.join(',')}>
+              <dt class="door__days">{run.label}</dt>
+              <dd class="door__times fig">{run.text}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <p class="door__line fig">{hoursLine(b)}</p>
+      )}
+      <p class="door__now small" data-open-now={nowData}></p>
+      {showCaption && caption && <p class="door__checked caption">{caption}</p>}
+    </div>
+  )}
+  {rating && (
+    <p class="door__rating caption">
+      <a class="door__rating-link" href={mapUrl} target="_blank" rel="noopener">
+        <span class="fig">{rating.rating.toFixed(1)}</span> on Google, {rating.count} reviews,{' '}
+        {formatDate(rating.asOf)}
+        <span class="sr-only"> (opens in a new tab)</span>
+      </a>
+    </p>
+  )}
+  <ul class="door__acts" role="list">
+    <li>
+      <a class="door__act" href={`tel:${phone.e164}`} aria-label={callName}>
+        <Icon name="phone" />
+        <span class="door__long">{callLong}</span>
+        <span class="door__short">{callShort}</span>
+      </a>
+    </li>
+    {b.mobile && (
+      <li>
+        <a
+          class="door__act"
+          href={`tel:${b.mobile.e164}`}
+          aria-label={`Call the mobile ${b.mobile.display}, ${b.name}`}
+        >
+          <Icon name="phone" />
+          <span class="door__long">Mobile {b.mobile.display}</span>
+          <span class="door__short">Mobile</span>
+        </a>
+      </li>
+    )}
+    <li>
+      <a
+        class="door__act"
+        href={mapUrl}
+        target="_blank"
+        rel="noopener"
+        aria-label={`Directions to ${b.name} (opens in a new tab)`}
+      >
+        <Icon name="map-pin" />
+        <span>Directions</span>
+      </a>
+    </li>
+    <li>
+      <a
+        class="door__act"
+        href={ask}
+        target="_blank"
+        rel="noopener"
+        aria-label={`WhatsApp this branch, ${b.name} (opens WhatsApp)`}
+      >
+        <Icon name="whatsapp" />
+        <span class="door__long">WhatsApp this branch</span>
+        <span class="door__short">WhatsApp</span>
+      </a>
+    </li>
+  </ul>
 </article>
 
+<script src="@/scripts/open-now.ts"></script>
+
 <style>
-  .store {
+  .door {
+    position: relative;
     display: grid;
-    gap: var(--space-4);
-    padding-block: var(--space-5);
+    align-content: start;
+    gap: var(--space-3);
+    min-inline-size: 0;
   }
 
-  .store__text {
-    display: grid;
-    gap: var(--space-1);
+  /* ---------- Stations: positioned by BranchDoors' route (custom properties set there) ---------- */
+  .door__station,
+  .door :global(.door__ring) {
+    position: absolute;
+    display: var(--station-display, none);
+    inset-block-start: var(--station-y, 0);
+    inset-inline-start: var(--station-x, 0);
+    background: var(--ground);
   }
 
-  .store__emirate {
-    color: var(--gold-700);
-    letter-spacing: 0.04em;
+  .door__station {
+    inline-size: var(--space-3);
+    block-size: var(--space-3);
+    border: 1px solid var(--accent);
+    rotate: 45deg;
+    translate: -50% -50%;
   }
 
-  .store__name {
+  [dir='rtl'] .door__station {
+    translate: 50% -50%;
+  }
+
+  .door :global(.door__ring) {
+    inline-size: var(--space-6);
+    block-size: var(--space-6);
+    color: var(--accent);
+    translate: -50% -50%;
+  }
+
+  [dir='rtl'] .door :global(.door__ring) {
+    translate: 50% -50%;
+  }
+
+  .door[data-lit] .door__station {
+    background: var(--accent);
+    inline-size: var(--space-4);
+    block-size: var(--space-4);
+  }
+
+  .door[data-lit] :global(.door__ring) {
+    stroke-width: 2;
+  }
+
+  /* ---------- Text ---------- */
+  .door__emirate {
+    margin: 0;
+  }
+
+  .door__name {
     font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1.15;
+    text-wrap: balance;
   }
 
-  .store__name a {
-    color: var(--ink-900);
+  .door[data-variant='compact'] .door__name {
+    font-size: var(--t-name);
+    font-style: italic;
   }
 
-  .store__venue {
-    color: var(--ink-700);
-  }
-
-  .store__hours {
-    color: var(--ink-500);
-  }
-
-  .store__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-4);
-  }
-
-  .store__links a {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    min-block-size: var(--tap);
-    color: var(--plum-700);
+  .door__link {
+    color: var(--fg);
     text-decoration: none;
-    font-weight: 500;
   }
 
-  .store__links a:hover {
+  .door__link:is(:hover, :focus-visible) {
     text-decoration: underline;
-    text-decoration-color: var(--gold-600);
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--wipe);
+    text-underline-offset: 0.16em;
   }
 
-  .store__soon {
-    color: var(--ink-500);
+  .door__facts {
+    display: grid;
+    gap: var(--space-1);
+    max-inline-size: 44ch;
+    font-size: var(--t-small);
+    line-height: 1.5;
+    color: var(--body);
+  }
+
+  /* ---------- Hours ---------- */
+  .door__hours {
+    display: grid;
+    gap: var(--space-1);
+    max-inline-size: 44ch;
+  }
+
+  /* Each run on one line: the days in the first column, the times in the second. */
+  .door__week {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: var(--space-4);
+    row-gap: var(--space-1);
+    font-size: var(--t-small);
+    line-height: 1.5;
+  }
+
+  .door__run {
+    display: contents;
+  }
+
+  .door__days {
+    color: var(--body);
+  }
+
+  .door__times {
+    color: var(--fg);
+  }
+
+  /* Today's run, marked by nav.ts in Dubai time. */
+  .door__run[data-today] .door__days {
+    font-weight: var(--fw-text-strong);
+    color: var(--fg);
+  }
+
+  .door__line {
+    font-size: var(--t-caption);
+    line-height: 1.45;
+    color: var(--body);
+  }
+
+  /* Written by open-now.ts: the line keeps its height so nothing below it moves when it fills. */
+  .door__now {
+    min-block-size: calc(var(--t-small) * 1.5);
+    color: var(--body);
+  }
+
+  .door__now[data-state='open'] {
+    color: var(--fg);
+  }
+
+  .door__checked {
+    margin: 0;
+  }
+
+  /* ---------- Rating ---------- */
+  .door__rating {
+    margin: 0;
+  }
+
+  .door__rating-link {
+    color: var(--body);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.2em;
+    transition: color var(--dur-quick) var(--ease-out);
+  }
+
+  .door__rating-link:is(:hover, :focus-visible) {
+    color: var(--fg);
+    text-decoration-color: var(--wipe);
+  }
+
+  /* ---------- Actions ---------- */
+  .door__acts {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    margin-block-start: var(--space-3);
+    border-block: 1px solid var(--rule);
+  }
+
+  .door__acts li + li {
+    border-inline-start: 1px solid var(--rule);
+  }
+
+  .door__act {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    min-block-size: calc(var(--tap) + var(--space-4));
+    padding: var(--space-2) var(--space-1);
+    font-size: var(--t-caption);
+    font-weight: var(--fw-text-strong);
+    line-height: 1.25;
+    text-align: center;
+    color: var(--fg);
+    text-decoration: none;
+    transition: color var(--dur-quick) var(--ease-out);
+  }
+
+  .door__act :global(.icon) {
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+    color: var(--wipe);
+  }
+
+  .door__act:hover {
+    color: var(--link);
+  }
+
+  .door__long {
+    display: none;
   }
 
   @media (min-width: 64em) {
-    .store--compact {
-      grid-template-columns: 1fr auto;
-      align-items: end;
+    .door__acts {
+      grid-auto-flow: row;
+      grid-auto-columns: auto;
+      grid-template-columns: minmax(0, 1fr);
+      border-block-end: 0;
+    }
+
+    .door__acts li + li {
+      border-inline-start: 0;
+    }
+
+    .door__acts li {
+      border-block-end: 1px solid var(--rule);
+    }
+
+    .door__act {
+      flex-direction: row;
+      justify-content: start;
+      gap: var(--space-3);
+      min-block-size: var(--tap);
+      padding: var(--space-2) 0;
+      font-size: var(--t-small);
+      text-align: start;
+    }
+
+    .door__long {
+      display: inline;
+    }
+
+    .door__short {
+      display: none;
     }
   }
 </style>

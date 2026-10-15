@@ -1,28 +1,62 @@
 ---
 /**
- * Site footer on the deep plum surface: link columns, every branch, the registered office
- * (byte-identical to the store pages and the JSON-LD), social links and the legal row.
+ * The site footer (docs/design-system-v2.md §5.3, §8.4) on deep plum, under a bronze rule.
+ *
+ *   Row 1  the slogan as a band line, the white logo, the group lockup and its one line
+ *   Row 2  Branches · Today, AED per gram · Ask us · The house (two columns on phones)
+ *   Row 3  © year, legal name, trade licence, legal pages and the five social profiles as text
+ *
+ * Column labels are <p class="eyebrow">, not headings. Every link sits in .list-links (24 px
+ * targets) and goes somewhere real: routes from routes.ts, facts and profiles from site.ts.
  */
-import Icon from '@/components/ui/Icon.astro';
+import GroupLockup from '@/components/ui/GroupLockup.astro';
 import Logo from '@/components/ui/Logo.astro';
-import { branches, flagship, site } from '@/data/site';
-import { getDesignCollections, getNavCategories } from '@/lib/content';
-import { hoursSummary } from '@/lib/hours';
+import RateFigure from '@/components/ui/RateFigure.astro';
+import { branches, site } from '@/data/site';
+import { formatDate, formatRateDate, formatRateTime } from '@/lib/format';
+import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
+import { DISPLAY_KARATS, KARAT_FACTS } from '@/lib/tones';
 import { whatsappGeneral } from '@/lib/whatsapp';
 
-const [categories, collections] = await Promise.all([getNavCategories(), getDesignCollections()]);
+const { latest: rate, stale, fetchedAt } = await getRates();
 const year = new Date().getFullYear();
-const listFormat = new Intl.ListFormat('en-GB', { style: 'long', type: 'conjunction' });
 
-const services = [
-  { label: 'Gold exchange', href: routes.goldExchange },
-  { label: 'Custom jewellery', href: routes.customJewellery },
+/** "Every jewel has a tale" -> "Every jewel" + the italic tail "has a tale." */
+const words = site.slogan.split(' ');
+const sloganLead = words.slice(0, 2).join(' ');
+const sloganTail = words.slice(2).join(' ');
+
+const open = branches.filter((b) => b.status === 'open');
+const soon = branches.filter((b) => b.status === 'opening-soon');
+const tel = site.phone.landline;
+
+/** The status line, as RateInstrument writes it, with the same rate.ts hooks: data-rate-lead
+ * swaps "Last published rate" for the source when a fresh posting arrives, and the <time
+ * data-rate-time> becomes "checked {HH:MM}". */
+const freshLead = `${site.rate.source} ${site.rate.basis}`;
+const status = rate
+  ? stale || !fetchedAt
+    ? {
+        lead: stale ? 'Last published rate' : freshLead,
+        at: rate.date,
+        text: formatDate(rate.date, { year: undefined }),
+      }
+    : {
+        lead: freshLead,
+        at: fetchedAt,
+        text: `${formatRateDate(fetchedAt)}, ${formatRateTime(fetchedAt)}`,
+      }
+  : null;
+
+const house = [
+  { label: 'Jewellery', href: routes.jewellery },
+  { label: 'Styles', href: routes.collections },
   { label: 'Occasions', href: routes.occasions },
+  { label: 'Gold rate', href: routes.goldRate },
+  { label: 'Old gold', href: routes.goldExchange },
+  { label: 'Custom jewellery', href: routes.customJewellery },
   { label: 'Offers', href: routes.offers },
-  { label: "Today's gold rate", href: routes.goldRate },
-];
-const company = [
   { label: 'About', href: routes.about },
   { label: 'Our promise', href: routes.promise },
   { label: 'Journal', href: routes.journal },
@@ -33,277 +67,344 @@ const legal = [
   { label: 'Terms', href: routes.terms },
   { label: 'Disclaimer', href: routes.disclaimer },
 ];
-const flagshipHours = flagship.hours ? hoursSummary(flagship) : null;
 ---
 
-<footer class="footer" data-surface="plum">
-  <div class="container">
-    <div class="footer__top">
-      <div class="footer__brand">
-        <Logo tone="light" />
-        <p class="footer__tag">{site.tagline}.</p>
-        <address class="footer__address">
-          <span class="footer__label">Registered office and flagship</span>
-          <span>{site.address.street}</span>
-          <span>
-            {site.address.locality}, {site.address.region}, {site.address.countryName}
-          </span>
-        </address>
-        <ul class="footer__contact" role="list">
-          <li>
-            <a href={`tel:${site.phone.landline.e164}`}>
-              <Icon name="phone" /> {site.phone.landline.display}
-            </a>
-          </li>
-          <li>
-            <a href={whatsappGeneral()} target="_blank" rel="noopener">
-              <Icon name="whatsapp" /> {site.whatsapp.display}
-            </a>
-          </li>
-          <li>
-            <a href={`mailto:${site.email}`}>
-              <Icon name="mail" /> {site.email}
-            </a>
-          </li>
-        </ul>
-        <p class="footer__hours small">
-          {flagshipHours
-            ? `${flagship.shortName}: ${flagshipHours}${flagship.hours?.confirmed ? '' : ' (as listed on Google)'}. Other branches: see each store page.`
-            : 'Branch hours are on each store page. Call ahead for Friday timings.'}
+<footer class="ftr" data-tone="stage-raised">
+  <div class="track" data-width="wide">
+    <div class="ftr__in">
+      <div class="ftr__top">
+        <p class="h-band ftr__slogan">
+          {sloganLead} <em>{sloganTail}.</em>
         </p>
+        <div class="ftr__house">
+          <Logo tone="light" />
+          <GroupLockup link />
+          <p class="ftr__line">
+            Jewellers since {site.founded.brandYear}; the group has been {site.group.experience}.
+          </p>
+        </div>
       </div>
 
-      <nav class="footer__cols" aria-label="Footer">
-        <div class="footer__col">
-          <p class="footer__title">Stores</p>
-          <ul role="list">
-            {branches.map((b) => (
-              <li>
-                {b.status === 'open' ? (
-                  <a href={routes.store(b.id)}>{b.name}</a>
+      <nav class="ftr__cols" aria-label="Footer">
+        <div class="ftr__col ftr__col--branches">
+          <p class="eyebrow ftr__label">Branches</p>
+          <ul class="list-links ftr__branches" role="list">
+            {open.map((b) => (
+              <li class="ftr__branch">
+                <span class="ftr__emirate">{b.emirate}</span>
+                <a href={routes.store(b.id)}>{b.name}</a>
+                {b.shortAddress && <span class="ftr__addr">{b.shortAddress}</span>}
+                {b.phone ? (
+                  <a class="ftr__tel fig" href={`tel:${b.phone.e164}`}>
+                    {b.phone.display}
+                  </a>
                 ) : (
-                  <span class="footer__soon">{b.name} · opening soon</span>
+                  <a class="ftr__tel" href={`tel:${tel.e164}`}>
+                    Group line<span class="sr-only"> {tel.display}</span>
+                  </a>
+                )}
+                {b.mobile && (
+                  <a class="ftr__tel fig" href={`tel:${b.mobile.e164}`}>
+                    {b.mobile.display}
+                    <span class="sr-only"> (mobile)</span>
+                  </a>
                 )}
               </li>
             ))}
+          </ul>
+          {soon.length > 0 && (
+            <p class="ftr__small">Opening soon: {soon.map((b) => b.name).join('; ')}.</p>
+          )}
+        </div>
+
+        <div class="ftr__col">
+          <p class="eyebrow ftr__label">Today, AED per gram</p>
+          {rate ? (
+            <>
+              <ul class="rows ftr__rates" role="list">
+                {DISPLAY_KARATS.map((k) => (
+                  <li class="ftr__rate">
+                    <span class="ftr__k">{KARAT_FACTS[k].label}</span>
+                    <RateFigure rate={rate} karat={k} class="ftr__v" />
+                  </li>
+                ))}
+              </ul>
+              <p class="ftr__small">
+                <span data-rate-lead data-fresh={`${freshLead},`}>{`${status!.lead},`}</span>{' '}
+                <time class="nowrap" datetime={status!.at} data-rate-time>
+                  {status!.text}
+                </time>
+              </p>
+              <p class="ftr__small ftr__small--tight">{site.rate.excludes}</p>
+            </>
+          ) : (
+            <p class="ftr__small">
+              Call for today’s rate:{' '}
+              <a class="fig" href={`tel:${tel.e164}`}>
+                {tel.display}
+              </a>
+            </p>
+          )}
+        </div>
+
+        <div class="ftr__col">
+          <p class="eyebrow ftr__label">Ask us</p>
+          <ul class="list-links ftr__list" role="list">
             <li>
-              <a href={routes.stores}>All stores</a>
+              <a href={whatsappGeneral()} target="_blank" rel="noopener">
+                WhatsApp <span class="fig nowrap">{site.whatsapp.display}</span>
+                <span class="sr-only"> (opens WhatsApp)</span>
+              </a>
+            </li>
+            <li>
+              <a href={`tel:${tel.e164}`}>
+                Call <span class="fig nowrap">{tel.display}</span>
+              </a>
+            </li>
+            <li>
+              <a href={`mailto:${site.email}`}>{site.email}</a>
+            </li>
+            <li>
+              <a href={routes.contact}>Book a visit</a>
             </li>
           </ul>
         </div>
-        <div class="footer__col">
-          <p class="footer__title">Jewellery</p>
-          <ul role="list">
-            {categories.map((c) => (
+
+        <div class="ftr__col ftr__col--house">
+          <p class="eyebrow ftr__label">The house</p>
+          <ul class="list-links ftr__list ftr__list--house" role="list">
+            {house.map((l) => (
               <li>
-                <a href={routes.category(c.id)}>{c.data.shortName ?? c.data.name}</a>
-              </li>
-            ))}
-            <li>
-              <a href={routes.jewellery}>All jewellery</a>
-            </li>
-          </ul>
-        </div>
-        <div class="footer__col">
-          <p class="footer__title">Collections</p>
-          <ul role="list">
-            {collections.map((c) => (
-              <li>
-                <a href={routes.collection(c.id)}>{c.data.name.replace(/ Collection$/i, '')}</a>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div class="footer__col">
-          <p class="footer__title">Services</p>
-          <ul role="list">
-            {services.map((s) => (
-              <li>
-                <a href={s.href}>{s.label}</a>
-              </li>
-            ))}
-          </ul>
-          <p class="footer__title footer__title--gap">Company</p>
-          <ul role="list">
-            {company.map((s) => (
-              <li>
-                <a href={s.href}>{s.label}</a>
-              </li>
-            ))}
-          </ul>
-          <p class="footer__title footer__title--gap">Follow</p>
-          <ul role="list">
-            {site.social.map((s) => (
-              <li>
-                <a href={s.url} target="_blank" rel="noopener me">
-                  {s.label} <Icon name="external" />
-                </a>
+                <a href={l.href}>{l.label}</a>
               </li>
             ))}
           </ul>
         </div>
       </nav>
-    </div>
 
-    <div class="footer__bottom small">
-      <p>Payment in store: {listFormat.format(site.paymentAccepted)}.</p>
-      <p>
-        {site.legalName} · part of {site.group.name} · Registration no. {site.registrationNumber} ·
-        ©{year}
-      </p>
-      <ul class="footer__legal" role="list">
-        {legal.map((l) => (
-          <li>
-            <a href={l.href}>{l.label}</a>
-          </li>
-        ))}
-      </ul>
+      <div class="ftr__legal">
+        <p class="ftr__small">
+          © {year} {site.legalName} · Trade licence{' '}
+          <span class="fig">{site.registrationNumber}</span>
+        </p>
+        <ul class="list-links ftr__row" role="list">
+          {legal.map((l) => (
+            <li>
+              <a href={l.href}>{l.label}</a>
+            </li>
+          ))}
+        </ul>
+        <ul class="list-links ftr__row" role="list" aria-label="Classic Jewels on social media">
+          {site.social.map((s) => (
+            <li>
+              <a href={s.url} target="_blank" rel="noopener me">
+                {s.label}
+                <span class="sr-only"> (opens in a new tab)</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   </div>
 </footer>
 
 <style>
-  .footer {
+  .ftr {
     padding-block: var(--space-8) var(--space-7);
-    background: var(--surface-plum-deep);
-    color: var(--ink-on-plum-muted);
     border-block-start: 1px solid var(--rule-gold);
   }
 
-  .footer__top {
+  .ftr__in {
     display: grid;
-    gap: var(--space-8);
+    gap: var(--space-7);
   }
 
-  .footer__brand {
-    display: grid;
-    gap: var(--space-4);
-    align-content: start;
-  }
-
-  .footer__tag {
-    color: var(--ink-on-plum);
-  }
-
-  .footer__address {
-    display: grid;
-    font-size: var(--t-small);
-  }
-
-  .footer__label {
-    margin-block-end: var(--space-1);
-    color: var(--gold-300);
-  }
-
-  .footer__contact {
-    display: grid;
-    gap: 0;
-    font-size: var(--t-small);
-  }
-
-  .footer a {
-    color: var(--ink-on-plum);
+  /* Links read as ink on the stage; the colour and underline come in on hover and focus. */
+  .ftr a {
+    color: var(--fg);
     text-decoration: none;
   }
 
-  .footer a:hover {
-    color: var(--gold-300);
+  .ftr a:is(:hover, :focus-visible) {
+    color: var(--link);
     text-decoration: underline;
-    text-decoration-color: var(--gold-300);
+    text-decoration-color: var(--wipe);
+    text-underline-offset: 0.25em;
   }
 
-  .footer__hours {
-    color: var(--ink-on-plum-muted);
-    max-inline-size: 28rem;
-  }
-
-  .footer__cols {
+  /* ---------- Row 1 ---------- */
+  .ftr__top {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-6);
+    align-items: end;
   }
 
-  .footer__col ul {
+  .ftr__slogan {
+    max-inline-size: 14ch;
+  }
+
+  .ftr__house {
     display: grid;
-    gap: 0;
-  }
-
-  /* Every footer link is at least 44 px tall: they sit close together on a phone. */
-  .footer__contact a,
-  .footer__legal a {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-block-size: var(--tap);
-  }
-
-  .footer__col a,
-  .footer__soon {
-    display: inline-flex;
-    align-items: center;
-    min-block-size: var(--tap);
-    font-size: var(--t-small);
-  }
-
-  .footer__soon {
-    color: var(--ink-on-plum-muted);
-  }
-
-  .footer__title {
-    margin-block-end: var(--space-3);
-    font-size: var(--t-eyebrow);
-    font-weight: 500;
-    letter-spacing: var(--track-eyebrow);
-    text-transform: uppercase;
-    color: var(--gold-300);
-  }
-
-  .footer__title--gap {
-    margin-block-start: var(--space-5);
-  }
-
-  .footer__bottom {
-    display: grid;
-    gap: var(--space-2);
-    margin-block-start: var(--space-8);
-    padding-block-start: var(--space-5);
-    border-block-start: 1px solid var(--rule-on-plum);
-    color: var(--ink-on-plum-muted);
-  }
-
-  .footer__legal {
-    display: flex;
-    flex-wrap: wrap;
+    justify-items: start;
     gap: var(--space-4);
   }
 
+  .ftr__line {
+    max-inline-size: var(--measure);
+    color: var(--body);
+  }
+
+  /* ---------- Row 2 ---------- */
+  .ftr__cols {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-7) var(--grid-gap);
+    padding-block-start: var(--space-6);
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .ftr__col {
+    min-inline-size: 0;
+  }
+
+  .ftr__label {
+    margin-block-end: var(--space-4);
+  }
+
+  .ftr__list {
+    display: grid;
+    gap: var(--space-1);
+    font-size: var(--t-small);
+  }
+
+  .ftr__branches {
+    display: grid;
+    gap: var(--space-4);
+    font-size: var(--t-small);
+  }
+
+  .ftr__branch {
+    display: grid;
+    justify-items: start;
+  }
+
+  .ftr__emirate,
+  .ftr__addr {
+    font-size: var(--t-caption);
+    color: var(--muted);
+  }
+
+  .ftr__addr {
+    margin-block-end: var(--space-1);
+    line-height: 1.45;
+  }
+
+  .ftr .ftr__tel {
+    color: var(--body);
+  }
+
+  .ftr__rates {
+    font-size: var(--t-small);
+  }
+
+  .ftr__rate {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-block: var(--space-1);
+  }
+
+  .ftr__k {
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    color: var(--eyebrow);
+  }
+
+  .ftr :global(.ftr__v) {
+    font-family: var(--ff-display);
+    font-size: var(--t-name);
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--numeral);
+  }
+
+  .ftr__small {
+    margin-block-start: var(--space-3);
+    font-size: var(--t-caption);
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .ftr__small--tight {
+    margin-block-start: 0;
+  }
+
+  /* ---------- Row 3 ---------- */
+  .ftr__legal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-6);
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .ftr__legal .ftr__small {
+    margin: 0;
+  }
+
+  .ftr__row {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: var(--space-4);
+    font-size: var(--t-caption);
+  }
+
+  .ftr__row a {
+    color: var(--body);
+  }
+
+  /*
+   * Phones: the branches column runs down the left beside Today and Ask us, and the house's
+   * eleven links flow as one wrapped row across both columns at the foot.
+   */
+  @media (max-width: 47.99em) {
+    .ftr__col--branches {
+      grid-row: span 2;
+    }
+
+    .ftr__col--house {
+      grid-column: 1 / -1;
+    }
+
+    .ftr__list--house {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1) var(--space-5);
+    }
+  }
+
   @media (min-width: 48em) {
-    .footer__cols {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+    .ftr__list--house {
+      grid-template-columns: repeat(2, max-content);
+      column-gap: var(--space-6);
     }
   }
 
   @media (min-width: 64em) {
-    .footer__top {
-      grid-template-columns: 4fr 8fr;
+    .ftr__top {
+      grid-template-columns: 7fr 5fr;
       column-gap: calc(var(--grid-gap) * 2);
     }
 
-    .footer__bottom {
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
-      gap: var(--space-6);
+    .ftr__cols {
+      grid-template-columns: 1.25fr 1fr 1fr 1.25fr;
     }
 
-    .footer__bottom p:nth-child(2) {
-      text-align: center;
-    }
-  }
-
-  @media (max-width: 63.99em) {
-    .footer {
-      /* The body already reserves room for the fixed action bar (BaseLayout). */
-      padding-block-end: var(--space-7);
+    .ftr__legal .ftr__small {
+      margin-inline-end: auto;
     }
   }
 </style>

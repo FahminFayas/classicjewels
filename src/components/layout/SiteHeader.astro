@@ -1,589 +1,287 @@
 ---
 /**
- * Site header: logo, primary navigation with a mega panel under "Jewellery", the two contact
- * actions, and the mobile drawer (<dialog>). Sticky on desktop only. Behaviour is in
- * src/scripts/nav.ts; without it, every link still works and the drawer can be reached via
- * the Jewellery index.
+ * The site header (docs/design-system-v2.md §5.3, §8.4). Solid, never translucent: its tone
+ * follows the page's first section (stage: white logo, bronze button; ivory: dark logo, plum
+ * button), with a 1 px rule under it. Sticky on every device, 56 px tall below 64em and 72 px
+ * from 64em, and named "hdr" for cross-document view transitions.
+ *
+ *   Desktop  logo | Jewellery (opens the mega panel), Styles, Occasions, Gold rate, Old gold,
+ *            Branches, About | rate chip, WhatsApp
+ *   Phones   logo | rate chip (compact) | Menu (opens the drawer, a modal dialog)
+ *
+ * The mega panel, the rate popover and the drawer render here too; they live in the top layer.
+ * Every menu opens without JavaScript (popovertarget, commandfor); src/scripts/nav.ts adds hover
+ * intent, aria-expanded mirroring and the fallbacks.
  */
-import RateBoard from '@/components/sections/RateBoard.astro';
+import MegaPanel from '@/components/layout/MegaPanel.astro';
+import MobileDrawer from '@/components/layout/MobileDrawer.astro';
+import RateChip from '@/components/layout/RateChip.astro';
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
 import Logo from '@/components/ui/Logo.astro';
 import { site } from '@/data/site';
-import { getDesignCollections, getNavCategories } from '@/lib/content';
+import { getDesignCollections, getNavCategories, getProducts } from '@/lib/content';
 import type { GoldRate } from '@/lib/gold-rate';
 import { routes } from '@/lib/routes';
 import type { Ground } from '@/lib/tones';
 import { whatsappGeneral } from '@/lib/whatsapp';
 
 export interface Props {
-  /** Ground of the page's first section (docs/design-system-v2.md §5.3). WP1 renders it. */
+  /** Tone of the page's first section. */
   tone: Ground;
   rate: GoldRate | null;
-  /** The rate is more than two days old: the chip's marker turns hollow (WP1). */
+  /** The rate is more than two days old: the chip's marker turns hollow. */
   stale: boolean;
-  /** When the rate was fetched (ISO), for the rate popover's status line (WP1). */
+  /** When the rate was fetched (ISO), for the rate popover's status line. */
   fetchedAt: string | null;
 }
 
-const { rate } = Astro.props;
-const [categories, collections] = await Promise.all([getNavCategories(), getDesignCollections()]);
+const { tone, rate, stale, fetchedAt } = Astro.props;
+const [categories, collections, products] = await Promise.all([
+  getNavCategories(),
+  getDesignCollections(),
+  getProducts(),
+]);
+
 const path = Astro.url.pathname;
-/**
- * aria-current: "page" only for the exact page; "true" for a section the page sits inside (e.g.
- * Jewellery while on a product). Screen readers announce only the first as "current page".
- */
-const current = (href: string): 'page' | 'true' | undefined => {
-  if (path === href) return 'page';
-  if (href !== '/' && path.startsWith(href)) return 'true';
-  return undefined;
-};
+/** "page" for the page itself, "true" for a section the page sits inside (a piece in Jewellery). */
+const current = (href: string): 'page' | 'true' | undefined =>
+  path === href ? 'page' : href !== '/' && path.startsWith(href) ? 'true' : undefined;
 
-const primary = [
-  { label: 'Collections', href: routes.collections },
+const nav = [
+  { label: 'Styles', href: routes.collections },
   { label: 'Occasions', href: routes.occasions },
   { label: 'Gold rate', href: routes.goldRate },
-  { label: 'Coins & bars', href: routes.goldCoinsBars },
-  { label: 'Our story', href: routes.about },
-  { label: 'Stores', href: routes.stores },
+  { label: 'Old gold', href: routes.goldExchange },
+  { label: 'Branches', href: routes.stores },
+  { label: 'About', href: routes.about },
 ];
-
-const materials = [
-  { label: '22K & 18K gold', href: routes.jewellery },
-  { label: 'Diamonds', href: routes.diamonds },
-  { label: 'Gemstones', href: routes.collection('gemstone') },
-  { label: 'Coins & bars', href: routes.goldCoinsBars },
-];
-
-const drawerLinks = [
-  { label: 'Occasions', href: routes.occasions },
-  { label: 'Gold rate', href: routes.goldRate },
-  { label: 'Coins & bars', href: routes.goldCoinsBars },
-  { label: 'Custom jewellery', href: routes.customJewellery },
-  { label: 'Gold exchange', href: routes.goldExchange },
-  { label: 'Our story', href: routes.about },
-  { label: 'Our promise', href: routes.promise },
-  { label: 'Journal', href: routes.journal },
-  { label: 'Stores', href: routes.stores },
-  { label: 'Offers', href: routes.offers },
-  { label: 'Contact', href: routes.contact },
-];
-const whatsapp = whatsappGeneral();
 ---
 
-<div data-scroll-sentinel aria-hidden="true"></div>
-<header class="header" data-site-header data-scrolled="false">
-  <div class="container header__inner">
-    <a class="header__logo" href={routes.home} aria-label={`${site.name} home`}>
-      <Logo />
-    </a>
-
-    <nav class="header__nav from-lg" aria-label="Primary">
-      <ul class="nav" role="list">
-        <li class="nav__item nav__item--mega" data-mega-item>
-          <a
-            class="nav__link link-quiet"
-            href={routes.jewellery}
-            aria-current={current(routes.jewellery)}
-          >
-            Jewellery
-          </a>
-          <button
-            class="nav__toggle"
-            type="button"
-            aria-expanded="false"
-            aria-controls="mega-jewellery"
-            data-mega-trigger
-            aria-label="Browse jewellery by piece, material and collection"
-          >
-            <Icon name="plus" />
-          </button>
-          <div class="mega" id="mega-jewellery" hidden>
-            <div class="container mega__grid">
-              <div class="mega__col">
-                <p class="mega__title small">By piece</p>
-                <ul class="mega__list" role="list">
-                  {categories.map((c) => (
-                    <li>
-                      <a class="link-quiet" href={routes.category(c.id)}>
-                        {c.data.shortName ?? c.data.name}
-                      </a>
-                    </li>
-                  ))}
-                  <li>
-                    <a class="link-quiet mega__all" href={routes.jewellery}>
-                      All jewellery
-                    </a>
-                  </li>
-                </ul>
-              </div>
-              <div class="mega__col">
-                <p class="mega__title small">By material</p>
-                <ul class="mega__list" role="list">
-                  {materials.map((m) => (
-                    <li>
-                      <a class="link-quiet" href={m.href}>
-                        {m.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div class="mega__col">
-                <p class="mega__title small">By collection</p>
-                <ul class="mega__list mega__list--two" role="list">
-                  {collections.map((c) => (
-                    <li>
-                      <a class="link-quiet" href={routes.collection(c.id)}>
-                        {c.data.name.replace(/ Collection$/i, '')}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div class="mega__col mega__col--rate">
-                <RateBoard rate={rate} variant="mini" />
-              </div>
-            </div>
-          </div>
-        </li>
-        {primary.map((item) => (
-          <li class="nav__item">
-            <a class="nav__link link-quiet" href={item.href} aria-current={current(item.href)}>
-              {item.label}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
-
-    <div class="header__actions">
-      <a class="header__call link-quiet from-xl" href={`tel:${site.phone.landline.e164}`}>
-        <Icon name="phone" />
-        <span>{site.phone.landline.display}</span>
+<header class="hdr" data-tone={tone}>
+  <div class="track" data-width="wide">
+    <div class="hdr__bar">
+      <a class="hdr__logo" href={routes.home} aria-label={`${site.name} home`}>
+        <Logo tone={tone === 'stage' ? 'light' : 'dark'} />
       </a>
-      <Button
-        href={whatsapp}
-        variant="secondary"
-        icon="whatsapp"
-        external
-        class="header__whatsapp from-md"
-      >
-        WhatsApp
-      </Button>
-      <button
-        class="header__menu until-lg"
-        type="button"
-        aria-expanded="false"
-        aria-controls="site-drawer"
-        data-drawer-open
-      >
-        <Icon name="menu" />
-        <span>Menu</span>
-      </button>
+
+      <nav class="hdr__nav from-lg" aria-label="Main">
+        <ul class="hdr__list" role="list">
+          <li>
+            <button
+              class="hdr__link"
+              type="button"
+              popovertarget="mega"
+              aria-current={current(routes.jewellery)}
+            >
+              Jewellery
+              <Icon name="chevron-down" class="hdr__chev" />
+            </button>
+          </li>
+          {nav.map((item) => (
+            <li>
+              <a class="hdr__link" href={item.href} aria-current={current(item.href)}>
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <div class="hdr__actions">
+        <RateChip rate={rate} stale={stale} fetchedAt={fetchedAt} compact />
+        <Button
+          href={whatsappGeneral()}
+          variant="primary"
+          size="compact"
+          icon="whatsapp"
+          external
+          class="hdr__wa from-lg"
+        >
+          <span class="hdr__wa-label">WhatsApp</span>
+        </Button>
+        <button
+          class="hdr__menu until-lg"
+          type="button"
+          aria-haspopup="dialog"
+          commandfor="drawer"
+          command="show-modal"
+        >
+          <Icon name="menu" />
+          <span class="hdr__menu-label">Menu</span>
+        </button>
+      </div>
     </div>
   </div>
 </header>
 
-<dialog class="drawer" id="site-drawer" aria-label="Site menu" data-surface="plum">
-  <div class="drawer__inner">
-    <div class="drawer__top">
-      <Logo tone="light" />
-      <button class="drawer__close" type="button" data-drawer-close aria-label="Close menu">
-        <Icon name="close" />
-      </button>
-    </div>
-
-    <nav aria-label="Mobile">
-      <details class="drawer__group">
-        <summary class="drawer__summary">
-          By piece <Icon name="plus" />
-        </summary>
-        <ul class="drawer__sub" role="list">
-          {categories.map((c) => (
-            <li>
-              <a href={routes.category(c.id)}>{c.data.shortName ?? c.data.name}</a>
-            </li>
-          ))}
-          <li>
-            <a href={routes.jewellery}>All jewellery</a>
-          </li>
-        </ul>
-      </details>
-      <details class="drawer__group">
-        <summary class="drawer__summary">
-          By material <Icon name="plus" />
-        </summary>
-        <ul class="drawer__sub" role="list">
-          {materials.map((m) => (
-            <li>
-              <a href={m.href}>{m.label}</a>
-            </li>
-          ))}
-        </ul>
-      </details>
-      <details class="drawer__group">
-        <summary class="drawer__summary">
-          By collection <Icon name="plus" />
-        </summary>
-        <ul class="drawer__sub" role="list">
-          {collections.map((c) => (
-            <li>
-              <a href={routes.collection(c.id)}>{c.data.name}</a>
-            </li>
-          ))}
-        </ul>
-      </details>
-      <ul class="drawer__links" role="list">
-        {drawerLinks.map((item) => (
-          <li>
-            <a href={item.href} aria-current={current(item.href)}>
-              {item.label}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
-
-    {rate && (
-      <p class="drawer__rate small">
-        22K today{' '}
-        <span class="tabular">
-          AED <span data-rate="22k">{rate.perGram['22k'].toFixed(2)}</span> / g
-        </span>
-      </p>
-    )}
-
-    <div class="drawer__actions">
-      <a href={`tel:${site.phone.landline.e164}`}>
-        <Icon name="phone" /> Call
-      </a>
-      <a href={whatsapp} target="_blank" rel="noopener">
-        <Icon name="whatsapp" /> WhatsApp
-      </a>
-      <a href={routes.stores}>
-        <Icon name="map-pin" /> Visit
-      </a>
-    </div>
-  </div>
-</dialog>
+<MegaPanel
+  categories={categories}
+  collections={collections}
+  products={products}
+  rate={rate}
+  fetchedAt={fetchedAt}
+/>
+<MobileDrawer piecesCount={products.length} collectionsCount={collections.length} rate={rate} />
 
 <style>
-  .header {
-    position: relative;
-    z-index: var(--z-sticky);
-    background: var(--surface-1);
-    border-block-end: 1px solid transparent;
-    transition: border-color var(--dur-fast) var(--ease);
+  .hdr {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--z-header);
+    block-size: var(--header-h);
+    border-block-end: 1px solid var(--rule);
+    view-transition-name: hdr;
   }
 
-  .header[data-scrolled='true'] {
-    border-block-end-color: var(--rule-1);
+  .hdr > .track,
+  .hdr__bar {
+    block-size: 100%;
   }
 
-  .header__inner {
+  .hdr__bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    min-block-size: var(--header-h);
+    gap: var(--space-3);
   }
 
-  .header__logo {
-    text-decoration: none;
+  .hdr__logo {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    min-block-size: var(--tap);
+    margin-inline-end: auto;
+  }
+
+  .hdr__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
     flex: none;
   }
 
-  .header__nav {
-    flex: 1;
-  }
-
-  .nav {
+  /* ---------- Primary navigation (64em and up) ---------- */
+  .hdr__nav {
+    flex: 1 1 auto;
     display: flex;
     justify-content: center;
-    gap: var(--space-4);
+    min-inline-size: 0;
   }
 
-  /* The nav fills the header's height, so the mega item touches the panel below it and the
-     pointer never crosses a gap that would close the panel. */
-  .header__nav {
-    align-self: stretch;
+  .hdr__list {
     display: flex;
+    gap: var(--space-5);
   }
 
-  .nav__item {
-    display: flex;
+  .hdr__link {
+    position: relative;
+    display: inline-flex;
     align-items: center;
     gap: var(--space-1);
-  }
-
-  .nav__link {
-    display: inline-flex;
-    white-space: nowrap;
-    align-items: center;
     min-block-size: var(--tap);
-    font-size: var(--t-title);
-    font-weight: 500;
-    color: var(--ink-900);
-    text-underline-offset: 0.35em;
+    font-size: 0.9375rem; /* 15 px: the button size of base.css (§3.5); no type token exists */
+    font-weight: var(--fw-text);
+    line-height: 1;
+    color: var(--body);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color var(--dur-quick) var(--ease-out);
   }
 
-  .nav__link[aria-current] {
-    text-decoration: underline;
-    text-decoration-color: var(--gold-600);
-  }
-
-  .nav__toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: 1.75rem;
-    block-size: var(--tap);
-    color: var(--ink-500);
-  }
-
-  .nav__toggle[aria-expanded='true'] {
-    color: var(--plum-700);
-  }
-
-  .nav__toggle[aria-expanded='true'] .icon {
-    transform: rotate(45deg);
-  }
-
-  .mega {
+  /* The 600 ms underline wipe (as .link-wipe in base.css), shown on hover, focus, open, current. */
+  .hdr__link::after {
+    content: '';
     position: absolute;
     inset-inline: 0;
-    inset-block-start: 100%;
-    z-index: var(--z-nav);
-    background: var(--surface-0);
-    border-block: 1px solid var(--rule-1);
-    padding-block: var(--space-7);
+    inset-block-end: var(--space-2);
+    block-size: 1px;
+    background: var(--wipe);
+    scale: 0 1;
+    transform-origin: 0 50%;
+    transition: scale var(--dur-slow) var(--ease-lux);
   }
 
-  .mega[hidden] {
-    display: none;
+  .hdr__link:is(:hover, :focus-visible, [aria-current], [aria-expanded='true']) {
+    color: var(--fg);
   }
 
-  .mega__grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1.6fr 1.4fr;
-    gap: var(--space-7);
+  .hdr__link:is(:hover, :focus-visible, [aria-current], [aria-expanded='true'])::after {
+    scale: 1 1;
   }
 
-  .mega__title {
-    margin-block-end: var(--space-3);
-    padding-block-end: var(--space-2);
-    border-block-end: 1px solid var(--rule-1);
-    font-weight: 500;
-    color: var(--ink-500);
+  .hdr__link :global(.hdr__chev) {
+    inline-size: var(--space-4);
+    block-size: var(--space-4);
+    color: var(--eyebrow);
   }
 
-  .mega__list {
-    display: grid;
-    gap: var(--space-1);
-  }
-
-  .mega__list--two {
-    grid-template-columns: 1fr 1fr;
-    column-gap: var(--space-5);
-  }
-
-  .mega__list a {
-    display: inline-block;
-    padding-block: var(--space-1);
-    color: var(--ink-900);
-  }
-
-  .mega__all {
-    margin-block-start: var(--space-2);
-    font-weight: 500;
-  }
-
-  .header__actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    flex: none;
-  }
-
-  .header__call {
+  /* ---------- Menu button (below 64em) ---------- */
+  .hdr__menu {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: var(--space-2);
+    min-inline-size: var(--tap);
     min-block-size: var(--tap);
-    font-size: var(--t-small);
-    font-weight: 500;
-    color: var(--ink-700);
-    white-space: nowrap;
-  }
-
-  .header__menu {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-block-size: var(--tap);
+    margin-inline-end: calc(var(--space-2) * -1);
     padding-inline: var(--space-2);
     font-size: var(--t-small);
-    font-weight: 500;
-    color: var(--ink-900);
+    font-weight: var(--fw-text-strong);
+    color: var(--fg);
+  }
+
+  .hdr__menu :global(.icon) {
+    inline-size: var(--space-5);
+    block-size: var(--space-5);
+  }
+
+  @media (max-width: 39.99em) {
+    .hdr__menu-label {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      margin: -1px;
+      overflow: clip;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+
+  /* The narrowest phones: a slightly smaller logo keeps the chip and Menu on one line. */
+  @media (max-width: 23.99em) {
+    .hdr__logo :global(.logo) {
+      block-size: var(--space-6);
+    }
   }
 
   @media (min-width: 64em) {
-    .header {
-      position: sticky;
-      inset-block-start: 0;
+    .hdr__bar {
+      gap: var(--space-5);
+    }
+
+    .hdr__logo {
+      margin-inline-end: 0;
+    }
+
+    .hdr__actions {
+      gap: var(--space-3);
     }
   }
 
-  /* ---------- Drawer ---------- */
-  .drawer {
-    inset: 0;
-    inline-size: min(100%, 24rem);
-    max-inline-size: none;
-    block-size: 100dvh;
-    max-block-size: none;
-    margin: 0;
-    margin-inline-start: auto;
-    padding: 0;
-    border: 0;
-    background: var(--surface-plum-deep);
-    color: var(--ink-on-plum);
-    overflow-y: auto;
-  }
-
-  .drawer::backdrop {
-    background: rgb(28 20 24 / 0.5);
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .drawer[open] {
-      animation: drawer-in var(--dur-slow) var(--ease);
+  /* 64em to 70em: the WhatsApp button keeps its icon and a hidden label, so the nav fits. */
+  @media (min-width: 64em) and (max-width: 69.99em) {
+    .hdr__wa-label {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      margin: -1px;
+      overflow: clip;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
 
-    @keyframes drawer-in {
-      from {
-        transform: translateX(100%);
-      }
-      to {
-        transform: translateX(0);
-      }
+    .hdr :global(.hdr__wa) {
+      padding-inline: var(--space-3);
     }
-  }
-
-  :global(body:has(.drawer[open])) {
-    overflow: hidden;
-  }
-
-  .drawer__inner {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-5);
-    min-block-size: 100%;
-    padding: var(--space-4) var(--gutter) var(--space-8);
-  }
-
-  .drawer__top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .drawer__close {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: var(--tap);
-    block-size: var(--tap);
-    color: var(--ink-on-plum);
-  }
-
-  .drawer__group {
-    border-block-start: 1px solid var(--rule-on-plum);
-  }
-
-  .drawer__summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-block-size: var(--control-h);
-    padding-block: var(--space-2);
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 500;
-    list-style: none;
-    cursor: pointer;
-  }
-
-  .drawer__summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .drawer__group[open] .drawer__summary .icon {
-    transform: rotate(45deg);
-  }
-
-  .drawer__sub {
-    display: grid;
-    gap: var(--space-1);
-    padding-block: var(--space-2) var(--space-4);
-  }
-
-  .drawer__sub a,
-  .drawer__links a {
-    display: inline-block;
-    padding-block: var(--space-2);
-    color: var(--ink-on-plum);
-    text-decoration: none;
-  }
-
-  .drawer__sub a {
-    color: var(--ink-on-plum-muted);
-  }
-
-  .drawer__links {
-    display: grid;
-    border-block: 1px solid var(--rule-on-plum);
-    padding-block: var(--space-3);
-  }
-
-  .drawer__links a {
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 500;
-  }
-
-  .drawer__links a[aria-current] {
-    color: var(--gold-300);
-  }
-
-  .drawer__rate {
-    color: var(--ink-on-plum-muted);
-  }
-
-  .drawer__rate .tabular {
-    color: var(--gold-300);
-    font-weight: 500;
-  }
-
-  .drawer__actions {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    margin-block-start: auto;
-    background: var(--rule-on-plum);
-    border: 1px solid var(--rule-on-plum);
-  }
-
-  .drawer__actions a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2);
-    min-block-size: var(--control-h);
-    background: var(--surface-plum-deep);
-    color: var(--gold-300);
-    font-size: var(--t-small);
-    font-weight: 500;
-    text-decoration: none;
   }
 </style>

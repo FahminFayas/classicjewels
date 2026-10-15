@@ -1,21 +1,32 @@
 ---
 /**
- * One campaign offer: headline, summary, the numbered terms, the body copy, the validity line,
- * the offers FAQ and the enquiry block. Only offers that are live today are built, so an expired
- * campaign disappears with its next build.
+ * One campaign offer (docs/design-system-v2.md §6.14). Ivory.
+ *
+ *   1. Opener: "Until {endsOn}", the headline as the H1 (the clause after its colon in italic),
+ *      the summary, "Ask on WhatsApp" and "Find a branch".
+ *   2. The offer: the body beside its terms as a numbered, ruled list, and where it applies.
+ *   3. When the offer is about the rate (Diwali: "book the rate"), today's rate on the stage.
+ *   4. Questions, then an enquiry band.
+ *
+ * Only offers that are live today are built, so an expired campaign disappears with its next
+ * build.
  */
 import type { InferGetStaticPropsType } from 'astro';
 import { render } from 'astro:content';
 
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import EnquiryBand from '@/components/sections/EnquiryBand.astro';
 import Faq from '@/components/sections/Faq.astro';
-import Hero from '@/components/sections/Hero.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import RateInstrument from '@/components/sections/RateInstrument.astro';
 import Button from '@/components/ui/Button.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Section from '@/components/ui/Section.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
 import { branches, openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getActiveOffers, getFaqGroup } from '@/lib/content';
 import { formatDate, listWords } from '@/lib/format';
+import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
 import { whatsappUrl } from '@/lib/whatsapp';
 
@@ -28,18 +39,20 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
 const { offer } = Astro.props;
 const { data } = offer;
-const [faq, { Content }] = await Promise.all([getFaqGroup('offers'), render(offer)]);
+const [faq, rates, { Content }] = await Promise.all([
+  getFaqGroup('offers'),
+  getRates(),
+  render(offer),
+]);
 
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
-const sameYear = data.startsOn.getFullYear() === data.endsOn.getFullYear();
-const startLabel = sameYear
-  ? data.startsOn.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'long',
-      timeZone: 'Asia/Dubai',
-    })
-  : formatDate(data.startsOn);
-const period = `${startLabel} to ${formatDate(data.endsOn)}`;
+
+/* The end date set large beside the opener: "10" over "November 2026". */
+const endDay = formatDate(data.endsOn, { month: undefined, year: undefined });
+const endMonth = formatDate(data.endsOn, { day: undefined });
+const startLabel = formatDate(data.startsOn, {
+  year: data.startsOn.getFullYear() === data.endsOn.getFullYear() ? undefined : 'numeric',
+});
 
 /* Short names ("Deira, Safari Mall and Rolla Mall"): full names carry commas of their own. */
 const branchName = new Map(branches.map((b) => [b.id, b.shortName]));
@@ -48,8 +61,14 @@ const where =
     ? data.branches.map((id) => branchName.get(id) ?? id)
     : openBranches.map((b) => b.shortName);
 
-/* The breadcrumb repeats the sentence-case heading, not the SEO title. */
-const crumb = data.headline.replace(/[.!]$/, '');
+/* "Diwali 2026: book the rate, no making charge on selected pieces." -> lead + italic clause. */
+const headline = data.headline.trim().replace(/[.!]$/, '');
+const colon = headline.indexOf(':');
+const lead = colon > 0 ? headline.slice(0, colon + 1) : headline;
+const clause = colon > 0 ? headline.slice(colon + 1).trim() : undefined;
+
+/** An offer about the rate itself (booking it, locking it) shows today's rate. */
+const aboutRate = /\brate\b/i.test(`${data.headline} ${data.summary}`);
 
 const whatsapp = whatsappUrl(
   data.whatsappMessage ??
@@ -58,108 +77,181 @@ const whatsapp = whatsappUrl(
 ---
 
 <BaseLayout ground="ivory" title={data.title} description={data.description}>
-  <div class="container">
-    <Breadcrumbs
-      items={[
-        { name: 'Offers', href: routes.offers },
-        { name: crumb, href: routes.offer(offer.id) },
-      ]}
-    />
-  </div>
-
-  <Hero
-    eyebrow={`Offer · ${period}`}
-    title={data.headline}
+  <PageHead
+    tone="ivory"
+    breadcrumbs={[
+      { name: 'Offers', href: routes.offers },
+      { name: headline, href: routes.offer(offer.id) },
+    ]}
+    eyebrow={`Until ${formatDate(data.endsOn)}`}
+    title={lead}
+    accent={clause}
     lead={data.summary}
-    media={data.image ? 'image' : 'none'}
-    image={data.image}
-    imageAlt={data.imageAlt ?? ''}
+    layout="split"
   >
     <Button href={whatsapp} icon="whatsapp" external>
       Ask on WhatsApp
     </Button>
     <Button href={routes.stores} variant="secondary" icon="map-pin">
-      Our stores
+      Find a branch
     </Button>
-  </Hero>
+    <p class="until" slot="aside">
+      <span class="until__label eyebrow">The last day</span>
+      <span class="until__day fig">{endDay}</span>
+      <span class="until__month">{endMonth}</span>
+      <span class="until__from">From {startLabel}</span>
+    </p>
+  </PageHead>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split split--reverse">
-        <div class="terms">
-          <h2 class="terms__heading">The terms</h2>
-          <ol class="rows" role="list">
-            {data.terms.map((term, i) => (
-              <li class="terms__row">
-                <span class="terms__no" aria-hidden="true">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <p class="terms__text">{term}</p>
-              </li>
-            ))}
-          </ol>
-          <p class="terms__valid small">
-            Valid until <time datetime={isoDate(data.endsOn)}>{formatDate(data.endsOn)}</time>.
-            Available at {listWords(where)}.
-          </p>
-        </div>
-        <div class="prose body">
-          <Content />
-        </div>
+  <Section tone="ivory" ruled labelledby="terms-title">
+    <div class="offer">
+      <div class="offer__body prose">
+        <Content />
+      </div>
+      <div class="offer__terms">
+        <h2 class="offer__heading" id="terms-title">
+          The terms
+        </h2>
+        <ol class="terms" role="list">
+          {data.terms.map((term, i) => (
+            <li class="terms__row">
+              <span class="terms__no fig" aria-hidden="true">
+                {String(i + 1).padStart(2, '0')}
+              </span>
+              <p class="terms__text">{term}</p>
+            </li>
+          ))}
+        </ol>
+        <p class="offer__valid">
+          Valid until <time datetime={isoDate(data.endsOn)}>{formatDate(data.endsOn)}</time>.
+          Available at {listWords(where)}.
+        </p>
       </div>
     </div>
-  </section>
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <Faq heading={faq.data.heading} items={faq.data.items} />
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <EnquiryBlock
-        heading="Ask about this offer"
-        text="WhatsApp is fastest during shop hours. Tell us which branch you plan to visit and we will confirm which pieces qualify."
-        whatsappUrl={whatsapp}
-        whatsappLabel="Ask on WhatsApp"
+  {aboutRate && (
+    <Section tone="stage" labelledby="rate-title">
+      <SectionHead
+        id="rate-title"
+        eyebrow="Today"
+        title="The rate"
+        accent="you would book"
+        shape="split"
+      >
+        The posted rate per gram, before making charges and 5% VAT. Ask us to confirm it on the day
+        you book.
+        <MoreLink href={routes.goldRate} slot="aside">
+          Today’s gold rate
+        </MoreLink>
+      </SectionHead>
+      <RateInstrument
+        rate={rates.latest}
+        stale={rates.stale}
+        fetchedAt={rates.fetchedAt}
+        variant="compact"
+        id="offer-rate"
       />
-    </div>
-  </section>
+    </Section>
+  )}
+
+  <Section tone="ivory">
+    <Faq heading={faq.data.heading} items={faq.data.items} />
+  </Section>
+
+  <EnquiryBand
+    title="Ask about"
+    accent="this offer"
+    text="Tell us which branch you plan to visit and we will confirm which pieces qualify."
+    whatsappUrl={whatsapp}
+    secondary={{ href: routes.stores, label: 'Find a branch' }}
+  />
 </BaseLayout>
 
 <style>
-  .terms__heading {
+  .until {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-2);
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule-strong);
+  }
+
+  .until__day {
+    font-family: var(--ff-display);
+    font-size: var(--t-stamp);
+    font-weight: var(--fw-display);
+    line-height: var(--lh-numeral);
+    letter-spacing: var(--track-rate);
+    color: var(--numeral);
+  }
+
+  .until__month {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-style: italic;
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--fg);
+  }
+
+  .until__from {
+    font-size: var(--t-small);
+    color: var(--muted);
+  }
+
+  .offer {
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  .offer__body {
+    font-size: var(--t-lead);
+    line-height: 1.6;
+  }
+
+  .offer__heading {
     margin-block-end: var(--space-5);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+  }
+
+  .terms {
+    border-block-start: 1px solid var(--rule-strong);
   }
 
   .terms__row {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     gap: var(--space-4);
-    align-items: start;
+    align-items: baseline;
     padding-block: var(--space-4);
+    border-block-end: 1px solid var(--rule);
   }
 
   .terms__no {
+    min-inline-size: 2ch;
     font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 400;
-    line-height: 1.4;
-    font-variant-numeric: tabular-nums;
-    color: var(--gold-600);
-    min-inline-size: 2.2ch;
+    font-size: var(--t-name);
+    font-style: italic;
+    font-weight: var(--fw-display-small);
+    color: var(--numeral);
   }
 
   .terms__text {
-    color: var(--ink-700);
+    color: var(--body);
   }
 
-  .terms__valid {
+  .offer__valid {
     margin-block-start: var(--space-5);
+    font-size: var(--t-small);
+    color: var(--muted);
   }
 
-  .body {
-    min-inline-size: 0;
+  @media (min-width: 64em) {
+    .offer {
+      grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+      column-gap: calc(var(--grid-gap) * 2);
+    }
   }
 </style>

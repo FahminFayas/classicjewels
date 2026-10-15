@@ -1,18 +1,20 @@
 ---
 /**
- * Privacy policy. Design-spec §7.18: typographic hero, dated, prose with numbered H2s.
+ * Privacy policy. docs/design-system-v2.md §6.17: PageHead, dated, prose with numbered H2s,
+ * a contents column, and "Contact us" to close.
  * Describes only what the site actually does: a contact form, WhatsApp, server logs, and Google
  * Tag Manager that loads only when PUBLIC_GTM_ID is set (see components/seo/Analytics.astro).
- * No enquiry block on legal pages.
+ * No enquiry band on legal pages.
  */
-import Hero from '@/components/sections/Hero.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Section from '@/components/ui/Section.astro';
 import { site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { formatDate } from '@/lib/format';
 import { routes } from '@/lib/routes';
 
-const updated = '2026-10-13';
+const updated = '2026-10-15';
 
 const sections = [
   { id: 'who-we-are', title: 'Who we are' },
@@ -33,25 +35,23 @@ const description =
 ---
 
 <BaseLayout ground="ivory" title={title} description={description}>
-  <div class="container">
-    <Breadcrumbs items={[{ name: 'Privacy policy', href: routes.privacy }]} />
-  </div>
-
-  <Hero
+  <PageHead
+    tone="ivory"
+    breadcrumbs={[{ name: 'Privacy policy', href: routes.privacy }]}
     eyebrow="Legal"
     title="Privacy policy"
     lead="How we handle the details you give us when you message, call or visit this site. In plain words, and short."
   >
-    <p class="small">
+    <p class="updated">
       <time datetime={updated}>Last updated {formatDate(updated)}</time>
     </p>
-  </Hero>
+  </PageHead>
 
-  <section class="section section--ruled">
-    <div class="container legal">
+  <Section tone="ivory" ruled>
+    <div class="legal">
       <nav class="legal__nav" aria-label="On this page">
-        <p class="legal__nav-title small">On this page</p>
-        <ol class="legal__nav-list small" role="list">
+        <p class="legal__nav-title eyebrow">On this page</p>
+        <ol class="legal__nav-list" role="list">
           {sections.map((s, i) => (
             <li>
               <a href={`#${s.id}`}>
@@ -88,8 +88,12 @@ const description =
         <p>We collect only what you give us and what any web server records.</p>
         <ul>
           <li>
-            <strong>The contact form.</strong> Whatever you type into it: usually your name, a phone
-            number or email address, your message and, if you give one, the reference of a piece.
+            <strong>The visit and enquiry forms.</strong> Whatever you type or choose in them:
+            usually your name, a phone or WhatsApp number or email address, the branch, the day and
+            time of day you plan to visit, the reason for your visit, a description of a piece and,
+            if you give one, the reference of a piece. When you choose “Send on WhatsApp”, the form
+            only prepares a message in WhatsApp on your device; nothing reaches us until you press
+            send there.
           </li>
           <li>
             <strong>WhatsApp.</strong> When you message our WhatsApp number we see your WhatsApp
@@ -205,45 +209,50 @@ const description =
           this page is the one that applies. See also our <a href={routes.terms}>terms of use</a>{' '}
           and <a href={routes.disclaimer}>disclaimer</a>.
         </p>
+        <p class="legal__close">
+          <MoreLink href={routes.contact}>Contact us</MoreLink>
+        </p>
       </div>
     </div>
-  </section>
+  </Section>
 </BaseLayout>
 
 <style>
-  /* Mirrors the typographic hero's 2 / 7 / 3 grid so the prose sits under the H1. */
+  /* Contents in the left column (sticky on desktop), the text at --prose beside it. */
   .legal {
     display: grid;
-    gap: var(--space-6);
+    gap: var(--space-7);
   }
 
   .legal__nav-title {
-    margin-block-end: var(--space-2);
-    font-weight: 500;
-    color: var(--ink-700);
+    margin-block-end: var(--space-3);
   }
 
   .legal__nav-list {
     display: grid;
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .legal__nav-list li {
+    border-block-end: 1px solid var(--rule);
   }
 
   .legal__nav-list a {
-    display: inline-flex;
-    gap: var(--space-2);
-    min-block-size: var(--tap);
+    display: flex;
+    gap: var(--space-3);
     align-items: center;
-    color: var(--ink-500);
+    min-block-size: var(--tap);
+    font-size: var(--t-small);
+    color: var(--body);
     text-decoration: none;
   }
 
   .legal__nav-list a:hover {
     color: var(--link-hover);
-    text-decoration: underline;
-    text-decoration-color: var(--gold-600);
   }
 
   .legal__nav-list span {
-    color: var(--gold-600);
+    color: var(--eyebrow);
   }
 
   .legal__body {
@@ -258,31 +267,37 @@ const description =
     display: inline-block;
     min-inline-size: 2.2ch;
     margin-inline-end: var(--space-3);
-    font-weight: 400;
-    font-variant-numeric: tabular-nums;
-    color: var(--gold-600);
+    font-weight: var(--fw-display-small);
+    font-variant-numeric: lining-nums tabular-nums;
+    color: var(--eyebrow);
   }
 
-  .legal__body strong {
-    font-weight: 500;
-    color: var(--ink-900);
+  .legal__body :global(strong) {
+    font-weight: var(--fw-text-strong);
+    color: var(--fg);
+  }
+
+  .legal__close {
+    margin-block-start: var(--space-8);
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule-strong);
+  }
+
+  .updated {
+    font-size: var(--t-small);
+    color: var(--muted);
   }
 
   @media (min-width: 64em) {
     .legal {
-      grid-template-columns: 2fr 7fr 3fr;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
       column-gap: calc(var(--grid-gap) * 2);
     }
 
     .legal__nav {
-      grid-column: 1;
       position: sticky;
-      inset-block-start: calc(var(--header-h) + var(--space-4));
+      inset-block-start: calc(var(--header-h) + var(--space-5));
       align-self: start;
-    }
-
-    .legal__body {
-      grid-column: 2;
     }
   }
 </style>

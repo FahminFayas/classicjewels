@@ -1,0 +1,59 @@
+---
+/**
+ * A section with one tone (docs/design-system-v2.md §1.2 rule 2, §3.3, §5.2). The tone sets the
+ * ground and every semantic colour its children read (--fg, --body, --accent, --btn-* ...); no
+ * component inside branches on it. Children sit on the .track grid: the content column (1280) by
+ * default, `width="wide"` (1536) or `"narrow"` (736, centred); a child with class "wide" or
+ * "bleed" breaks out on its own.
+ *
+ *   pad    section: --section-y; band: --band-y (one-line bands); slim: --slim-y; flush: none
+ *   seam   the 1 px bronze seam where two dark sections meet
+ *   ruled  a 1 px --rule on top, for two sections of the same tone in a row
+ *
+ * Pacing (§3.3): never three dark sections in a row; two in a row are stage then stage-raised.
+ */
+import type { Tone } from '@/lib/tones';
+
+export interface Props {
+  tone: Tone;
+  /** section: --section-y; band: --band-y (one-line bands); slim: --slim-y; flush: no padding. */
+  pad?: 'section' | 'band' | 'slim' | 'flush';
+  /** Default column for children: content (1280), wide (1536) or narrow (736, centred). */
+  width?: 'content' | 'wide' | 'narrow';
+  /** 1 px bronze seam on top: where a dark section follows another dark section. */
+  seam?: boolean;
+  /** 1 px --rule on top: two sections of the same tone in a row. */
+  ruled?: boolean;
+  as?: 'section' | 'div' | 'aside';
+  id?: string;
+  /** id of the heading that names the section (aria-labelledby). */
+  labelledby?: string;
+  class?: string;
+  style?: string;
+}
+
+const {
+  tone,
+  pad = 'section',
+  width = 'content',
+  seam = false,
+  ruled = false,
+  as: Tag = 'section',
+  id,
+  labelledby,
+  class: className,
+  style,
+} = Astro.props;
+---
+
+<Tag
+  class:list={['sec', `sec--${pad}`, seam && 'seam', ruled && 'sec--ruled', className]}
+  data-tone={tone}
+  aria-labelledby={labelledby}
+  id={id}
+  style={style}
+>
+  <div class="track" data-width={width}>
+    <slot />
+  </div>
+</Tag>

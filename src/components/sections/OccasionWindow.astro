@@ -1,0 +1,149 @@
+---
+/**
+ * An occasion as a shop window (docs/design-system-v2.md §5.2; replaces OccasionFeature). The
+ * portrait sits in a 1 px frame set 0.5 rem out from it, like a window surround, at most `cap`
+ * CSS px wide (392 by default, never more: sharp on 2x screens from the 784 x 1280 source) and at
+ * its own aspect ratio. Under it the name in Cormorant italic, an optional note (the running
+ * festival offer) in --accent and an optional summary. Text never sits on the portrait.
+ *
+ * The whole window is one link (the name's link is stretched over it); hover and focus turn the
+ * frame --accent, and nothing moves or scales. Lives on ivory (portraits are pale-ground images).
+ */
+import { Picture } from 'astro:assets';
+
+import type { Occasion } from '@/lib/content';
+import { routes } from '@/lib/routes';
+
+export interface Props {
+  occasion: Occasion;
+  /** Extra line, e.g. the active festival offer. */
+  note?: string;
+  /** Show the summary under the name (occasion index: yes; home: no). */
+  summary?: boolean;
+  headingLevel?: 'h2' | 'h3';
+  cap?: number; // default 392 (2× sharp from the 784 px source); never above 392
+}
+
+const { occasion, note, summary = false, headingLevel: Tag = 'h3', cap: wanted } = Astro.props;
+const { data } = occasion;
+const image = data.image;
+
+const cap = Math.round(Math.min(wanted ?? 392, 392, image.width));
+const widths = [
+  ...new Set([296, 392, 588, 784, cap, cap * 2].filter((w) => w <= image.width)),
+].sort((a, b) => a - b);
+---
+
+<article
+  class:list={['win', summary && 'win--index']}
+  style={`--cap:${cap}px;--ar:${image.width}/${image.height}`}
+>
+  <div class="win__frame">
+    <Picture
+      class="win__img"
+      src={image}
+      alt={data.imageAlt}
+      formats={['avif', 'webp']}
+      widths={widths}
+      sizes={`(min-width: 64em) ${cap}px, min(${cap}px, 74vw)`}
+      fit="cover"
+      position="top"
+      loading="lazy"
+      decoding="async"
+      fetchpriority="low"
+    />
+  </div>
+  <div class="win__text">
+    <Tag class="win__name">
+      <a class="win__link" href={routes.occasion(occasion.id)}>
+        {data.name}
+      </a>
+    </Tag>
+    {note && <p class="win__note small">{note}</p>}
+    {summary && <p class="win__summary">{data.summary}</p>}
+  </div>
+</article>
+
+<style>
+  .win {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: var(--space-5);
+    inline-size: min(100%, calc(var(--cap) + var(--space-4) + 2px));
+  }
+
+  .win__frame {
+    padding: var(--space-2);
+    border: 1px solid var(--rule-strong);
+    transition: border-color var(--dur-quick) var(--ease-out);
+  }
+
+  .win__frame :global(picture) {
+    display: block;
+  }
+
+  .win__frame :global(img) {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: var(--ar);
+    object-fit: cover;
+    object-position: top;
+  }
+
+  .win__text {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .win__name {
+    font-size: var(--t-name);
+    font-style: italic;
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+  }
+
+  .win--index .win__name {
+    font-size: var(--t-h3);
+  }
+
+  .win__link {
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  /* The name's link covers the whole window: one target, no nested links. */
+  .win__link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .win:hover .win__frame,
+  .win:focus-within .win__frame {
+    border-color: var(--accent);
+  }
+
+  /* Ring the whole window, not just the name, where :has() exists. */
+  @supports selector(:has(*)) {
+    .win__link:focus-visible {
+      outline: none;
+    }
+
+    .win:has(.win__link:focus-visible) {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: var(--space-2);
+    }
+  }
+
+  .win__note {
+    color: var(--accent);
+    font-weight: var(--fw-text-strong);
+  }
+
+  .win__summary {
+    max-inline-size: var(--measure);
+    color: var(--body);
+  }
+</style>

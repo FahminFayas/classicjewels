@@ -1,51 +1,56 @@
 ---
 /**
- * Where the contact endpoint sends a no-JavaScript submission. Kept out of search results and
- * the sitemap (see SITEMAP_EXCLUDE in astro.config.mjs).
+ * Where the contact endpoint sends a submission made without JavaScript (docs/design-system-v2.md
+ * §6.18). The stage, noindex, kept out of the sitemap (SITEMAP_EXCLUDE in astro.config.mjs). It
+ * promises no reply time: "during shop hours, usually on WhatsApp".
  */
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
-import Hero from '@/components/sections/Hero.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
-import Button from '@/components/ui/Button.astro';
-import { flagship } from '@/data/site';
+import Icon from '@/components/ui/Icon.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import PageHead from '@/components/ui/PageHead.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { routes } from '@/lib/routes';
 ---
 
 <BaseLayout
-  ground="ivory"
+  ground="stage"
   title="Message received"
-  description="Your message to Classic Jewels & Diamonds has been received. We reply by email or phone during shop hours. Meanwhile, see the jewellery or today’s gold rate."
+  description="Your message to Classic Jewels & Diamonds has been received. We reply during shop hours, usually on WhatsApp. Meanwhile, see the jewellery or today’s rate."
   noindex
 >
-  <div class="container">
-    <Breadcrumbs
-      items={[
-        { name: 'Contact', href: routes.contact },
-        { name: 'Message received', href: routes.thankYou },
-      ]}
-    />
-  </div>
-
-  <Hero
-    eyebrow="Contact"
+  <PageHead
+    tone="stage"
+    breadcrumbs={[
+      { name: 'Contact', href: routes.contact },
+      { name: 'Message received', href: routes.thankYou },
+    ]}
     title="Message received"
-    lead="Thank you. We reply by email or phone during shop hours; if it cannot wait, WhatsApp is faster."
+    lead="We reply during shop hours, usually on WhatsApp."
+    layout="centre"
   >
-    <Button href={routes.jewellery} iconEnd="arrow-right">
-      See the jewellery
-    </Button>
-    <Button href={routes.goldRate} variant="secondary">
-      Today’s gold rate
-    </Button>
-  </Hero>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <EnquiryBlock
-        heading="Need an answer sooner?"
-        text={`WhatsApp is fastest during shop hours. Calls go to the ${flagship.shortName} counter.`}
-      />
+    <div slot="media">
+      <Icon name="c-ring" class="received__ring" size="4rem" />
     </div>
-  </section>
+    <ul class="received__links" role="list">
+      <li>
+        <MoreLink href={routes.jewellery}>Jewellery</MoreLink>
+      </li>
+      <li>
+        <MoreLink href={routes.goldRate}>Today’s gold rate</MoreLink>
+      </li>
+    </ul>
+  </PageHead>
 </BaseLayout>
+
+<style>
+  :global(.received__ring) {
+    color: var(--wipe);
+    stroke-width: 0.75;
+  }
+
+  .received__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3) var(--space-7);
+  }
+</style>

@@ -1,0 +1,312 @@
+---
+/**
+ * From bar to bangle (docs/design-system-v2.md §5.6, §6.12 section 3): the About page's chapter
+ * on where the gold comes from, told in three cards on the stage until the shoot (shot list
+ * item 5) gives it photographs:
+ *
+ *   The bar    a line drawing of a bullion bar engraved "999.9 FINE GOLD" in champagne (a drawing,
+ *              labelled as one, not a photograph), with today's 24K rate;
+ *   The stamp  the four UAE hallmark numbers, 999 / 916 / 875 / 750, with today's rate for the
+ *              visitor's chosen karat (a RateFigure follower);
+ *   The piece  a velvet photograph through StageImage, with today's rate for its karat.
+ *
+ * On desktop, where scroll-driven animation exists and motion is welcome, the cards start
+ * gathered and turned (--from-x, --from-y, --from-r per card) and settle into their row on the
+ * row's own view timeline as it comes fully into view. Everywhere else (Firefox, reduced motion,
+ * phones) they simply sit in their row: the static state is the finished design. The section
+ * clips its overflow (clip, never hidden) so a gathered card never widens the page.
+ *
+ * When the photographs arrive, they replace the bar drawing and the stamp card.
+ */
+import RateFigure from '@/components/ui/RateFigure.astro';
+import Section from '@/components/ui/Section.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import StageImage from '@/components/ui/StageImage.astro';
+import type { Product } from '@/lib/content';
+import type { GoldRate } from '@/lib/gold-rate';
+import { DISPLAY_KARATS, KARAT_FACTS, toDisplayKarat } from '@/lib/tones';
+
+export interface Props {
+  rate: GoldRate | null;
+  /** The velvet piece for the third card (p03 today). */
+  piece: Product;
+  id?: string;
+}
+
+const { rate, piece, id = 'bar-to-bangle' } = Astro.props;
+const photo = piece.data.images[0];
+const pieceKarat = toDisplayKarat(piece.data.karat);
+const titleId = `${id}-title`;
+---
+
+<Section tone="stage" id={id} labelledby={titleId} class="btb">
+  <SectionHead
+    id={titleId}
+    eyebrow="Where the gold comes from"
+    title="From bar"
+    accent="to bangle"
+    shape="split"
+    class="reveal"
+  >
+    The group began in bullion. A piece in our cases is the same metal, alloyed to its karat and
+    stamped with what it holds.
+  </SectionHead>
+
+  <ol class="btb__row" role="list">
+    <li class="btb__card" style="--from-x:104%;--from-y:3rem;--from-r:-7deg">
+      <div class="btb__case" data-tone="stage-raised">
+        <svg
+          class="btb__bar"
+          viewBox="10 26 220 104"
+          role="img"
+          aria-label="Line drawing of a gold bar engraved 999.9 Fine Gold"
+        >
+          <path class="btb__stroke" d="M18 124 H222 L204 74 H36 Z"></path>
+          <path class="btb__stroke" d="M36 74 L52 40 H188 L204 74"></path>
+          <path class="btb__stroke btb__stroke--fine" d="M62 49 H178 L188 67 H52 Z"></path>
+          <text
+            class="btb__engrave btb__engrave--big"
+            x="120"
+            y="64"
+            font-size="15"
+            text-anchor="middle"
+          >
+            999.9
+          </text>
+          <text class="btb__engrave" x="120" y="104" font-size="9" text-anchor="middle">
+            FINE GOLD
+          </text>
+        </svg>
+      </div>
+      <p class="btb__n eyebrow">01</p>
+      <h3 class="btb__title">The bar</h3>
+      <p class="btb__text">
+        Fine gold, as the group has traded it from the start: bought, refined and sold by the gram.
+      </p>
+      <p class="btb__rate">
+        {KARAT_FACTS['24k'].label} today:
+        <span class="nowrap">
+          {rate && 'AED '}
+          <RateFigure rate={rate} karat="24k" class="btb__fig" />
+          {rate && ' a gram'}
+        </span>
+      </p>
+    </li>
+
+    <li class="btb__card" style="--from-x:0%;--from-y:5rem;--from-r:3deg">
+      <div class="btb__case" data-tone="stage-raised">
+        <ul class="btb__stamps" role="list">
+          {DISPLAY_KARATS.map((k) => (
+            <li class="btb__stamp">
+              <span class="btb__stamp-n fig">{KARAT_FACTS[k].stamp}</span>
+              <span class="btb__stamp-k">{KARAT_FACTS[k].label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p class="btb__n eyebrow">02</p>
+      <h3 class="btb__title">The stamp</h3>
+      <p class="btb__text">
+        Pure gold is too soft to wear, so it is alloyed and assayed. The UAE hallmark records what
+        is left: parts of gold in a thousand.
+      </p>
+      <p class="btb__rate">
+        Today: <RateFigure rate={rate} karat="follow" format="label" class="btb__fig" />
+        {rate && ' a gram'}
+      </p>
+    </li>
+
+    <li class="btb__card" style="--from-x:-104%;--from-y:2rem;--from-r:6deg">
+      <div class="btb__case btb__case--photo" data-tone="stage-raised">
+        {photo && (
+          <StageImage
+            image={photo.src}
+            alt={photo.alt}
+            mask="spot"
+            cap={Math.min(photo.src.width, 420)}
+            sizes="(min-width: 64em) 26rem, min(420px, 90vw)"
+          />
+        )}
+      </div>
+      <p class="btb__n eyebrow">03</p>
+      <h3 class="btb__title">The piece</h3>
+      <p class="btb__text">
+        The {piece.data.name}, in {KARAT_FACTS[pieceKarat].label}: weighed in front of you and
+        priced at the day’s rate for its karat, plus the making charge.
+      </p>
+      <p class="btb__rate">
+        {KARAT_FACTS[pieceKarat].label} today:
+        <span class="nowrap">
+          {rate && 'AED '}
+          <RateFigure rate={rate} karat={pieceKarat} class="btb__fig" />
+          {rate && ' a gram'}
+        </span>
+      </p>
+    </li>
+  </ol>
+</Section>
+
+<style>
+  /* Gathered cards may start beyond the row: clip (never hidden, so the view timeline works). */
+  :global(.sec.btb) {
+    overflow: clip;
+  }
+
+  .btb__row {
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  .btb__card {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    min-inline-size: 0;
+  }
+
+  /* The case: a raised square, a frame inset like a mount. */
+  .btb__case {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    margin-block-end: var(--space-4);
+    padding: var(--space-6);
+  }
+
+  .btb__case::before {
+    content: '';
+    position: absolute;
+    inset: var(--space-3);
+    border: 1px solid var(--rule);
+    pointer-events: none;
+  }
+
+  .btb__case--photo {
+    padding: var(--space-3);
+  }
+
+  /* Phones: the drawing and the stamps need less height than a square. */
+  @media (max-width: 47.99em) {
+    .btb__case:not(.btb__case--photo) {
+      aspect-ratio: 4 / 3;
+    }
+  }
+
+  /* ---------- The bar drawing ---------- */
+  .btb__bar {
+    inline-size: 92%;
+    overflow: visible;
+  }
+
+  .btb__stroke {
+    fill: none;
+    stroke: var(--champagne);
+    stroke-width: 1.25;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .btb__stroke--fine {
+    stroke: var(--bronze);
+  }
+
+  .btb__engrave {
+    fill: var(--champagne);
+    font-family: var(--ff-text);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+  }
+
+  .btb__engrave--big {
+    font-family: var(--ff-display);
+    font-weight: var(--fw-display-small);
+    letter-spacing: 0;
+  }
+
+  /* ---------- The stamps ---------- */
+  .btb__stamps {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6) var(--space-7);
+  }
+
+  .btb__stamp {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+  }
+
+  .btb__stamp-n {
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral-xl);
+    font-weight: var(--fw-display);
+    line-height: var(--lh-numeral);
+    letter-spacing: var(--track-rate);
+    color: var(--numeral);
+  }
+
+  .btb__stamp-k {
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    color: var(--muted);
+  }
+
+  /* ---------- Text ---------- */
+  .btb__n {
+    margin: 0;
+  }
+
+  .btb__title {
+    font-size: var(--t-h3);
+  }
+
+  .btb__text {
+    max-inline-size: 34ch;
+    color: var(--body);
+  }
+
+  .btb__rate {
+    margin-block-start: var(--space-2);
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--rule);
+    font-size: var(--t-small);
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .btb__rate :global(.btb__fig) {
+    color: var(--fg);
+    font-weight: var(--fw-text-strong);
+  }
+
+  @media (min-width: 48em) {
+    .btb__row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--grid-gap);
+    }
+  }
+
+  /* The assembly: desktop, scroll-driven, motion welcome. The gathered start is never at rest. */
+  @media (min-width: 64em) and (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .btb__row {
+        view-timeline: --btb block;
+      }
+
+      .btb__card {
+        animation: btb-settle linear both;
+        animation-timeline: --btb;
+        animation-range: entry 0% entry 90%;
+      }
+    }
+  }
+
+  @keyframes btb-settle {
+    from {
+      translate: var(--from-x, 0) var(--from-y, 0);
+      rotate: var(--from-r, 0deg);
+    }
+  }
+</style>

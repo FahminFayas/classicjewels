@@ -1,7 +1,16 @@
 ---
 /**
- * The six promises as a numbered ledger: two ruled columns on wide screens, one below.
- * Each row links to its section on the promise page. `condensed` shows three rows (product pages).
+ * The written promises as a numbered ledger (docs/design-system-v2.md §5.6, §6.4, §6.12, §6.15).
+ * Each row links to its terms on /our-promise/#{id}. Tone-aware: numerals in --numeral, titles in
+ * --fg, details in --body, hairlines in --rule, so it sits on ivory or on the stage alike.
+ *
+ *   full       every promise, two columns on wide screens (the promise page)
+ *   condensed  the hallmark, diamond and returns promises in a three-column row (piece pages,
+ *              About)
+ *
+ * The exchange promise is never shown with its "no weight deduction" title until the owner
+ * confirms the terms (site.exchange.confirmed): until then the full ledger reads "Old gold
+ * exchanged at the day's rate" with its detail, and the condensed one leaves it out anyway.
  */
 import Icon from '@/components/ui/Icon.astro';
 import { site } from '@/data/site';
@@ -13,17 +22,24 @@ export interface Props {
 }
 
 const { variant = 'full', class: className } = Astro.props;
+
+const CONDENSED = ['hallmark-916', 'certified-diamonds', 'returns'];
+const promises = site.promises.map((p) =>
+  p.id === 'gold-exchange' && !site.exchange.confirmed
+    ? { ...p, title: 'Old gold exchanged at the day’s rate' }
+    : p,
+);
 const rows =
   variant === 'condensed'
-    ? site.promises.filter((p) => ['hallmark-916', 'certified-diamonds', 'returns'].includes(p.id))
-    : site.promises;
+    ? CONDENSED.flatMap((id) => promises.filter((p) => p.id === id))
+    : promises;
 ---
 
 <ol class:list={['ledger', `ledger--${variant}`, className]} role="list">
   {rows.map((p, i) => (
     <li class="ledger__row">
       <a class="ledger__link" href={`${routes.promise}#${p.id}`}>
-        <span class="ledger__no" aria-hidden="true">
+        <span class="ledger__no fig" aria-hidden="true">
           {String(i + 1).padStart(2, '0')}
         </span>
         <span class="ledger__text">
@@ -39,82 +55,98 @@ const rows =
 <style>
   .ledger {
     display: grid;
-    border-block-start: 1px solid var(--rule-1);
+    border-block-start: 1px solid var(--rule);
   }
 
   .ledger__row {
-    border-block-end: 1px solid var(--rule-1);
+    min-inline-size: 0;
+    border-block-end: 1px solid var(--rule);
   }
 
   .ledger__link {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: start;
-    gap: var(--space-4);
-    padding-block: var(--space-5);
-    color: var(--ink-900);
+    gap: var(--space-4) var(--space-5);
+    block-size: 100%;
+    padding-block: var(--space-6);
+    color: var(--fg);
     text-decoration: none;
   }
 
   .ledger__no {
+    min-inline-size: 2ch;
     font-family: var(--ff-display);
-    font-size: var(--t-h2);
-    font-weight: 400;
+    font-size: var(--t-numeral);
+    font-weight: var(--fw-display-small);
     line-height: 1;
-    font-variant-numeric: tabular-nums;
-    color: var(--gold-600);
-    min-inline-size: 2.2ch;
+    color: var(--numeral);
   }
 
   .ledger__text {
     display: grid;
-    gap: var(--space-1);
+    gap: var(--space-2);
   }
 
   .ledger__title {
     font-family: var(--ff-display);
     font-size: var(--t-h3);
-    font-weight: 600;
-    line-height: 1.25;
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    text-wrap: balance;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: transparent;
+    text-underline-offset: 0.16em;
+    transition: text-decoration-color var(--dur-quick) var(--ease-out);
   }
 
-  .ledger__link:hover .ledger__title {
-    text-decoration: underline;
-    text-decoration-color: var(--gold-700);
-    text-underline-offset: 0.15em;
+  .ledger__link:is(:hover, :focus-visible) .ledger__title {
+    text-decoration-color: var(--wipe);
   }
 
   .ledger__detail {
-    color: var(--ink-700);
+    max-inline-size: 52ch;
+    color: var(--body);
   }
 
-  .ledger__arrow {
-    margin-block-start: 0.35em;
-    color: var(--gold-600);
+  .ledger :global(.ledger__arrow) {
+    margin-block-start: 0.4em;
+    color: var(--wipe);
   }
 
   .ledger--condensed .ledger__link {
-    padding-block: var(--space-3);
-  }
-
-  .ledger--condensed .ledger__no {
-    font-size: var(--t-h3);
-  }
-
-  .ledger--condensed .ledger__title {
-    font-family: var(--ff-text);
-    font-size: var(--t-title);
-    font-weight: 500;
+    padding-block: var(--space-5);
   }
 
   .ledger--condensed .ledger__detail {
     font-size: var(--t-small);
+    line-height: 1.5;
   }
 
   @media (min-width: 56.25em) {
     .ledger--full {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       column-gap: var(--space-8);
+    }
+
+    /* Three promises across, each its own ruled cell. */
+    .ledger--condensed {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: var(--grid-gap);
+      border-block-start: 0;
+    }
+
+    .ledger--condensed .ledger__row {
+      border-block: 1px solid var(--rule);
+    }
+
+    .ledger--condensed .ledger__link {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .ledger--condensed :global(.ledger__arrow) {
+      display: none;
     }
   }
 </style>

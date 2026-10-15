@@ -1,29 +1,36 @@
 ---
 /**
- * One branch: address and contact, hours as listed, directions and map, what the counter does,
- * the other branches, the visiting FAQ and a branch-specific enquiry. Built for every open branch
- * in src/data/site.ts; an opening-soon branch has no page until its status changes.
+ * One branch (docs/design-system-v2.md §6.11), built for every open branch in src/data/site.ts.
  *
- * Copy that only fits one branch is gated on its data: mall wording on venueType 'mall', the
- * "Hours & Directions" title on branch.hours, "Get directions" on a known map pin, and the
- * flagship's Deira questions are kept off the other branches' FAQ. The flagship's Google Maps
- * iframe is a recorded deviation from the spec (docs/implementation-notes.md).
+ *   1. Opener, stage: the branch name at display size, the emirate, the route miniature with this
+ *      branch lit, WhatsApp and Directions; the media is a parchment facts plate (the venue set in
+ *      Cormorant italic) until branch photographs exist. Never a jewellery photograph.
+ *   2. Facts ledger, ivory: the address with its "located in" and plus-code lines, the phone (and
+ *      Deira's mobile), WhatsApp this branch, directions and the map link, the hours by day
+ *      (identical days collapsed, today marked, the breaks named, the open-now line in Dubai
+ *      time, captioned "As listed on Google" until confirmed), the branch's own Google rating as
+ *      one dated line, facilities, metro, parking and Instagram where site.ts has them.
+ *   3. Book a visit, plum: the four-step visit form with this branch preselected.
+ *   4. Every door, stage: BranchDoors compact, so the page ends at a person.
+ *
+ * Copy that only fits one branch is gated on its data (mall wording on venueType 'mall', metro
+ * and parking rows only where site.ts has them). No map iframe: Google Maps by link only.
  */
 import type { InferGetStaticPropsType } from 'astro';
 
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
-import Faq from '@/components/sections/Faq.astro';
-import Hero from '@/components/sections/Hero.astro';
-import StoreCard from '@/components/sections/StoreCard.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import BranchDoors from '@/components/sections/BranchDoors.astro';
+import ContactForm from '@/components/sections/ContactForm.astro';
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import Ornament from '@/components/ui/Ornament.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Section from '@/components/ui/Section.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
 import { flagship, openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { getFaqGroup } from '@/lib/content';
-import { listWords } from '@/lib/format';
-import { hhmm, weeklyRows } from '@/lib/hours';
+import { formatDate } from '@/lib/format';
+import { breakLines, hoursCaption, hoursRuns, openNowData } from '@/lib/hours';
 import { routes } from '@/lib/routes';
 import { jewelryStoreSchema } from '@/lib/schema';
 import { TITLE_MAX } from '@/lib/seo';
@@ -36,558 +43,527 @@ export function getStaticPaths() {
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
 const { branch } = Astro.props;
-const faq = await getFaqGroup('stores');
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const storeImage = new URL('/og/default.png', origin).toString();
 
+const own = Boolean(branch.phone);
 const phone = branch.phone ?? site.phone.landline;
-const others = openBranches.filter((b) => b.id !== branch.id);
 const inMall = branch.venueType === 'mall';
-/** A Google Maps link without coordinates is a search, not a pin: the button says so. */
-const hasPin = Boolean(branch.map?.geo);
-const guide = inMall ? 'from the mall entrance' : 'to the counter';
+const mapUrl = branch.map?.url;
 
 /** Address lines with the locality/region duplicate that mall branches carry removed. */
 const addressLines = [branch.address.street, branch.address.locality, branch.address.region].filter(
   (line, i, all) => all.indexOf(line) === i,
 );
+/** "Located in" only when the venue is not already the whole street line. */
+const locatedIn = branch.address.street === branch.venue ? undefined : branch.venue;
 const hasUnit = /\b(shop|unit|no\.)/i.test(branch.address.street);
 const lead = hasUnit
-  ? `${addressLines.join(', ')}.${
+  ? `${branch.shortAddress ?? addressLines[0]}, ${branch.address.locality}.${
       branch.isFlagship ? ` Our first counter, open since ${site.founded.brandYear}.` : ''
     }`
-  : `${inMall ? 'Inside' : 'In'} ${branch.venue}, ${branch.city}. Call or WhatsApp for the shop number and we will direct you.`;
+  : `${inMall ? 'Inside' : 'In'} ${branch.venue}, ${branch.city}. Call or message for the shop number and we will guide you to the counter.`;
 
-const hours = branch.hours;
-/** One row per day with any break applied, so Friday reads "10:00–12:00, 14:30–22:30". */
-const hourRows = weeklyRows(branch);
+const parking = branch.facilities?.filter((f) => /parking/i.test(f)) ?? [];
+const facilities = branch.facilities?.filter((f) => !/parking/i.test(f)) ?? [];
+const directions =
+  branch.directions ??
+  `The shop is ${inMall ? 'inside' : 'in'} ${branch.venue}, ${branch.city}. Open the map for a route, then call or message us and we will guide you ${inMall ? 'from the mall entrance' : 'to the counter'}.`;
 
-/*
- * The stores FAQ is written around the flagship. Other branches get only the questions that are
- * true everywhere; the flagship page drops "Where is the flagship?" about itself.
- */
-const BRANCH_SPECIFIC = /deira|gold souq|metro|flagship/i;
-const faqItems = branch.isFlagship
-  ? faq.data.items.filter((item) => !/flagship/i.test(item.question))
-  : faq.data.items.filter((item) => !BRANCH_SPECIFIC.test(`${item.question} ${item.answer}`));
+const runs = hoursRuns(branch);
+const breaks = breakLines(branch);
+const caption = hoursCaption(branch);
+const nowData = openNowData(branch);
+const hasHours = runs.length > 0;
+const rating = branch.reviews;
 
 const instagramHandle = branch.instagram
   ? new URL(branch.instagram).pathname.split('/').filter(Boolean)[0]
   : undefined;
 
-const services = [
-  {
-    title: 'See the trays',
-    detail:
-      'Every piece is weighed in front of you and quoted at the day’s rate plus making charge.',
-    href: routes.jewellery,
-  },
-  {
-    title: 'Exchange old gold',
-    detail:
-      'Tested and weighed at the counter, credited by weight at the day’s rate against a new piece.',
-    href: routes.goldExchange,
-  },
-  {
-    title: 'Book a custom piece',
-    detail:
-      'Bring a sketch, a photo or an heirloom. Karat, weight and making charge are agreed before work begins.',
-    href: routes.customJewellery,
-  },
-  {
-    title: 'Collect an online enquiry',
-    detail:
-      'Ask about a piece on WhatsApp or through the contact form and arrange to see it at this counter.',
-    href: routes.contact,
-  },
-  {
-    title: 'Pay by card, cash or cheque',
-    detail: `In store we accept ${listWords(
-      site.paymentAccepted.map((p) => (p === 'Cash' || p === 'Cheque' ? p.toLowerCase() : p)),
-    )}.`,
-  },
-];
-
 const visitWhatsapp = whatsappUrl(
   `${site.whatsapp.greeting} I’d like to visit the ${branch.name} branch. Could you confirm today’s hours?`,
 );
-const enquiryWhatsapp = whatsappUrl(
-  `${site.whatsapp.greeting} I’m planning to visit the ${branch.name} branch and would like to ask about a piece.`,
-);
 
-/* "Hours & Directions" only where the page has hours to show. */
-const [longTitle, shortTitle] = hours
+/* "Hours & Directions" only where the page prints hours. */
+const [longTitle, shortTitle] = hasHours
   ? [`Jewellers in ${branch.name}: Hours & Directions`, `${branch.name}: Hours & Directions`]
   : [`Gold and Diamond Jewellers in ${branch.name}`, `Jewellers in ${branch.name}`];
 const title = longTitle.length <= TITLE_MAX ? longTitle : shortTitle;
-const description = hours
-  ? `${site.name} at ${branch.venue}, ${branch.city}: address, hours and directions. WhatsApp us to confirm today’s hours before you visit.`
+const description = hasHours
+  ? `${site.name} at ${branch.venue}, ${branch.city}: address, hours, phone and directions. WhatsApp us to confirm today’s hours.`
   : `${site.name} at ${branch.venue}, ${branch.city}: address, directions and what the counter offers. WhatsApp us for the shop number before you visit.`;
 
 /** The flagship's JewelryStore is already in every page head (BaseLayout). */
 const jsonLd = branch.isFlagship ? [] : [jewelryStoreSchema(branch, storeImage)];
 ---
 
-<BaseLayout ground="ivory" title={title} description={description} jsonLd={jsonLd}>
-  <div class="container">
-    <Breadcrumbs
-      items={[
-        { name: 'Stores', href: routes.stores },
-        { name: branch.name, href: routes.store(branch.id) },
-      ]}
-    />
-  </div>
-
-  <Hero
+<BaseLayout ground="stage" title={title} description={description} jsonLd={jsonLd}>
+  <PageHead
+    tone="stage"
+    breadcrumbs={[
+      { name: 'Branches', href: routes.stores },
+      { name: branch.name, href: routes.store(branch.id) },
+    ]}
     eyebrow={`${branch.emirate}${branch.isFlagship ? ' · Flagship' : ''}`}
-    title={`${site.name}, ${branch.name}`}
+    title={branch.name}
     lead={lead}
-    media="none"
+    layout="split"
+    size="display"
   >
-    {branch.map?.url && (
-      <Button href={branch.map.url} icon="map-pin" external>
-        {hasPin ? 'Get directions' : 'Find on Google Maps'}
+    <Button href={visitWhatsapp} icon="whatsapp" external>
+      WhatsApp this branch
+    </Button>
+    {mapUrl && (
+      <Button href={mapUrl} variant="secondary" icon="map-pin" external>
+        Directions
       </Button>
     )}
-    <Button href={visitWhatsapp} variant="secondary" icon="whatsapp" external>
-      WhatsApp
-    </Button>
-  </Hero>
+    <div class="plate-facts" data-tone="parchment" slot="media">
+      <div class="plate-facts__frame">
+        {branch.isFlagship ? (
+          <Icon name="c-ring" class="plate-facts__ring" />
+        ) : (
+          <Ornament class="plate-facts__orn" />
+        )}
+        <p class="plate-facts__venue">{branch.venue}</p>
+        <p class="plate-facts__place eyebrow">{branch.city}</p>
+      </div>
+    </div>
+    <div slot="aside" class="opener-route">
+      <BranchDoors variant="compact" lit={branch.id} showSoon={false} />
+    </div>
+  </PageHead>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="facts">
-        <div class="facts__cell">
-          <h2 class="facts__title">Address and contact</h2>
-          <address class="facts__address">
+  <Section tone="ivory" labelledby="facts-title">
+    <SectionHead
+      id="facts-title"
+      eyebrow="Before you set out"
+      title="Finding the counter"
+      shape="split"
+    >
+      Everything we have for this branch, as it stands on its Google listing. For anything else, a
+      message is quickest.
+    </SectionHead>
+    <dl class="ledger">
+      <div class="ledger__row">
+        <dt class="ledger__term">Address</dt>
+        <dd class="ledger__value">
+          <address class="ledger__address">
             {addressLines.map((line) => (
               <span>{line}</span>
             ))}
             <span>{site.address.countryName}</span>
           </address>
-          <ul class="facts__contact" role="list">
-            <li>
-              <a href={`tel:${phone.e164}`}>
-                <Icon name="phone" /> {phone.display}
-              </a>
-              {!branch.phone && (
-                <span class="small">Calls go to the {flagship.shortName} counter.</span>
+          {(locatedIn || branch.plusCode) && (
+            <dl class="ledger__sub">
+              {locatedIn && (
+                <div class="ledger__subrow">
+                  <dt>Located in</dt>
+                  <dd>{locatedIn}</dd>
+                </div>
               )}
-            </li>
-            <li>
-              <a href={visitWhatsapp} target="_blank" rel="noopener">
-                <Icon name="whatsapp" /> {site.whatsapp.display}
+              {branch.plusCode && (
+                <div class="ledger__subrow">
+                  <dt>Plus code</dt>
+                  <dd class="fig">{branch.plusCode}</dd>
+                </div>
+              )}
+            </dl>
+          )}
+        </dd>
+      </div>
+      <div class="ledger__row">
+        <dt class="ledger__term">{own ? 'Phone' : 'Group line'}</dt>
+        <dd class="ledger__value">
+          <a class="ledger__big fig" href={`tel:${phone.e164}`}>
+            {phone.display}
+          </a>
+          {branch.mobile && (
+            <p class="ledger__also">
+              <span class="ledger__also-label">Mobile</span>
+              <a class="ledger__big fig" href={`tel:${branch.mobile.e164}`}>
+                {branch.mobile.display}
               </a>
-            </li>
-            <li>
-              <a href={`mailto:${site.email}`}>
-                <Icon name="mail" /> {site.email}
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <div class="facts__cell">
-          <h2 class="facts__title">Opening hours</h2>
-          {hours ? (
+            </p>
+          )}
+          {!own && (
+            <p class="ledger__note">
+              The group’s number: calls go to the {flagship.shortName} counter.
+            </p>
+          )}
+        </dd>
+      </div>
+      <div class="ledger__row">
+        <dt class="ledger__term">WhatsApp</dt>
+        <dd class="ledger__value">
+          <a class="ledger__big fig" href={visitWhatsapp} target="_blank" rel="noopener">
+            {site.whatsapp.display}
+            <span class="sr-only"> (opens WhatsApp)</span>
+          </a>
+          <p class="ledger__note">
+            WhatsApp this branch: the quickest way to check a piece is at this counter.
+          </p>
+        </dd>
+      </div>
+      <div class="ledger__row">
+        <dt class="ledger__term">Directions</dt>
+        <dd class="ledger__value">
+          <p>{directions}</p>
+          {mapUrl && (
+            <MoreLink href={mapUrl} external icon="arrow-up-right">
+              Open in Google Maps
+            </MoreLink>
+          )}
+        </dd>
+      </div>
+      <div class="ledger__row">
+        <dt class="ledger__term">Hours</dt>
+        <dd class="ledger__value">
+          {hasHours ? (
             <>
-              <table class="hours">
-                <caption class="sr-only">Opening hours, {branch.name}</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Day</th>
-                    <th scope="col">Hours</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {hourRows.map(({ day, text }) => (
-                    <tr data-hours-days={day}>
-                      <th scope="row">{day}</th>
-                      <td class="tabular">{text}</td>
-                    </tr>
+              <dl class="ledger__week">
+                {runs.map((run) => (
+                  <div class="ledger__run" data-hours-days={run.days.join(',')}>
+                    <dt class="ledger__days">{run.label}</dt>
+                    <dd class="ledger__times fig">{run.text}</dd>
+                  </div>
+                ))}
+              </dl>
+              {breaks.length > 0 && (
+                <ul class="ledger__breaks" role="list">
+                  {breaks.map((line) => (
+                    <li class="fig">{line}</li>
                   ))}
-                </tbody>
-              </table>
-              {hours.breaks?.map((b) => (
-                <p class="facts__note small">
-                  {b.label}: closed {hhmm(b.from)} to {hhmm(b.to)} on {listWords(b.days)}.
-                </p>
-              ))}
-              {hours.confirmed ? (
-                hours.note && <p class="facts__note small">{hours.note}</p>
-              ) : (
-                <p class="facts__note small">
-                  As listed on Google; call to confirm Friday and Ramadan timings.
-                </p>
+                </ul>
               )}
+              {branch.hours?.note && <p class="ledger__note">{branch.hours.note}</p>}
+              {caption && <p class="ledger__caption caption">{caption}</p>}
+              <p class="ledger__now" data-open-now={nowData}></p>
             </>
           ) : (
-            <p class="facts__nohours">Call or WhatsApp for today’s hours.</p>
+            <p>Call or message for today’s hours before you set out.</p>
           )}
-        </div>
+        </dd>
       </div>
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <div class="prose">
-          <h2>Getting here</h2>
-          <p>
-            {branch.directions ??
-              `The shop is ${inMall ? 'inside' : 'in'} ${branch.venue}, ${branch.city}. Open the map for a route, then call or WhatsApp us and we will guide you ${guide}.`}
-          </p>
-          {branch.facilities && branch.facilities.length > 0 && (
-            <>
-              <h3>Facilities</h3>
-              <ul>
-                {branch.facilities.map((f) => (
-                  <li>{f}</li>
-                ))}
-              </ul>
-            </>
-          )}
-          {branch.instagram && instagramHandle && (
-            <p>
-              This branch on Instagram:{' '}
-              <a href={branch.instagram} target="_blank" rel="noopener">
-                @{instagramHandle} <Icon name="external" />
-              </a>
-            </p>
-          )}
-        </div>
-
-        {branch.isFlagship && branch.map?.embedUrl ? (
-          <figure class="map">
-            {/* The tint and the line behind the frame show until the map paints, or if it never does. */}
-            <div class="map__frame">
-              <p class="map__fallback small" aria-hidden="true">
-                Map of {branch.name}
-              </p>
-              <iframe
-                src={branch.map.embedUrl}
-                title={`Map of ${site.name}, ${branch.name}`}
-                loading="lazy"
-                referrerpolicy="no-referrer-when-downgrade"
-                height="360"
-              ></iframe>
-            </div>
-            <figcaption class="map__caption small">
-              <a href={branch.map.url} target="_blank" rel="noopener">
-                Open in Google Maps <Icon name="external" />
-              </a>
-            </figcaption>
-          </figure>
-        ) : (
-          <div class="map map--panel">
-            <p class="map__text">
-              {site.name}, {branch.venue}, {branch.city}, on Google Maps.
-            </p>
-            {branch.map?.url && (
-              <Button href={branch.map.url} variant="secondary" icon="map-pin" external>
-                Open in Google Maps
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <SectionHead eyebrow="At the counter" title="What you can do here." />
-      <ol class="rows ledger" role="list">
-        {services.map((s, i) => (
-          <li class="ledger__row">
-            <span class="ledger__no" aria-hidden="true">
-              {String(i + 1).padStart(2, '0')}
-            </span>
-            <div class="ledger__text">
-              <h3 class="ledger__title">
-                {s.href ? (
-                  <a class="link-quiet" href={s.href}>
-                    {s.title}
-                  </a>
-                ) : (
-                  s.title
-                )}
-              </h3>
-              <p class="ledger__detail">{s.detail}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </div>
-  </section>
-
-  {others.length > 0 && (
-    <section class="section section--ruled">
-      <div class="container">
-        <SectionHead eyebrow="Also open" title="Our other branches.">
-          <Fragment slot="aside">
-            <a class="link-quiet section__link" href={routes.stores}>
-              All stores <Icon name="arrow-right" />
+      {rating && mapUrl && (
+        <div class="ledger__row">
+          <dt class="ledger__term">On Google</dt>
+          <dd class="ledger__value">
+            <a class="ledger__rating" href={mapUrl} target="_blank" rel="noopener">
+              <span class="ledger__big fig">{rating.rating.toFixed(1)}</span>
+              <span class="ledger__rating-text">
+                on Google, {rating.count} reviews, {formatDate(rating.asOf)}
+              </span>
+              <span class="sr-only"> (opens in a new tab)</span>
             </a>
-          </Fragment>
-        </SectionHead>
-        <div class="rows">
-          {others.map((b) => (
-            <StoreCard branch={b} compact />
-          ))}
+          </dd>
         </div>
-      </div>
-    </section>
-  )}
+      )}
+      {facilities.length > 0 && (
+        <div class="ledger__row">
+          <dt class="ledger__term">At the branch</dt>
+          <dd class="ledger__value">
+            <ul class="ledger__list" role="list">
+              {facilities.map((f) => (
+                <li>{f}</li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+      )}
+      {branch.metro && (
+        <div class="ledger__row">
+          <dt class="ledger__term">Nearest metro</dt>
+          <dd class="ledger__value">{branch.metro}</dd>
+        </div>
+      )}
+      {parking.length > 0 && (
+        <div class="ledger__row">
+          <dt class="ledger__term">Parking</dt>
+          <dd class="ledger__value">{parking.join('. ')}</dd>
+        </div>
+      )}
+      {branch.instagram && instagramHandle && (
+        <div class="ledger__row">
+          <dt class="ledger__term">Instagram</dt>
+          <dd class="ledger__value">
+            <MoreLink href={branch.instagram} external icon="arrow-up-right">
+              @{instagramHandle}
+            </MoreLink>
+          </dd>
+        </div>
+      )}
+    </dl>
+  </Section>
 
-  {faqItems.length > 0 && (
-    <section class="section section--ruled">
-      <div class="container">
-        <Faq heading={faq.data.heading} items={faqItems} />
-      </div>
-    </section>
-  )}
+  <Section tone="parchment" id="visit" labelledby="visit-title">
+    <SectionHead
+      id="visit-title"
+      eyebrow="Book a visit"
+      title="Tell us when"
+      accent="you are coming"
+      shape="split"
+    >
+      Choose the day and what you would like to see, and send it on WhatsApp or by email. We reply
+      to confirm.
+    </SectionHead>
+    <ContactForm variant="visit" branch={branch.id} />
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <EnquiryBlock
-        heading={`Ask before you visit ${branch.shortName}`}
-        text={`WhatsApp is fastest during shop hours. Tell us what you would like to see at ${branch.shortName} and we will check it is at the counter before you set out.`}
-        whatsappUrl={enquiryWhatsapp}
-        whatsappLabel="WhatsApp about this branch"
-      />
-    </div>
-  </section>
+  <Section tone="stage" seam labelledby="doors-title">
+    <SectionHead
+      id="doors-title"
+      eyebrow="Branches"
+      title="Every door,"
+      accent="west to east"
+      shape="split"
+    >
+      <MoreLink href={routes.stores} slot="aside">
+        All branches
+      </MoreLink>
+    </SectionHead>
+    <BranchDoors variant="compact" />
+  </Section>
 </BaseLayout>
 
+<script src="@/scripts/open-now.ts"></script>
+
 <style>
-  .section__link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-weight: 500;
-    color: var(--plum-700);
+  /* ---------- The facts plate: a parchment nameplate until branch photographs exist ---------- */
+  .plate-facts {
+    container-type: inline-size;
+    aspect-ratio: 3 / 2;
+    margin: 0;
+    padding: var(--space-3);
+    background: var(--ground);
   }
 
-  /* ---------- Address and hours: two cells; the section rules above and below frame them ---------- */
-  .facts {
+  .plate-facts__frame {
     display: grid;
-  }
-
-  .facts__cell {
-    display: grid;
+    place-content: center;
+    justify-items: center;
     gap: var(--space-4);
-    align-content: start;
-    padding-block: var(--space-6);
-  }
-
-  .facts__cell + .facts__cell {
-    border-block-start: 1px solid var(--rule-1);
-  }
-
-  .facts__title {
-    font-size: var(--t-h3);
-  }
-
-  .facts__address {
-    display: grid;
-    gap: var(--space-1);
-    color: var(--ink-700);
-  }
-
-  .facts__contact {
-    display: grid;
-    gap: var(--space-2);
-  }
-
-  .facts__contact li {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-3);
-  }
-
-  .facts__contact a {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-block-size: var(--tap);
-    color: var(--plum-700);
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  .facts__contact a:hover {
-    text-decoration: underline;
-    text-decoration-color: var(--gold-600);
-  }
-
-  .facts__note {
-    color: var(--ink-500);
-    max-inline-size: 36rem;
-  }
-
-  .facts__nohours {
-    color: var(--ink-700);
-  }
-
-  .hours {
-    border-block: 1px solid var(--rule-2);
-    font-size: var(--t-small);
-  }
-
-  .hours th,
-  .hours td {
-    padding-block: var(--space-2);
-    padding-inline: var(--space-3);
-    text-align: start;
-    border-block-end: 1px solid var(--rule-1);
-  }
-
-  .hours thead th {
-    background: var(--surface-2);
-    font-weight: 500;
-    color: var(--ink-700);
-  }
-
-  .hours tbody th {
-    font-weight: 400;
-    color: var(--ink-700);
-  }
-
-  .hours tr[data-today='true'] th,
-  .hours tr[data-today='true'] td {
-    background: var(--plum-050);
-    color: var(--ink-900);
-    font-weight: 500;
-  }
-
-  .hours tr[data-today='true'] th::after {
-    content: ' · Today';
-    font-weight: 400;
-    color: var(--gold-700);
-  }
-
-  /* ---------- Map ---------- */
-  .map {
-    min-inline-size: 0;
-  }
-
-  /* Tinted behind the frame, so a slow or blocked embed never shows an empty white box. */
-  .map__frame {
-    position: relative;
-    aspect-ratio: 4 / 3;
-    background: var(--plum-050);
-    border: 1px solid var(--rule-1);
-  }
-
-  .map__fallback {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
+    block-size: 100%;
     padding: var(--space-5);
+    border: 1px solid var(--rule-strong);
     text-align: center;
   }
 
-  .map__frame iframe {
-    position: relative;
-    z-index: 1;
-    display: block;
-    inline-size: 100%;
-    block-size: 100%;
-    border: 0;
+  .plate-facts :global(.plate-facts__ring) {
+    inline-size: var(--space-7);
+    block-size: var(--space-7);
+    color: var(--wipe);
   }
 
-  .map__caption {
-    margin-block-start: var(--space-2);
+  .plate-facts :global(.plate-facts__orn) {
+    inline-size: var(--space-8);
+    block-size: var(--space-3);
   }
 
-  .map__caption a {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-block-size: var(--tap);
-    font-weight: 500;
-    color: var(--plum-700);
-    text-decoration: none;
+  .plate-facts__venue {
+    max-inline-size: 18ch;
+    font-family: var(--ff-display);
+    font-size: min(var(--t-h2), 10cqi);
+    font-style: italic;
+    font-weight: var(--fw-display);
+    line-height: var(--lh-display);
+    color: var(--fg);
+    text-wrap: balance;
   }
 
-  .map__caption a:hover {
-    text-decoration: underline;
-    text-decoration-color: var(--gold-600);
+  .plate-facts__place {
+    margin: 0;
   }
 
-  /* No pin yet: a short panel sized to its content, in body type. */
-  .map--panel {
-    display: grid;
-    gap: var(--space-4);
-    justify-items: start;
-    padding: var(--space-6);
-    background: var(--plum-050);
+  .opener-route {
+    margin-block-start: var(--space-3);
   }
 
-  .map__text {
-    max-inline-size: 28rem;
-    color: var(--ink-700);
+  /* ---------- Facts ledger ---------- */
+  .ledger {
+    border-block-start: 1px solid var(--rule-strong);
   }
 
-  /* ---------- Numbered ledger ---------- */
   .ledger__row {
     display: grid;
-    grid-template-columns: auto 1fr;
-    gap: var(--space-4);
+    gap: var(--space-2);
     padding-block: var(--space-5);
+    border-block-end: 1px solid var(--rule);
   }
 
-  .ledger__no {
-    font-family: var(--ff-display);
-    font-size: var(--t-h2);
-    font-weight: 400;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-    color: var(--gold-600);
-    min-inline-size: 2.2ch;
+  .ledger__term {
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    line-height: 1.6;
+    text-transform: uppercase;
+    color: var(--eyebrow);
   }
 
-  .ledger__text {
+  .ledger__value {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+    max-inline-size: var(--prose);
+    font-size: var(--t-lead);
+    line-height: 1.55;
+    color: var(--fg);
+  }
+
+  .ledger__address {
+    display: grid;
+  }
+
+  /* "Located in" and the plus code: a small two-column list under the address. */
+  .ledger__sub {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: var(--space-1) var(--space-4);
+    font-size: var(--t-small);
+    line-height: 1.5;
+  }
+
+  .ledger__subrow {
+    display: contents;
+  }
+
+  .ledger__subrow dt {
+    color: var(--muted);
+  }
+
+  .ledger__subrow dd {
+    color: var(--body);
+  }
+
+  .ledger__list {
     display: grid;
     gap: var(--space-1);
   }
 
-  .ledger__title {
-    font-size: var(--t-h3);
+  .ledger__big {
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral);
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--fg);
+    text-decoration-color: var(--rule-strong);
   }
 
-  .ledger__title a {
-    color: var(--ink-900);
+  .ledger__big:hover {
+    color: var(--accent);
+    text-decoration-color: var(--wipe);
   }
 
-  .ledger__title a:hover {
+  /* A second number under the first, labelled. */
+  .ledger__also {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .ledger__also-label {
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .ledger__note {
+    max-inline-size: 48ch;
+    font-size: var(--t-small);
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  /* ---------- Hours by day ---------- */
+  .ledger__week {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: var(--space-2) var(--space-5);
+    inline-size: 100%;
+  }
+
+  .ledger__run {
+    display: contents;
+  }
+
+  .ledger__days {
+    color: var(--body);
+  }
+
+  .ledger__times {
+    color: var(--fg);
+  }
+
+  /* Today's run, marked by nav.ts in Dubai time. */
+  .ledger__run[data-today] .ledger__days {
+    font-weight: var(--fw-text-strong);
+    color: var(--fg);
+  }
+
+  .ledger__breaks {
+    display: grid;
+    gap: var(--space-1);
+    font-size: var(--t-small);
+    line-height: 1.5;
+    color: var(--body);
+  }
+
+  .ledger__caption {
+    margin: 0;
+  }
+
+  /* Written by open-now.ts: the line keeps its height so nothing below it moves when it fills. */
+  .ledger__now {
+    min-block-size: calc(var(--t-lead) * 1.55);
+    color: var(--body);
+  }
+
+  .ledger__now[data-state='open'] {
+    font-weight: var(--fw-text-strong);
+    color: var(--fg);
+  }
+
+  /* ---------- Rating ---------- */
+  .ledger__rating {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-3);
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  .ledger__rating .ledger__big {
     text-decoration: underline;
-    text-decoration-color: var(--gold-700);
-    text-underline-offset: 0.15em;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.16em;
   }
 
-  .ledger__detail {
-    color: var(--ink-700);
-    max-inline-size: 48rem;
+  .ledger__rating:is(:hover, :focus-visible) .ledger__big {
+    color: var(--accent);
+    text-decoration-color: var(--wipe);
   }
 
-  @media (min-width: 48em) {
-    .facts {
-      grid-template-columns: 5fr 7fr;
+  .ledger__rating-text {
+    color: var(--body);
+  }
+
+  @media (min-width: 64em) {
+    .ledger__row {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--grid-gap);
+      padding-block: var(--space-6);
     }
 
-    .facts__cell + .facts__cell {
-      border-block-start: 0;
-      border-inline-start: 1px solid var(--rule-1);
-      padding-inline-start: var(--space-7);
+    .ledger__term {
+      grid-column: 1 / span 4;
     }
 
-    .facts__cell:first-child {
-      padding-inline-end: var(--space-7);
+    .ledger__value {
+      grid-column: 5 / span 8;
     }
   }
 </style>

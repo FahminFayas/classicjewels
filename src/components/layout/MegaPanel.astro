@@ -1,0 +1,446 @@
+---
+/**
+ * The Jewellery mega panel (docs/design-system-v2.md §5.3, §8.4): a popover under the header on
+ * the raised stage, full width, four columns.
+ *
+ *   By piece   the nine categories in Cormorant, then "All jewellery"
+ *   By style   the place-based styles and the others, each with a 208 px preview stacked in one
+ *              cell beside the list: the style's first velvet piece (StageImage), its studio
+ *              cut-out (Plate), or a TypesetPlate when it has no photograph. Hovering or focusing
+ *              a style crossfades to its preview (CSS :has, no script needed); nav.ts keeps the
+ *              last one lit (data-active)
+ *   Visit us   the open branches (emirate, name, phone or the group line), then "Opening soon"
+ *   Today      the four rates, the source and time, "Today's gold rate"
+ *
+ * Column labels are <p class="eyebrow">, never headings: the page's first heading is its H1.
+ * Opened by the Jewellery button (popovertarget, declarative) and by hover intent (nav.ts).
+ * Light dismiss and Escape are native. The previews are lazy, so they load only once the panel
+ * is shown. The page behind is not dimmed: the header stays lit.
+ */
+import Plate from '@/components/ui/Plate.astro';
+import RateFigure from '@/components/ui/RateFigure.astro';
+import StageImage from '@/components/ui/StageImage.astro';
+import TypesetPlate from '@/components/ui/TypesetPlate.astro';
+import Icon from '@/components/ui/Icon.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import { branches, site } from '@/data/site';
+import type { Category, DesignCollection, Product } from '@/lib/content';
+import { photoGround } from '@/lib/content';
+import { formatDate, formatRateDate, formatRateTime } from '@/lib/format';
+import type { GoldRate } from '@/lib/gold-rate';
+import { isStale } from '@/lib/rates';
+import { routes } from '@/lib/routes';
+import { DISPLAY_KARATS, KARAT_FACTS } from '@/lib/tones';
+
+export interface Props {
+  categories: Category[];
+  collections: DesignCollection[];
+  products: Product[];
+  rate: GoldRate | null;
+  fetchedAt: string | null;
+}
+
+const { categories, collections, products, rate, fetchedAt } = Astro.props;
+
+/** The preview size: 208 CSS px, sharp on 2x screens from the 600 px velvet sources. */
+const PREVIEW = 208;
+
+/** Each style's preview, from content: a velvet piece, else the style's own cut-out, else type. */
+const styles = collections.map((c) => {
+  const velvet = products.find(
+    (p) => p.data.collection?.id === c.id && photoGround(p) === 'velvet' && p.data.images[0],
+  );
+  const cover = velvet?.data.images[0];
+  const preview = cover
+    ? ({ kind: 'stage', image: cover.src } as const)
+    : c.data.image && c.data.imageGround === 'lilac'
+      ? ({ kind: 'plate', image: c.data.image } as const)
+      : ({ kind: 'type' } as const);
+  return {
+    id: c.id,
+    name: c.data.shortName,
+    href: routes.collection(c.id),
+    placed: typeof c.data.longitude === 'number',
+    preview,
+  };
+});
+// Place-based styles first (editorial order), then the others.
+const ordered = [...styles.filter((s) => s.placed), ...styles.filter((s) => !s.placed)];
+const firstOther = ordered.findIndex((s) => !s.placed);
+
+const open = branches.filter((b) => b.status === 'open');
+const soon = branches.filter((b) => b.status === 'opening-soon');
+const group = site.phone.landline;
+
+const stale = rate ? isStale(rate.date) : false;
+/** The status line, as RateInstrument writes it, with the same rate.ts hooks: data-rate-lead
+ * swaps "Last published rate" for the source when a fresh posting arrives, and the <time
+ * data-rate-time> becomes "checked {HH:MM}". */
+const freshLead = `${site.rate.source} ${site.rate.basis}`;
+const status = rate
+  ? stale || !fetchedAt
+    ? {
+        lead: stale ? 'Last published rate' : freshLead,
+        at: rate.date,
+        text: formatDate(rate.date, { year: undefined }),
+      }
+    : {
+        lead: freshLead,
+        at: fetchedAt,
+        text: `${formatRateDate(fetchedAt)}, ${formatRateTime(fetchedAt)}`,
+      }
+  : null;
+---
+
+<div id="mega" popover class="sheet mega" data-tone="stage-raised" aria-label="Jewellery">
+  <div class="track" data-width="wide">
+    <div class="mega__cols">
+      <div class="mega__col">
+        <p class="eyebrow mega__label">By piece</p>
+        <ul class="mega__pieces" role="list">
+          {categories.map((c) => (
+            <li>
+              <a class="mega__piece" href={routes.category(c.id)}>
+                {c.data.shortName ?? c.data.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <MoreLink href={routes.jewellery} class="mega__more">
+          All jewellery
+        </MoreLink>
+      </div>
+
+      <div class="mega__col">
+        <p class="eyebrow mega__label">By style</p>
+        <div class="mega__styles" data-styles style={`--preview:${PREVIEW}px`}>
+          <ul class="mega__style-list" role="list">
+            {ordered.map((s, i) => (
+              <li class:list={['mega__style', i === firstOther && 'mega__style--rule']}>
+                <a class="mega__style-link" href={s.href} data-style={s.id}>
+                  {s.name}
+                </a>
+                <span class="mega__pv" aria-hidden="true">
+                  {s.preview.kind === 'stage' ? (
+                    <StageImage image={s.preview.image} alt="" cap={PREVIEW} mask="spot" />
+                  ) : s.preview.kind === 'plate' ? (
+                    <Plate image={s.preview.image} alt="" cap={PREVIEW} />
+                  ) : (
+                    <TypesetPlate name={s.name} cap={PREVIEW} />
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <MoreLink href={routes.collections} class="mega__more">
+          All styles
+        </MoreLink>
+      </div>
+
+      <div class="mega__col">
+        <p class="eyebrow mega__label">Visit us</p>
+        <ul class="mega__doors" role="list">
+          {open.map((b) => (
+            <li class="mega__door">
+              <span class="mega__emirate">
+                {b.isFlagship && <Icon name="c-ring" class="mega__ring" />}
+                {b.emirate}
+                {b.isFlagship && ' · Flagship'}
+              </span>
+              <a class="mega__door-name" href={routes.store(b.id)}>
+                {b.name}
+              </a>
+              {b.phone ? (
+                <a class="mega__tel fig" href={`tel:${b.phone.e164}`}>
+                  {b.phone.display}
+                </a>
+              ) : (
+                <a class="mega__tel" href={`tel:${group.e164}`}>
+                  Group line<span class="sr-only"> {group.display}</span>
+                </a>
+              )}
+              {b.mobile && (
+                <a class="mega__tel fig" href={`tel:${b.mobile.e164}`}>
+                  {b.mobile.display}
+                  <span class="sr-only"> (mobile)</span>
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+        {soon.length > 0 && (
+          <p class="caption mega__soon">Opening soon: {soon.map((b) => b.name).join('; ')}.</p>
+        )}
+      </div>
+
+      <div class="mega__col">
+        <p class="eyebrow mega__label">Today</p>
+        {rate ? (
+          <>
+            <ul class="rows mega__rates" role="list">
+              {DISPLAY_KARATS.map((k) => (
+                <li class="mega__rate">
+                  <span class="mega__k">{KARAT_FACTS[k].label}</span>
+                  <RateFigure rate={rate} karat={k} class="mega__v" />
+                </li>
+              ))}
+            </ul>
+            <p class="caption mega__status">
+              <span data-rate-lead data-fresh={`${freshLead},`}>{`${status!.lead},`}</span>{' '}
+              <time class="nowrap" datetime={status!.at} data-rate-time>
+                {status!.text}
+              </time>
+            </p>
+            <p class="caption">AED per gram. {site.rate.excludes}.</p>
+          </>
+        ) : (
+          <p class="mega__status">
+            Call for today’s rate:{' '}
+            <a href={`tel:${group.e164}`} class="fig">
+              {group.display}
+            </a>
+          </p>
+        )}
+        <MoreLink href={routes.goldRate} class="mega__more">
+          Today’s gold rate
+        </MoreLink>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .mega {
+    position: fixed;
+    inset-block: var(--header-h) auto;
+    inset-inline: 0;
+    inline-size: auto;
+    block-size: auto;
+    max-block-size: calc(100dvh - var(--header-h));
+    margin: 0;
+    padding: calc(var(--section-y) / 2) 0;
+    border: 0;
+    border-block-end: 1px solid var(--rule);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* The columns follow the panel in, 120 ms later. */
+  @media (prefers-reduced-motion: no-preference) {
+    .mega__cols {
+      transition:
+        opacity var(--dur-ui) var(--ease-out) 120ms,
+        translate var(--dur-ui) var(--ease-out) 120ms;
+    }
+
+    @starting-style {
+      .mega:popover-open .mega__cols {
+        opacity: 0;
+        translate: 0 calc(var(--space-1) * -1);
+      }
+    }
+  }
+
+  .mega__cols {
+    display: grid;
+    grid-template-columns: 1fr 1.8fr 1.15fr 0.95fr;
+    gap: var(--space-7);
+  }
+
+  .mega__col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-inline-size: 0;
+  }
+
+  .mega__label {
+    margin-block-end: var(--space-5);
+  }
+
+  .mega :global(.mega__more) {
+    margin-block-start: var(--space-5);
+  }
+
+  /* ---------- By piece: Cormorant 400 at the h3 size ---------- */
+  .mega__pieces {
+    display: grid;
+  }
+
+  .mega__piece {
+    display: inline-block;
+    padding-block: calc(var(--space-1) / 2);
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  .mega__piece:is(:hover, :focus-visible) {
+    color: var(--accent);
+  }
+
+  /* ---------- By style: the list, and its previews stacked in one cell beside it ---------- */
+  .mega__styles {
+    position: relative;
+    inline-size: 100%;
+    min-block-size: var(--preview);
+    padding-inline-end: calc(var(--preview) + var(--space-6));
+  }
+
+  .mega__style-list {
+    display: grid;
+  }
+
+  .mega__style--rule {
+    margin-block-start: var(--space-3);
+    padding-block-start: var(--space-3);
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .mega__style-link {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--tap-inline);
+    padding-block: calc(var(--space-1) / 2);
+    font-size: 0.9375rem; /* 15 px: the button size of base.css (§3.5); no type token exists */
+    color: var(--body);
+    text-decoration: none;
+    transition: color var(--dur-quick) var(--ease-out);
+  }
+
+  .mega__style:is(:hover, :focus-within, [data-active]) .mega__style-link {
+    color: var(--fg);
+    text-decoration: underline;
+    text-decoration-color: var(--wipe);
+    text-underline-offset: 0.3em;
+  }
+
+  .mega__pv {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    inline-size: var(--preview);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-ui) var(--ease-out);
+  }
+
+  /* No script: the hovered or focused style shows; the first shows while none is. */
+  .mega__style:is(:hover, :focus-within) .mega__pv,
+  .mega__style[data-active] .mega__pv,
+  .mega__styles:not(:has(.mega__style:is(:hover, :focus-within, [data-active])))
+    .mega__style:first-child
+    .mega__pv {
+    opacity: 1;
+  }
+
+  /* While another style is hovered, the remembered one steps back. */
+  .mega__styles:has(.mega__style:is(:hover, :focus-within))
+    .mega__style[data-active]:not(:hover, :focus-within)
+    .mega__pv {
+    opacity: 0;
+  }
+
+  /* ---------- Visit us ---------- */
+  .mega__doors {
+    display: grid;
+    inline-size: 100%;
+  }
+
+  .mega__door {
+    display: grid;
+    justify-items: start;
+    padding-block: var(--space-3);
+    border-block-end: 1px solid var(--rule);
+  }
+
+  .mega__door:first-child {
+    padding-block-start: 0;
+  }
+
+  .mega__emirate {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    text-transform: uppercase;
+    color: var(--eyebrow);
+  }
+
+  .mega :global(.mega__ring) {
+    inline-size: var(--space-4);
+    block-size: var(--space-4);
+    color: var(--wipe);
+  }
+
+  .mega__door-name {
+    display: inline-block;
+    padding-block: calc(var(--space-1) / 2);
+    font-family: var(--ff-display);
+    font-size: var(--t-name);
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  .mega__door-name:is(:hover, :focus-visible) {
+    color: var(--accent);
+  }
+
+  .mega__tel {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--tap-inline);
+    font-size: var(--t-small);
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .mega__tel:is(:hover, :focus-visible) {
+    color: var(--link);
+    text-decoration: underline;
+  }
+
+  .mega__soon {
+    margin-block-start: var(--space-4);
+  }
+
+  /* ---------- Today ---------- */
+  .mega__rates {
+    inline-size: 100%;
+  }
+
+  .mega__rate {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-block: var(--space-2);
+  }
+
+  .mega__k {
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    color: var(--eyebrow);
+  }
+
+  .mega :global(.mega__v) {
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral);
+    font-weight: var(--fw-display-small);
+    line-height: 1.05;
+    color: var(--numeral);
+  }
+
+  .mega__status {
+    margin-block: var(--space-4) var(--space-1);
+    color: var(--body);
+  }
+</style>

@@ -1,0 +1,347 @@
+---
+/**
+ * The piece ticket (docs/design-system-v2.md §5.5, §6.4; replaces EnquiryBlock on piece pages):
+ * daylight for asking, beside the stage. An ivory card in the store's own idiom (square, 1 px
+ * rule, plum primary), sticky on desktop; edge to edge with no border on phones. In order:
+ *
+ *   1  eyebrow: the collection's short name (a link) · the category
+ *   2  the page's <h1>: the piece's name
+ *   3  facts: "22K gold · 916 hallmark · Ref CJ-NK-003"
+ *   4  today's rate for the piece's karat (RateFigure, rolls on a real change), its source and
+ *      fetch time, then the weight line, or the gold value when a weight is known
+ *   5  primary: "Ask about this piece on WhatsApp" (name, reference and URL in the message)
+ *   6  secondary: "Call Deira +971 4 255 1288" (the flagship's line)
+ *   7  quiet rows: book a visit (?piece=), which branch has it today (WhatsApp), ask us to call
+ *      you (only when site.services.callback), copy the reference (form.ts)
+ *   8  the small print: no prices online, and why
+ */
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import RateFigure from '@/components/ui/RateFigure.astro';
+import { flagship, site } from '@/data/site';
+import type { Category, DesignCollection, Product } from '@/lib/content';
+import { formatAed, formatGrams, formatRateDate, formatRateTime } from '@/lib/format';
+import type { GoldRate } from '@/lib/gold-rate';
+import { goldValue } from '@/lib/pricing';
+import { isStale } from '@/lib/rates';
+import { routes } from '@/lib/routes';
+import { KARAT_FACTS, toDisplayKarat } from '@/lib/tones';
+import { whatsappForProduct, whatsappUrl } from '@/lib/whatsapp';
+
+export interface Props {
+  product: Product;
+  category: Category;
+  collection?: DesignCollection;
+  rate: GoldRate | null;
+  fetchedAt: string | null;
+  url: string;
+}
+
+const { product, category, collection, rate, fetchedAt, url } = Astro.props;
+const { data } = product;
+
+const karat = toDisplayKarat(data.karat);
+const facts = KARAT_FACTS[karat];
+const categoryName = category.data.shortName ?? category.data.name;
+const sold = data.availability === 'sold';
+const value = goldValue(data, rate);
+const stale = rate ? isStale(rate.date) : false;
+const vat = `${Math.round(site.rate.vat * 100)}% VAT`;
+
+const phone = flagship.phone ?? site.phone.landline;
+const ask = whatsappForProduct({ name: data.name, sku: data.sku, url });
+const which = whatsappUrl(
+  `${site.whatsapp.greeting} which branch has the ${data.name} (ref ${data.sku}) today? ${url}`,
+);
+const callMe = whatsappUrl(
+  `${site.whatsapp.greeting} please call me about the ${data.name} (ref ${data.sku}).`,
+);
+const visit = `${routes.contact}?piece=${encodeURIComponent(data.sku)}`;
+---
+
+<section class="ticket" data-tone="ivory" aria-labelledby="piece-title">
+  <p class="ticket__eyebrow eyebrow">
+    {collection && (
+      <>
+        <a class="ticket__col" href={routes.collection(collection.id)}>
+          {collection.data.shortName}
+        </a>
+        <span aria-hidden="true">·</span>
+      </>
+    )}
+    <span>{categoryName}</span>
+  </p>
+
+  <h1 id="piece-title" class="ticket__name">
+    {data.name}
+  </h1>
+
+  <p class="ticket__facts fig">
+    <span>{facts.label} gold</span>
+    <span>{facts.stamp} hallmark</span>
+    <span>Ref {data.sku}</span>
+    {sold && <span>Sold</span>}
+    {data.availability === 'made-to-order' && <span>Made to order</span>}
+  </p>
+
+  <div class="ticket__today">
+    <div class="ticket__rate-row">
+      <p class="ticket__label eyebrow">{facts.label} today, per gram</p>
+      <p class="ticket__rate">
+        {rate && <span class="ticket__aed">AED</span>}
+        <RateFigure rate={rate} karat={karat} roll class="ticket__fig" />
+      </p>
+    </div>
+    {rate && fetchedAt && (
+      <p class="caption">
+        {stale ? (
+          <>Last published rate, {formatRateDate(fetchedAt)}</>
+        ) : (
+          <>
+            {site.rate.source} {site.rate.basis},{' '}
+            <time datetime={fetchedAt} data-rate-time>
+              {formatRateDate(fetchedAt)}, {formatRateTime(fetchedAt)}
+            </time>
+          </>
+        )}
+      </p>
+    )}
+    {value ? (
+      <p class="ticket__line small fig">
+        Gold value today ≈{' '}
+        <strong data-rate-calc={value.karat} data-grams={value.grams}>
+          {formatAed(value.value)}
+        </strong>{' '}
+        for {formatGrams(value.grams)} of {facts.label}, before the making charge and {vat}.
+      </p>
+    ) : (
+      <p class="ticket__line small">
+        Weight on request. The price is weight × this rate, plus the making charge and {vat}.
+      </p>
+    )}
+  </div>
+
+  <div class="ticket__acts">
+    <Button href={ask} icon="whatsapp" external block>
+      {sold ? 'Ask for a similar piece on WhatsApp' : 'Ask about this piece on WhatsApp'}
+    </Button>
+    <Button href={`tel:${phone.e164}`} variant="secondary" icon="phone" block>
+      {`Call ${flagship.shortName} ${phone.display}`}
+    </Button>
+  </div>
+
+  <ul class="ticket__quiet" role="list">
+    <li>
+      <a class="ticket__row" href={visit}>
+        <span>Book a visit to see it</span>
+        <Icon name="arrow-right" />
+      </a>
+    </li>
+    <li>
+      <a class="ticket__row" href={which} target="_blank" rel="noopener">
+        <span>
+          Which branch has it today?<span class="sr-only"> (opens WhatsApp)</span>
+        </span>
+        <Icon name="whatsapp" />
+      </a>
+    </li>
+    {site.services.callback && (
+      <li>
+        <a class="ticket__row" href={callMe} target="_blank" rel="noopener">
+          <span>
+            Ask us to call you<span class="sr-only"> (opens WhatsApp)</span>
+          </span>
+          <Icon name="whatsapp" />
+        </a>
+      </li>
+    )}
+    <li>
+      <button type="button" class="ticket__row" data-copy={data.sku}>
+        <span data-copy-label>Copy the reference {data.sku}</span>
+        <Icon name="copy" />
+      </button>
+    </li>
+  </ul>
+
+  <p class="ticket__small caption">
+    No prices online. Gold is priced by weight at the day’s rate, so each piece is quoted on
+    request.
+  </p>
+</section>
+
+<script src="@/scripts/form.ts"></script>
+
+<style>
+  .ticket {
+    display: grid;
+    gap: var(--space-5);
+    padding: var(--space-7) var(--gutter);
+    margin-inline: calc(var(--gutter) * -1);
+    min-inline-size: 0;
+  }
+
+  .ticket__eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: 0;
+  }
+
+  .ticket__col {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .ticket__col:hover {
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-color: var(--wipe);
+  }
+
+  .ticket__name {
+    font-size: var(--t-h1);
+    line-height: var(--lh-heading);
+    letter-spacing: var(--track-h1);
+    text-wrap: balance;
+  }
+
+  /* Facts set apart by small gold lozenges (the live marker's shape). */
+  .ticket__facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    font-size: var(--t-small);
+    color: var(--body);
+  }
+
+  .ticket__facts > span + span::before {
+    content: '';
+    display: inline-block;
+    inline-size: 0.3125rem;
+    block-size: 0.3125rem;
+    margin-inline-end: var(--space-4);
+    background: var(--eyebrow);
+    rotate: 45deg;
+    vertical-align: middle;
+  }
+
+  .ticket__today {
+    display: grid;
+    gap: var(--space-2);
+    padding-block: var(--space-5);
+    border-block: 1px solid var(--rule-strong);
+  }
+
+  .ticket__rate-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .ticket__label {
+    margin: 0;
+  }
+
+  .ticket__rate {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral-xl);
+    font-weight: var(--fw-display);
+    line-height: 1;
+    letter-spacing: var(--track-rate);
+    color: var(--numeral);
+  }
+
+  .ticket__aed {
+    font-family: var(--ff-text);
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    color: var(--body);
+  }
+
+  .ticket__rate :global(.rate-fig--none) {
+    font-size: var(--t-h3);
+    letter-spacing: 0;
+  }
+
+  .ticket__line {
+    color: var(--body);
+  }
+
+  .ticket__line strong {
+    font-weight: var(--fw-text-strong);
+    color: var(--fg);
+  }
+
+  .ticket__acts {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .ticket__acts :global(.btn) {
+    white-space: normal;
+  }
+
+  .ticket__quiet {
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .ticket__quiet > li {
+    border-block-end: 1px solid var(--rule);
+  }
+
+  .ticket__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    inline-size: 100%;
+    min-block-size: var(--control-h);
+    padding-block: var(--space-2);
+    color: var(--fg);
+    font-size: var(--t-small);
+    text-align: start;
+    text-decoration: none;
+  }
+
+  .ticket__row:hover {
+    color: var(--link);
+  }
+
+  .ticket__row :global(.icon) {
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+    color: var(--eyebrow);
+  }
+
+  .ticket__row[data-copied='true'] {
+    color: var(--ok-tone);
+  }
+
+  .ticket__small {
+    margin: 0;
+  }
+
+  @media (min-width: 40em) {
+    .ticket {
+      margin-inline: 0;
+      padding: var(--space-6);
+      border: 1px solid var(--rule-strong);
+    }
+  }
+
+  @media (min-width: 64em) {
+    .ticket {
+      position: sticky;
+      inset-block-start: calc(var(--header-h) + var(--space-5));
+      align-self: start;
+      padding: var(--space-7) var(--space-6);
+    }
+  }
+</style>

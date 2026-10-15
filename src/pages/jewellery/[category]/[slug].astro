@@ -1,52 +1,57 @@
 ---
 /**
- * Product detail (/jewellery/{category}/{slug}/), design-spec §7.7.
+ * A piece (/jewellery/{category}/{slug}/), docs/design-system-v2.md §6.4.
  *
- * Desktop: gallery in the 7-column block, the facts and the ways to enquire in the 5-column block.
- * The facts column is taller than the screen, so a single photograph stays in view (sticky) while
- * it scrolls. Mobile: the DOM order below is the reading order (eyebrow, H1, gallery, story,
- * spec, price, enquiry, reserve, ledger, care).
+ *   1  Opener: breadcrumbs, then the stage (7) and the ticket (5) on the wide track, both sticky
+ *      on desktop. A velvet piece opens on the stage, on its own sampled velvet when content has
+ *      one (`stage`, written as --stage, the one content-sourced style allowed); a studio piece
+ *      opens on ivory with its cut-out on a lilac plate at native size. The ticket holds the H1.
+ *   2  About the piece (raised stage): the piece's own text as an italic lead, the specification,
+ *      and three promises under both.
+ *   3  Your quote, in three lines (ivory).
+ *   4  From the same counter: three pieces of the same ground (same collection first, then same
+ *      category), a static CaseWall on the stage or a PlateGrid on ivory.
+ *   5  The slim old-gold estimator (plum, seam), naming the piece's karat.
+ *   6  Before you decide (ivory): the product FAQ.
  *
- * The lead is the piece's own Markdown text. `data.description` is the meta description (it ends
- * with a call to action) and is not shown on the page.
- *
- * No price is printed: pieces are priced at the day's rate on the net gold weight plus a making
- * charge. When a weight is known, the gold value at the baked rate is shown (src/lib/pricing.ts)
- * and marked for src/scripts/rate.ts, which recomputes it when a newer rate arrives.
+ * Phones: the stage first (at most 600 px), then the ticket edge to edge as an ivory band; the
+ * phone bar carries "Ask about this piece". No price is printed: pieces are quoted at the day's
+ * rate on the weight plus a making charge; with a weight, the ticket shows the gold value.
  */
 import type { InferGetStaticPropsType } from 'astro';
 import { render } from 'astro:content';
 
 import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import CaseWall from '@/components/sections/CaseWall.astro';
+import Estimator from '@/components/sections/Estimator.astro';
 import Faq from '@/components/sections/Faq.astro';
-import ProductCard from '@/components/sections/ProductCard.astro';
-import ProductGallery from '@/components/sections/ProductGallery.astro';
+import PieceStage from '@/components/sections/PieceStage.astro';
+import PieceTicket from '@/components/sections/PieceTicket.astro';
+import PlateGrid from '@/components/sections/PlateGrid.astro';
+import QuoteLines from '@/components/sections/QuoteLines.astro';
 import SpecTable from '@/components/sections/SpecTable.astro';
-import TrayGrid from '@/components/sections/TrayGrid.astro';
 import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
-import Eyebrow from '@/components/ui/Eyebrow.astro';
-import Icon from '@/components/ui/Icon.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import Ornament from '@/components/ui/Ornament.astro';
+import Section from '@/components/ui/Section.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
-import { openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import {
+  collectionShortNames,
   getDesignCollections,
   getFaqGroup,
+  getOccasions,
   getProducts,
-  getProductsByCategory,
-  getProductsByCollection,
+  photoGround,
   productPath,
   resolveProductRefs,
-  type Product,
 } from '@/lib/content';
-import { formatAed, formatDate, formatGrams, formatKarat, karatToFineness } from '@/lib/format';
-import { goldValue } from '@/lib/pricing';
+import { formatGrams, formatKarat, karatToFineness } from '@/lib/format';
 import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
 import { productSchema } from '@/lib/schema';
 import { TITLE_MAX } from '@/lib/seo';
-import { whatsappForProduct, whatsappUrl } from '@/lib/whatsapp';
+import { toDisplayKarat } from '@/lib/tones';
 
 export async function getStaticPaths() {
   const products = await getProducts();
@@ -60,45 +65,59 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { product } = Astro.props as Props;
 const { data } = product;
 
-const [{ category, collection }, faq, rates, collections, { Content }] = await Promise.all([
-  resolveProductRefs(product),
-  getFaqGroup('product'),
-  getRates(),
-  getDesignCollections(),
-  render(product),
-]);
+const [{ category, collection }, faq, rates, collections, occasions, products, { Content }] =
+  await Promise.all([
+    resolveProductRefs(product),
+    getFaqGroup('product'),
+    getRates(),
+    getDesignCollections(),
+    getOccasions(),
+    getProducts(),
+    render(product),
+  ]);
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
-const url = new URL(productPath(product), origin).toString();
+const path = productPath(product);
+const url = new URL(path, origin).toString();
+const rate = rates.latest;
+const karat = toDisplayKarat(data.karat);
+const ground = photoGround(product);
+const velvet = ground === 'velvet';
 const categoryName = category.data.shortName ?? category.data.name;
-const collectionName = collection?.data.name;
-const collectionShort = collectionName?.replace(/ (Collection|Jewellery)$/i, '');
 const fineness = karatToFineness(data.karat);
-const colour = data.colour.charAt(0).toUpperCase() + data.colour.slice(1).replace('-', ' ');
-const sold = data.availability === 'sold';
 const hasStory = Boolean(product.body?.trim());
 /** Only if a piece has no Markdown text: the meta description without its call to action. */
 const fallbackLead = data.description.replace(/\s*(Enquire now|Ask on WhatsApp)[.!]?\s*$/i, '');
+/** The sampled velvet behind a piece shown alone (content-sourced, so validated as #rrggbb). */
+const stage = velvet && data.stage && /^#[0-9a-f]{6}$/i.test(data.stage) ? data.stage : undefined;
 
-/* ---------- Gold value at the baked rate (only when a weight is known) ---------- */
-const rate = rates.latest;
-const value = goldValue(data, rate);
+/* ---------- Specification ---------- */
+const colour = `${data.colour.charAt(0).toUpperCase()}${data.colour.slice(1).replace('-', ' ')} gold`;
+const occasionNames = occasions
+  .filter((o) => data.occasions.some((ref) => ref.id === o.id))
+  .map((o) => o.data.name);
+const availability = {
+  'in-store': 'In store',
+  'made-to-order': 'Made to order',
+  sold: 'Sold',
+}[data.availability];
+const weight = data.weightGrams
+  ? data.netWeightGrams
+    ? `${formatGrams(data.weightGrams)} gross, ${formatGrams(data.netWeightGrams)} gold`
+    : formatGrams(data.weightGrams)
+  : 'On request, weighed in front of you';
 
-/* ---------- Related: same collection (two or more others), else same category ---------- */
-const others = (list: Product[]) => list.filter((p) => p.id !== product.id);
-const collectionPool = collection ? others(await getProductsByCollection(collection.id)) : [];
-const fromCollection = collectionPool.length >= 2;
-const related = (
-  fromCollection ? collectionPool : others(await getProductsByCategory(category.id))
-).slice(0, 4);
-const relatedHeading =
-  fromCollection && collectionShort
-    ? `Also in ${collectionShort}`
-    : `More ${categoryName.toLowerCase()}`;
-const relatedHref =
-  fromCollection && collection ? routes.collection(collection.id) : routes.category(category.id);
-/** Each related card shows its own collection, not this piece's. */
-const collectionNames = new Map(collections.map((c) => [c.id, c.data.name]));
+/* ---------- From the same counter: same ground, same collection first, then same category ---------- */
+const sameGround = products.filter((p) => p.id !== product.id && photoGround(p) === ground);
+const byCollection = sameGround.filter(
+  (p) => collection && p.data.collection?.id === collection.id,
+);
+const byCategory = sameGround.filter(
+  (p) => !byCollection.includes(p) && p.data.category.id === category.id,
+);
+const rest = sameGround.filter((p) => !byCollection.includes(p) && !byCategory.includes(p));
+const related = [...byCollection, ...byCategory, ...rest].slice(0, 3);
+const names = collectionShortNames(collections);
 
 /* ---------- SEO ---------- */
 const longTitle = `${data.name}, ${formatKarat(data.karat)} ${categoryName}`;
@@ -118,7 +137,7 @@ const jsonLd = [
     material: data.material === 'gold' ? 'gold' : `gold with ${data.material}`,
     colour: data.colour,
     category: category.data.name,
-    collection: collectionName,
+    collection: collection?.data.name,
     collectionUrl: collection
       ? new URL(routes.collection(collection.id), origin).toString()
       : undefined,
@@ -127,17 +146,11 @@ const jsonLd = [
     certification: data.certification,
   }),
 ];
-
-/* ---------- Enquiry links ---------- */
-const enquiryUrl = whatsappForProduct({ name: data.name, sku: data.sku, url });
-const reserveUrl = (branchName: string) =>
-  whatsappUrl(
-    `${site.whatsapp.greeting} I’d like to view the ${data.name} (ref ${data.sku}) at your ${branchName} branch. Is it available there?`,
-  );
 ---
 
 <BaseLayout
-  ground="ivory"
+  ground={velvet ? 'stage' : 'ivory'}
+  piece={{ name: data.name, sku: data.sku, url }}
   title={title}
   description={data.description}
   type="product"
@@ -147,317 +160,220 @@ const reserveUrl = (branchName: string) =>
   imageHeight={firstImage.src.height}
   jsonLd={jsonLd}
 >
-  <div class="container container--wide">
+  <Section
+    tone={velvet ? 'stage' : 'ivory'}
+    pad="flush"
+    width="wide"
+    class:list={['popen', stage && 'popen--own']}
+    style={stage ? `--stage:${stage}` : undefined}
+    labelledby="piece-title"
+  >
     <Breadcrumbs
+      class="popen__crumbs"
       items={[
         { name: 'Jewellery', href: routes.jewellery },
         { name: categoryName, href: routes.category(category.id) },
-        { name: data.name, href: productPath(product) },
+        { name: data.name, href: path },
       ]}
     />
-  </div>
-
-  <article class="container container--wide product">
-    <header class="product__head">
-      <Eyebrow>{collectionShort ? `${collectionShort} · ${categoryName}` : categoryName}</Eyebrow>
-      <h1 class="product__title">{data.name}</h1>
-      <p class="product__facts tabular">
-        {formatKarat(data.karat)} · hallmark {fineness}
-        {data.weightGrams && <> · {formatGrams(data.weightGrams)}</>}
-        {sold && <> · Sold</>}
-        {data.availability === 'made-to-order' && <> · Made to order</>}
-      </p>
-    </header>
-
-    <div class:list={['product__media', data.images.length === 1 && 'product__media--single']}>
-      <ProductGallery images={data.images} name={data.name} />
+    <div class="popen__grid">
+      <PieceStage product={product} images={data.images} />
+      <PieceTicket
+        product={product}
+        category={category}
+        collection={collection}
+        rate={rate}
+        fetchedAt={rates.fetchedAt}
+        url={url}
+      />
     </div>
+  </Section>
 
-    <div class="product__info">
-      <div class="product__body lead">{hasStory ? <Content /> : <p>{fallbackLead}</p>}</div>
-
+  <Section tone={velvet ? 'stage-raised' : 'stage'} width="wide" labelledby="about-title">
+    <div class="about">
+      <div class="about__story">
+        <h2 id="about-title" class="about__title eyebrow">
+          <Ornament />
+          About the piece
+        </h2>
+        <div class="about__lead">{hasStory ? <Content /> : <p>{fallbackLead}</p>}</div>
+      </div>
       <SpecTable
+        class="about__spec"
         caption={`Specification of the ${data.name}`}
         rows={[
-          { label: 'Karat and hallmark', value: `${formatKarat(data.karat)} · ${fineness}` },
-          { label: 'Metal colour', value: colour },
-          { label: 'Plating or finish coat', value: data.plating },
-          { label: 'Gross weight', value: data.weightGrams ? formatGrams(data.weightGrams) : null },
+          { label: 'Karat', value: `${formatKarat(data.karat)}, stamped ${fineness}` },
           {
-            label: 'Net gold weight',
-            value: data.netWeightGrams ? formatGrams(data.netWeightGrams) : null,
+            label: 'Style',
+            value: collection ? `${collection.data.shortName}: ${collection.data.origin}` : null,
           },
+          { label: 'Metal', value: colour },
+          { label: 'Plating', value: data.plating },
+          { label: 'Finish', value: data.finish },
           { label: 'Stones', value: data.stones },
           { label: 'Certificate', value: data.certification },
-          { label: 'Finish', value: data.finish },
-          { label: 'Collection', value: collectionShort },
+          { label: 'Weight', value: weight },
+          { label: 'Occasion', value: occasionNames.join(', ') },
+          { label: 'Availability', value: availability },
           { label: 'Reference', value: data.sku },
         ]}
       />
-
-      <div class="price">
-        {sold ? (
-          <p class="price__line">
-            Sold. Ask for a similar piece and we will send what is in the trays.
-          </p>
-        ) : (
-          <>
-            <p class="price__line">
-              Priced at <a href={routes.goldRate}>today’s {formatKarat(data.karat)} rate</a> × net
-              gold weight, plus making charge and 5% VAT, quoted in store as three separate lines.
-            </p>
-            {value && rate && (
-              <p class="price__value tabular">
-                <span class="price__label">Gold value today</span>
-                <span class="price__figure" data-rate-calc={value.karat} data-grams={value.grams}>
-                  {formatAed(value.value)}
-                </span>
-                <span class="small">
-                  The {formatKarat(data.karat)} rate of
-                  <span data-rate-date={rate.date}>
-                    <span data-rate-date-text>{formatDate(rate.date, { year: undefined })}</span>
-                  </span>
-                  is
-                  <span class="nowrap">
-                    AED <span data-rate={value.karat}>{value.perGram.toFixed(2)}</span>
-                  </span>
-                  per gram, for {formatGrams(value.grams)} of gold, before making charge and VAT.
-                </span>
-              </p>
-            )}
-          </>
-        )}
-      </div>
-
-      <EnquiryBlock
-        compact
-        text="Send the reference on WhatsApp and we reply with the weight, today’s price and which branch has it."
-        whatsappUrl={enquiryUrl}
-        whatsappLabel={sold ? 'Ask for a similar piece' : 'Enquire on WhatsApp'}
-        reference={data.sku}
-      />
-
-      {!sold && (
-        <div class="reserve">
-          <h2 class="reserve__title">Reserve to view</h2>
-          <p class="small">Pieces move between branches. Pick one and we will have it ready.</p>
-          <ul class="rows reserve__list" role="list">
-            {openBranches.map((b) => (
-              <li>
-                <a
-                  class="reserve__link link-quiet"
-                  href={reserveUrl(b.name)}
-                  target="_blank"
-                  rel="noopener"
-                >
-                  <span>
-                    <span class="reserve__name">{b.name}</span>
-                    <span class="small reserve__emirate">{b.emirate}</span>
-                  </span>
-                  <Icon name="whatsapp" />
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <AssuranceLedger variant="condensed" />
-
-      <div class="care">
-        <h2 class="care__title">Care</h2>
-        <p class="small">
-          Plating and surface finishes wear with time. Bring the piece and its invoice to any branch
-          and we will advise on cleaning, polishing and refinishing.
-        </p>
+      <div class="about__promises">
+        <AssuranceLedger variant="condensed" />
       </div>
     </div>
-  </article>
+  </Section>
 
-  {related.length > 0 && (
-    <section class="section section--ruled">
-      <div class="container container--wide">
-        <SectionHead eyebrow="From the same trays" title={relatedHeading}>
+  <Section tone="ivory" id="price">
+    <QuoteLines karat={karat} rate={rate} />
+  </Section>
+
+  {related.length > 0 &&
+    (velvet ? (
+      <Section tone="stage" width="wide" labelledby="counter-title">
+        <SectionHead
+          id="counter-title"
+          title="From the same"
+          accent="counter"
+          shape="split"
+          class="reveal"
+        >
           <Fragment slot="aside">
-            <a class="link-quiet section__link" href={relatedHref}>
-              See them all <Icon name="arrow-right" />
-            </a>
+            <MoreLink href={routes.category(category.id)}>
+              All {categoryName.toLowerCase()}
+            </MoreLink>
           </Fragment>
         </SectionHead>
-        <TrayGrid>
-          {related.map((p) => (
-            <ProductCard
-              product={p}
-              collectionName={
-                p.data.collection ? collectionNames.get(p.data.collection.id) : undefined
-              }
-              rate={rate}
-            />
-          ))}
-        </TrayGrid>
-      </div>
-    </section>
-  )}
+        <CaseWall
+          products={related}
+          rate={rate}
+          collectionNames={names}
+          columns={3}
+          light="static"
+        />
+      </Section>
+    ) : (
+      <Section tone="ivory" ruled labelledby="counter-title">
+        <SectionHead
+          id="counter-title"
+          title="From the same"
+          accent="counter"
+          shape="split"
+          class="reveal"
+        >
+          <Fragment slot="aside">
+            <MoreLink href={routes.jewellery}>All jewellery</MoreLink>
+          </Fragment>
+        </SectionHead>
+        <PlateGrid products={related} rate={rate} collectionNames={names} columns={3} />
+      </Section>
+    ))}
 
-  <section class="section section--ruled">
-    <div class="container">
+  <Estimator rate={rate} variant="slim" id="piece-estimate" karat={karat} />
+
+  <Section tone="ivory">
+    <div class="faq-wrap">
       <Faq heading={faq.data.heading} items={faq.data.items} />
     </div>
-  </section>
-
-  <script src="@/scripts/form.ts"></script>
+  </Section>
 </BaseLayout>
 
 <style>
-  .product {
+  /* ---------- 1. Opener ---------- */
+  /* Phones: the ticket is the opener's last band, so it meets the next section directly. */
+  :global(.sec.popen) {
+    padding-block: var(--space-5) 0;
+  }
+
+  @media (min-width: 40em) {
+    :global(.sec.popen) {
+      padding-block-end: var(--section-y);
+    }
+  }
+
+  /* A piece shown alone sits on its own sampled velvet, so the photograph has no edge. */
+  :global(.sec.popen--own) {
+    background-color: var(--stage);
+  }
+
+  .popen__grid {
     display: grid;
     gap: var(--space-6);
-    padding-block: var(--space-4) var(--section-y);
-  }
-
-  .product__head {
-    min-inline-size: 0;
-  }
-
-  .product__title {
-    font-size: var(--t-h1);
-  }
-
-  .product__facts {
-    margin-block-start: var(--space-3);
-    color: var(--ink-700);
-  }
-
-  .product__media,
-  .product__info {
-    min-inline-size: 0;
-  }
-
-  .product__info {
-    display: grid;
-    gap: var(--space-6);
-    align-content: start;
-  }
-
-  .product__body {
-    display: grid;
-    gap: var(--space-4);
-  }
-
-  .price {
-    display: grid;
-    gap: var(--space-3);
-    padding: var(--space-5);
-    background: var(--surface-2);
-  }
-
-  .price__line {
-    color: var(--ink-700);
-  }
-
-  .price__value {
-    display: grid;
-    gap: var(--space-1);
-    padding-block-start: var(--space-3);
-    border-block-start: 1px solid var(--rule-2);
-  }
-
-  .price__label {
-    font-size: var(--t-eyebrow);
-    font-weight: 500;
-    letter-spacing: var(--track-eyebrow);
-    text-transform: uppercase;
-    color: var(--gold-700);
-  }
-
-  .price__figure {
-    font-family: var(--ff-display);
-    font-size: var(--t-h2);
-    font-weight: 500;
-    line-height: 1.1;
-  }
-
-  .reserve__title,
-  .care__title {
-    font-size: var(--t-h3);
-    margin-block-end: var(--space-2);
-  }
-
-  .reserve__list {
-    margin-block-start: var(--space-3);
-  }
-
-  .reserve__link {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    min-block-size: var(--tap);
-    padding-block: var(--space-3);
-    color: var(--ink-900);
-  }
-
-  .reserve__link > span {
-    display: grid;
-  }
-
-  .reserve__name {
-    font-weight: 500;
-  }
-
-  .reserve__emirate {
-    color: var(--ink-500);
-  }
-
-  .reserve__link .icon {
-    color: var(--plum-700);
-  }
-
-  .care {
-    padding-block-start: var(--space-5);
-    border-block-start: 1px solid var(--rule-1);
-  }
-
-  .section__link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-weight: 500;
-    color: var(--plum-700);
+    margin-block-start: var(--space-5);
   }
 
   @media (min-width: 64em) {
-    .product {
-      grid-template-columns: 7fr 5fr;
-      grid-template-areas:
-        'media head'
-        'media info';
-      grid-template-rows: auto 1fr;
+    .popen__grid {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
       column-gap: calc(var(--grid-gap) * 2);
-      row-gap: var(--space-5);
+      align-items: start;
+      margin-block-start: var(--space-6);
+    }
+  }
+
+  /* ---------- 2. About the piece ---------- */
+  .about {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  .about__story {
+    display: grid;
+    align-content: start;
+    gap: var(--space-5);
+  }
+
+  .about__title {
+    display: flex;
+    margin: 0;
+  }
+
+  .about__lead :global(p) {
+    max-inline-size: var(--measure);
+    color: var(--body);
+  }
+
+  .about__lead :global(p:first-child) {
+    max-inline-size: 36rem;
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-style: italic;
+    font-weight: var(--fw-display);
+    line-height: 1.3;
+    color: var(--fg);
+  }
+
+  .about__lead :global(p + p) {
+    margin-block-start: var(--space-4);
+  }
+
+  .about__promises {
+    min-inline-size: 0;
+  }
+
+  @media (min-width: 64em) {
+    .about {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--grid-gap);
+      row-gap: var(--space-8);
     }
 
-    .product__head {
-      grid-area: head;
+    .about__story {
+      grid-column: 1 / span 6;
     }
 
-    .product__media {
-      grid-area: media;
-    }
-
-    .product__info {
-      grid-area: info;
-    }
-
-    /*
-     * The facts column is taller than the screen, so a single photograph stays in view beside it
-     * instead of scrolling away and leaving the left of the page blank. Several photographs stack
-     * and fill the column themselves.
-     */
-    .product__media--single {
-      position: sticky;
-      inset-block-start: calc(var(--header-h) + var(--space-4));
+    .about :global(.about__spec) {
+      grid-column: 8 / -1;
       align-self: start;
     }
+
+    .about__promises {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* ---------- 6. FAQ ---------- */
+  .faq-wrap {
+    max-inline-size: 52rem;
   }
 </style>

@@ -1,22 +1,31 @@
 /**
- * Filter and sort over one tray grid. State is kept in location.hash
- * (#karat=22&collection=kolkata&sort=name) with replaceState, so the page keeps a single
- * canonical URL and no history entries are added. Cells carry data-karat, data-collection,
- * data-name and data-new (the ProductCard inside is the fallback for karat).
- * Loaded only by <Filters>; without it the block shows plain category links.
+ * Filter and sort over one or more grids of pieces (docs/design-system-v2.md §5.5, §7).
+ * <Filters> names its grids in data-filters ("grid-velvet grid-studio"); each grid's cells carry
+ * data-karat, data-collection, data-name and data-new (or the .card inside them does). State is
+ * kept in location.hash (#karat=22&collection=kolkata&sort=name) with replaceState, so the page
+ * keeps a single canonical URL and no history entries are added. A grid's whole section hides
+ * when none of its cards match (never the section that holds the controls). Loaded only by
+ * <Filters>; without it the block shows plain category links. Budget: 1.8 KB minified.
  */
 const root = document.querySelector<HTMLElement>('[data-filters]');
-const grid = root && document.getElementById(root.dataset.filters ?? '');
+const grids = (root?.dataset.filters ?? '')
+  .split(' ')
+  .map((id) => document.getElementById(id))
+  .filter((g): g is HTMLElement => !!g);
 
-if (root && grid) {
-  const cells = [...grid.children] as HTMLElement[];
-  cells.forEach((c, i) => (c.dataset.i = String(i)));
+if (root && grids.length) {
   const chips = [...root.querySelectorAll<HTMLButtonElement>('[data-facet]')];
   const facets = [...new Set(chips.map((b) => b.dataset.facet as string))];
   const sort = root.querySelector<HTMLSelectElement>('[data-sort]');
   const count = root.querySelector<HTMLElement>('[data-count]');
   const empty = root.querySelector<HTMLElement>('[data-empty]');
   const clear = root.querySelector<HTMLElement>('[data-clear]');
+  const sets = grids.map((grid) => {
+    const cells = [...grid.children] as HTMLElement[];
+    cells.forEach((c, i) => (c.dataset.i = String(i)));
+    const sec = grid.closest('section');
+    return { grid, cells, sec: sec?.contains(root) ? null : sec };
+  });
 
   const read = () => new URLSearchParams(location.hash.slice(1));
   const write = (p: URLSearchParams) => {
@@ -29,28 +38,33 @@ if (root && grid) {
 
   const apply = () => {
     const p = read();
+    const s = p.get('sort') ?? 'featured';
+    let total = 0;
     for (const b of chips) {
       b.setAttribute('aria-pressed', String(p.get(b.dataset.facet as string) === b.dataset.value));
     }
-    let n = 0;
-    for (const c of cells) {
-      const ok = facets.every((f) => !p.get(f) || val(c, f) === p.get(f));
-      c.hidden = !ok;
-      if (ok) n++;
+    for (const { grid, cells, sec } of sets) {
+      let n = 0;
+      for (const c of cells) {
+        const ok = facets.every((f) => !p.get(f) || val(c, f) === p.get(f));
+        c.hidden = !ok;
+        if (ok) n++;
+      }
+      grid.append(
+        ...cells.sort((a, b) =>
+          s === 'name'
+            ? val(a, 'name').localeCompare(val(b, 'name'))
+            : s === 'newest'
+              ? Number(val(b, 'new')) - Number(val(a, 'new')) || idx(a) - idx(b)
+              : idx(a) - idx(b),
+        ),
+      );
+      if (sec) sec.hidden = !n;
+      total += n;
     }
-    const s = p.get('sort') ?? 'featured';
     if (sort) sort.value = s;
-    grid.append(
-      ...[...cells].sort((a, b) =>
-        s === 'name'
-          ? val(a, 'name').localeCompare(val(b, 'name'))
-          : s === 'newest'
-            ? Number(val(b, 'new')) - Number(val(a, 'new')) || idx(a) - idx(b)
-            : idx(a) - idx(b),
-      ),
-    );
-    if (count) count.textContent = `${n} ${n === 1 ? 'piece' : 'pieces'} shown`;
-    if (empty) empty.hidden = n > 0;
+    if (count) count.textContent = `${total} ${total === 1 ? 'piece' : 'pieces'} shown`;
+    if (empty) empty.hidden = total > 0;
     if (clear) clear.hidden = !p.size;
   };
 

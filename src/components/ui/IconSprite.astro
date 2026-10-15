@@ -1,8 +1,8 @@
 ---
 /**
- * The site's icon set: 14 monoline glyphs at 1.25 px stroke, drawn in currentColor.
- * Rendered once per page (in BaseLayout) and referenced by <Icon name="…" />.
- * The C-ring is the brand mark's open ring; it is the only curve used decoratively on the site.
+ * The site's icon set: 18 monoline glyphs on a 24 x 24 grid, drawn at 1.25 px in currentColor
+ * (the .icon rule in base.css). Rendered once per page by BaseLayout and referenced by
+ * <Icon name="…" />. The C-ring is the brand mark's open ring, the only decorative curve.
  */
 ---
 
@@ -26,11 +26,21 @@
     <circle cx="12" cy="12" r="9"></circle>
     <path d="M12 7v5l3 2"></path>
   </symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24">
+    <rect x="3.5" y="5" width="17" height="15"></rect>
+    <path d="M3.5 9.5h17M8 3v4M16 3v4"></path>
+  </symbol>
   <symbol id="i-arrow-right" viewBox="0 0 24 24">
     <path d="M4 12h16M13 5l7 7-7 7"></path>
   </symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 24 24">
+    <path d="M20 12H4M11 5l-7 7 7 7"></path>
+  </symbol>
   <symbol id="i-arrow-up-right" viewBox="0 0 24 24">
     <path d="M7 17 17 7M8 7h9v9"></path>
+  </symbol>
+  <symbol id="i-chevron-down" viewBox="0 0 24 24">
+    <path d="M6 9.5l6 6 6-6"></path>
   </symbol>
   <symbol id="i-plus" viewBox="0 0 24 24">
     <path d="M12 5v14M5 12h14"></path>

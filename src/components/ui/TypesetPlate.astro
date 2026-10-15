@@ -1,0 +1,100 @@
+---
+/**
+ * The honest empty state (docs/design-system-v2.md §1.2 rule 8, §5.2): a style or piece with no
+ * photograph yet (Kuwaiti, Singapore) is typeset, never shown with a borrowed photograph.
+ *
+ * A square on the raised stage with a 1 px hairline frame inset 12 px, the name in Cormorant
+ * italic 300, a short note and, when `whatsappUrl` is given, "Ask on WhatsApp". It is the same
+ * box as a StageImage of the same `cap`, so it drops into any grid of cases. The square carries
+ * its own tone (stage-raised), so it reads the same on any ground.
+ */
+import MoreLink from '@/components/ui/MoreLink.astro';
+
+export interface Props {
+  /** The style or piece with no photograph yet, e.g. "Kuwaiti". */
+  name: string;
+  note?: string; // default "Not photographed yet. Ask us on WhatsApp and we will send pieces from the case."
+  whatsappUrl?: string;
+  cap?: number; // default 420
+}
+
+const {
+  name,
+  note = 'Not photographed yet. Ask us on WhatsApp and we will send pieces from the case.',
+  whatsappUrl,
+  cap = 420,
+} = Astro.props;
+---
+
+<div class="tplate" data-tone="stage-raised" style={`--cap:${Math.round(cap)}px`}>
+  <div class="tplate__body">
+    <p class="tplate__name">{name}</p>
+    {note && <p class="tplate__note">{note}</p>}
+    {whatsappUrl && (
+      <MoreLink href={whatsappUrl} external icon="whatsapp" class="tplate__ask">
+        Ask on WhatsApp
+      </MoreLink>
+    )}
+  </div>
+</div>
+
+<style>
+  .tplate {
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: min(100%, var(--cap));
+    aspect-ratio: 1;
+    margin-inline: auto;
+    padding: var(--space-5);
+    container-type: inline-size;
+    text-align: center;
+  }
+
+  /* The inner frame: a hairline 12 px inside the square, like a mount in a case. */
+  .tplate::before {
+    content: '';
+    position: absolute;
+    inset: var(--space-3);
+    border: 1px solid var(--rule);
+    pointer-events: none;
+  }
+
+  .tplate__body {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: var(--space-4);
+    max-inline-size: 22rem;
+  }
+
+  .tplate__name {
+    font-family: var(--ff-display);
+    font-size: min(var(--t-display), 19cqi);
+    font-style: italic;
+    font-weight: var(--fw-display);
+    line-height: var(--lh-display);
+    letter-spacing: var(--track-display);
+    color: var(--fg);
+    text-wrap: balance;
+  }
+
+  .tplate__note {
+    font-size: var(--t-small);
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  /* Small squares (240 px and less) keep the name and the link; the note needs room. */
+  @container (max-width: 14rem) {
+    .tplate__note {
+      display: none;
+    }
+  }
+
+  @container (max-width: 9.5rem) {
+    .tplate :global(.tplate__ask) {
+      display: none;
+    }
+  }
+</style>

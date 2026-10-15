@@ -18,6 +18,7 @@ import type {
 } from 'schema-dts';
 
 import { site, type Branch } from '@/data/site';
+import { openingSpecs } from '@/lib/hours';
 import { routes } from '@/lib/routes';
 import type { BreadcrumbItem } from '@/lib/seo';
 
@@ -60,7 +61,11 @@ export function organizationSchema(logoUrl: string): WithContext<Organization> {
   };
 }
 
-/** One JewelryStore per branch. Hours are only emitted once the company has confirmed them. */
+/**
+ * One JewelryStore per branch: its own telephone, map link, pin and the hours it publishes on
+ * Google (openingHoursSpecification whenever `hours.weekly` exists; a split Friday becomes two
+ * entries). Never aggregateRating: the Google rating is text on the page, not a claim in markup.
+ */
 export function jewelryStoreSchema(branch: Branch, imageUrl: string): WithContext<JewelryStore> {
   const schema: WithContext<JewelryStore> = {
     '@context': 'https://schema.org',
@@ -100,12 +105,12 @@ export function jewelryStoreSchema(branch: Branch, imageUrl: string): WithContex
       longitude: branch.map.geo.longitude,
     };
   }
-  if (branch.hours?.confirmed) {
-    schema.openingHoursSpecification = branch.hours.weekly.map((h) => ({
+  if (branch.hours?.weekly.length) {
+    schema.openingHoursSpecification = openingSpecs(branch).map((spec) => ({
       '@type': 'OpeningHoursSpecification',
-      dayOfWeek: h.days,
-      opens: h.opens,
-      closes: h.closes,
+      dayOfWeek: spec.days,
+      opens: spec.opens,
+      closes: spec.closes,
     }));
   }
   if (branch.isFlagship) schema.sameAs = [...site.social.map((s) => s.url), site.map.placeUrl];

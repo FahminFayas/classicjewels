@@ -1,25 +1,26 @@
 ---
 /**
- * Store index: every open branch as a ruled row, the announced branches below, the visiting FAQ
- * and the enquiry block. Every fact comes from src/data/site.ts.
+ * Branches (docs/design-system-v2.md §6.11): the four doors on the stage, drawn west to east, each
+ * with Call, Directions and WhatsApp; the opening-soon row; the visiting questions on ivory; an
+ * enquiry band for anyone not sure which branch suits them. Maps by link only, no iframe. Every
+ * fact comes from src/data/site.ts: each door carries the hours, phone and Google rating its
+ * branch publishes, the hours captioned "As listed on Google" until the owner confirms them.
  */
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
+import BranchDoors from '@/components/sections/BranchDoors.astro';
+import EnquiryBand from '@/components/sections/EnquiryBand.astro';
 import Faq from '@/components/sections/Faq.astro';
-import Hero from '@/components/sections/Hero.astro';
-import StoreCard from '@/components/sections/StoreCard.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
 import Button from '@/components/ui/Button.astro';
-import SectionHead from '@/components/ui/SectionHead.astro';
-import { branches, emirates, flagship, openBranches } from '@/data/site';
+import PageHead from '@/components/ui/PageHead.astro';
+import Section from '@/components/ui/Section.astro';
+import { emirates, openBranches, site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getFaqGroup } from '@/lib/content';
 import { countWord, listWords } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { jewelryStoreSchema } from '@/lib/schema';
-import { whatsappVisit } from '@/lib/whatsapp';
+import { whatsappUrl } from '@/lib/whatsapp';
 
 const faq = await getFaqGroup('stores');
-const soon = branches.filter((b) => b.status === 'opening-soon');
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const storeImage = new URL('/og/default.png', origin).toString();
 
@@ -28,16 +29,22 @@ const emirateList = listWords(emirates);
 const description = `${count} Classic Jewels branches in ${emirateList}: ${listWords(
   openBranches.map((b) => b.shortName),
 )}. Address, directions and WhatsApp for each.`;
+const lead = `${count} branches in ${emirateList}. Message the one nearest you before you come.`;
 
-/** "Deira in Dubai, Safari Mall and Rolla Mall in Sharjah and Madinat Zayed in Abu Dhabi" */
-const byEmirate = new Map<string, string[]>();
-for (const b of openBranches) {
-  byEmirate.set(b.emirate, [...(byEmirate.get(b.emirate) ?? []), b.shortName]);
-}
-const places = listWords(
-  [...byEmirate].map(([emirate, names]) => `${listWords(names)} in ${emirate}`),
+/** Two counts for the opener, each with the names behind it: all from site.ts. */
+const westToEast = [...openBranches].sort((a, b) => (a.routeOrder ?? 99) - (b.routeOrder ?? 99));
+const tally = [
+  {
+    n: openBranches.length,
+    label: 'Branches open',
+    note: listWords(westToEast.map((b) => b.shortName)),
+  },
+  { n: emirates.length, label: emirates.length === 1 ? 'Emirate' : 'Emirates', note: emirateList },
+];
+
+const ask = whatsappUrl(
+  `${site.whatsapp.greeting} which of your branches is best for me? I’m coming from`,
 );
-const lead = `${places}${soon.length > 0 ? ', with more opening' : ''}. The day’s rate on the board is the same at every counter.`;
 
 /** The flagship's JewelryStore is already in every page head (BaseLayout); the rest go here. */
 const jsonLd = openBranches
@@ -46,112 +53,103 @@ const jsonLd = openBranches
 ---
 
 <BaseLayout
-  ground="ivory"
+  ground="stage"
   title={`Our Stores in ${emirateList}`}
   description={description}
   jsonLd={jsonLd}
 >
-  <div class="container">
-    <Breadcrumbs items={[{ name: 'Stores', href: routes.stores }]} />
-  </div>
-
-  <Hero eyebrow="Stores" title="Our branches across the UAE" display lead={lead}>
-    <Button href={whatsappVisit()} icon="whatsapp" external>
-      WhatsApp before you visit
+  <PageHead
+    tone="stage"
+    breadcrumbs={[{ name: 'Branches', href: routes.stores }]}
+    eyebrow="Branches"
+    title="Our branches across the UAE"
+    lead={lead}
+    layout="split"
+  >
+    <Button href={ask} icon="whatsapp" external>
+      WhatsApp us
     </Button>
-    <Button href={routes.store(flagship.id)} variant="secondary" icon="map-pin">
-      The {flagship.shortName} flagship
+    <Button href={`tel:${site.phone.landline.e164}`} variant="secondary" icon="phone">
+      Call {site.phone.landline.display}
     </Button>
-  </Hero>
+    <dl class="tally" slot="aside">
+      {tally.map((t) => (
+        <div class="tally__cell">
+          <dt class="tally__label">{t.label}</dt>
+          <dd class="tally__n fig">{t.n}</dd>
+          <dd class="tally__note">{t.note}</dd>
+        </div>
+      ))}
+    </dl>
+  </PageHead>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <SectionHead eyebrow="Open now" title="Where to find us.">
-        Each branch page has the address, how to reach the counter and the hours we have for it.
-      </SectionHead>
-      <div class="rows">
-        {openBranches.map((b) => (
-          <StoreCard branch={b} compact />
-        ))}
-      </div>
-    </div>
-  </section>
+  <Section tone="stage" seam class="stores-doors" labelledby="doors-title">
+    <h2 class="sr-only" id="doors-title">
+      The branches, west to east
+    </h2>
+    <BranchDoors variant="full" />
+  </Section>
 
-  {soon.length > 0 && (
-    <section class="section section--ruled">
-      <div class="container">
-        <SectionHead eyebrow="Opening soon" title="More counters are on the way.">
-          Announced locations, with dates to follow once confirmed. Until then the nearest open
-          branch is a message away.
-        </SectionHead>
-        <ul class="rows" role="list">
-          {soon.map((b) => (
-            <li class="soon">
-              <div class="soon__text">
-                <p class="soon__emirate small">{b.emirate}</p>
-                <h3 class="soon__name">{b.name}</h3>
-                <p class="soon__venue">{b.venue}</p>
-              </div>
-              <p class="soon__note small">{b.publicNote ?? 'Opening soon.'}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  )}
+  <Section tone="ivory">
+    <Faq heading={faq.data.heading} items={faq.data.items} />
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <Faq heading={faq.data.heading} items={faq.data.items} />
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <EnquiryBlock
-        heading="Check before you set out"
-        text="WhatsApp is fastest during shop hours: confirm today’s timings, or ask us to have a piece ready at the counter nearest you."
-        whatsappUrl={whatsappVisit()}
-        whatsappLabel="WhatsApp before you visit"
-      />
-    </div>
-  </section>
+  <EnquiryBand
+    title="Not sure which branch?"
+    accent="Ask us."
+    text="Tell us where you are coming from and what you would like to see. We will say which counter suits you and check the piece is there."
+    whatsappUrl={ask}
+    secondary={{
+      href: `tel:${site.phone.landline.e164}`,
+      label: `Call ${site.phone.landline.display}`,
+    }}
+  />
 </BaseLayout>
 
 <style>
-  .soon {
+  /* The doors continue the opener's stage: one room, no second band edge between them. */
+  :global(.sec.stores-doors) {
+    padding-block-start: 0;
+  }
+
+  /* Two counts on the right of the opener: champagne numerals, the names under them. */
+  .tally {
     display: grid;
-    gap: var(--space-3);
-    padding-block: var(--space-5);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--grid-gap);
+    border-block-start: 1px solid var(--rule);
   }
 
-  .soon__text {
-    display: grid;
-    gap: var(--space-1);
+  .tally__cell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-block-start: var(--space-5);
   }
 
-  .soon__emirate {
-    color: var(--gold-700);
-    letter-spacing: 0.04em;
+  .tally__n {
+    order: -1;
+    font-family: var(--ff-display);
+    font-size: var(--t-stamp);
+    font-weight: var(--fw-display);
+    line-height: var(--lh-numeral);
+    letter-spacing: var(--track-rate);
+    color: var(--numeral);
   }
 
-  .soon__name {
-    font-size: var(--t-h3);
+  .tally__label {
+    margin-block-start: var(--space-3);
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    text-transform: uppercase;
+    color: var(--eyebrow);
   }
 
-  .soon__venue {
-    color: var(--ink-700);
-  }
-
-  .soon__note {
-    color: var(--ink-500);
-  }
-
-  @media (min-width: 64em) {
-    .soon {
-      grid-template-columns: 7fr 5fr;
-      column-gap: calc(var(--grid-gap) * 2);
-      align-items: end;
-    }
+  .tally__note {
+    max-inline-size: 22ch;
+    font-size: var(--t-small);
+    line-height: 1.5;
+    color: var(--body);
   }
 </style>

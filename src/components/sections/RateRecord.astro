@@ -1,0 +1,254 @@
+---
+/**
+ * Our record of the posted rate (docs/design-system-v2.md §5.4 RateRecord), on /gold-rate/.
+ *
+ * Until seven postings are recorded it says so plainly, "Our record starts on {date}. A 7-day
+ * chart appears here once we have seven days of postings.", beside a ruled table of the days we
+ * have (RateBoard). From seven postings: an inline SVG line of the 22K rate, built here at build
+ * time, with a 7-day / 30-day switch (two radios and :has(), no script; without :has() the
+ * 7-day line shows), and the last seven postings in the table.
+ *
+ * The default slot opens the first column (the page's SectionHead), so the heading, the note and
+ * the table read as one block. Only recorded postings are drawn, placed by their date: nothing is interpolated, smoothed or
+ * invented. The line draws once as it enters (stroke-dashoffset under view(), motion allowed
+ * only); its static state is the drawn line.
+ */
+import RateBoard from '@/components/sections/RateBoard.astro';
+import { formatDate } from '@/lib/format';
+import type { RateSnapshot } from '@/lib/rates';
+
+export interface Props {
+  history: RateSnapshot[];
+}
+
+const { history } = Astro.props;
+
+const DAY = 86_400_000;
+/**
+ * The plot's user space, close to its drawn size (about 450 × 160 on desktop, 310 × 160 on
+ * phones), so the 1.5 px line scales almost evenly. The line is not non-scaling: dashes with
+ * pathLength="1" (the draw) need user space. The gridlines are non-scaling hairlines.
+ */
+const W = 400;
+const H = 160;
+const CHART_FROM = 7;
+const oldest = history.at(-1);
+const newest = history[0];
+const charted = history.length >= CHART_FROM && newest !== undefined;
+
+/** One window of the chart: the postings of the last `days` days, placed by date. */
+function windowOf(days: number) {
+  if (!newest) return null;
+  const end = Date.parse(newest.date);
+  const points = history
+    .filter((s) => Date.parse(s.date) > end - days * DAY)
+    .map((s) => ({ date: s.date, t: Date.parse(s.date), v: s.perGram['22k'] }))
+    .reverse();
+  // From the first posting in the window to the newest, each placed by its date.
+  const start = points[0]?.t ?? end;
+  const span = end - start;
+  const values = points.map((p) => p.v);
+  const hi = Math.max(...values);
+  const lo = Math.min(...values);
+  const pad = hi === lo ? 1 : (hi - lo) * 0.12;
+  const top = hi + pad;
+  const bottom = lo - pad;
+  const x = (t: number) => (span ? ((t - start) / span) * W : W / 2);
+  const y = (v: number) => ((top - v) / (top - bottom)) * H;
+  const d = points
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p.t).toFixed(2)} ${y(p.v).toFixed(2)}`)
+    .join(' ');
+  const first = points[0];
+  return {
+    days,
+    d,
+    hi,
+    lo,
+    yHi: y(hi).toFixed(2),
+    yLo: y(lo).toFixed(2),
+    from: first ? formatDate(first.date, { year: undefined }) : '',
+    to: formatDate(newest.date, { year: undefined }),
+    count: points.length,
+    last: points.at(-1),
+  };
+}
+
+const windows = charted ? [windowOf(7), windowOf(30)].filter((w) => w !== null) : [];
+---
+
+<div class="rec" data-charted={charted ? '' : undefined}>
+  <div class="rec__lead">
+    <slot />
+    {oldest && !charted && (
+      <p class="rec__note">
+        Our record starts on {formatDate(oldest.date)}. A 7-day chart appears here once we have
+        seven days of postings.
+      </p>
+    )}
+    {charted && (
+      <div class="rec__chart">
+        <fieldset class="rec__range">
+          <legend class="sr-only">Show the 22K rate for the last</legend>
+          <div class="chips">
+            {windows.map((w, i) => (
+              <label class="chip">
+                <input type="radio" name="rec-range" value={w.days} checked={i === 0} />
+                <span>{w.days} days</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        {windows.map((w) => (
+          <figure class="rec__fig" data-range={w.days}>
+            <div class="rec__plot">
+              <svg
+                class="rec__svg"
+                viewBox={`0 0 ${W} ${H}`}
+                preserveAspectRatio="none"
+                role="img"
+                aria-label={`22K gold rate, ${w.from} to ${w.to}: ${w.count} postings, between AED ${w.lo.toFixed(2)} and AED ${w.hi.toFixed(2)} a gram.`}
+              >
+                <line class="rec__grid" x1="0" x2={W} y1={w.yHi} y2={w.yHi} />
+                <line class="rec__grid" x1="0" x2={W} y1={w.yLo} y2={w.yLo} />
+                <path class="rec__line" d={w.d} pathLength="1" />
+              </svg>
+              <p class="rec__scale caption fig" aria-hidden="true">
+                <span>{w.hi.toFixed(2)}</span>
+                <span>{w.lo.toFixed(2)}</span>
+              </p>
+            </div>
+            <figcaption class="rec__axis caption">
+              <span>{w.from}</span>
+              <span>22K, AED per gram</span>
+              <span>{w.to}</span>
+            </figcaption>
+          </figure>
+        ))}
+        {oldest && (
+          <p class="caption rec__since">Our record starts on {formatDate(oldest.date)}.</p>
+        )}
+      </div>
+    )}
+  </div>
+  <div class="rec__table">
+    <RateBoard history={history} rows={charted ? CHART_FROM : undefined} />
+  </div>
+</div>
+
+<style>
+  .rec {
+    display: grid;
+    gap: var(--space-7) var(--grid-gap);
+    align-items: start;
+  }
+
+  .rec__note {
+    max-inline-size: 28rem;
+    font-size: var(--t-lead);
+    line-height: 1.55;
+    color: var(--body);
+  }
+
+  .rec__chart {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .rec__range {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    inline-size: min(100%, 16rem);
+  }
+
+  .rec__fig {
+    margin: 0;
+  }
+
+  /* Without :has(), the 7-day line only. */
+  .rec__fig[data-range='30'] {
+    display: none;
+  }
+
+  @supports selector(:has(*)) {
+    .rec:has(input[value='30']:checked) .rec__fig[data-range='7'] {
+      display: none;
+    }
+
+    .rec:has(input[value='30']:checked) .rec__fig[data-range='30'] {
+      display: block;
+    }
+  }
+
+  .rec__plot {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+  }
+
+  .rec__svg {
+    inline-size: 100%;
+    block-size: 10rem;
+    overflow: visible;
+  }
+
+  .rec__grid {
+    stroke: var(--rule);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .rec__line {
+    fill: none;
+    stroke: var(--champagne);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+
+  .rec__scale {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-block: var(--space-2);
+    color: var(--muted);
+  }
+
+  .rec__axis {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-block-start: var(--space-2);
+    color: var(--muted);
+  }
+
+  .rec__since {
+    color: var(--muted);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .rec__line {
+        animation: rec-draw linear both;
+        animation-timeline: var(--tl-view);
+        animation-range: entry 30% cover 45%;
+      }
+    }
+  }
+
+  @keyframes rec-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+  }
+
+  @media (min-width: 64em) {
+    .rec {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: calc(var(--grid-gap) * 2);
+      align-items: end;
+    }
+  }
+</style>

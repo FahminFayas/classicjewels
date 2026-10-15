@@ -1,6 +1,8 @@
 ---
 /**
- * Breadcrumb trail. The last item is the current page (plain text, aria-current).
+ * Breadcrumb trail, on every page except home (docs/design-system-v2.md §5.2). The last item is
+ * the current page (plain text, aria-current). Tone-aware: links in --muted, the current page in
+ * --fg, slash separators in --rule-strong, 13 px, every link a 24 px target.
  * Emits the matching BreadcrumbList JSON-LD so the HTML and the structured data never drift.
  */
 import JsonLd from '@/components/seo/JsonLd.astro';
@@ -19,16 +21,18 @@ const all: BreadcrumbItem[] = [{ name: 'Home', href: routes.home }, ...items];
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 ---
 
-<nav class:list={['crumbs small', className]} aria-label="Breadcrumb">
-  <ol class="crumbs__list" role="list">
+<nav class:list={['crumbs', className]} aria-label="Breadcrumb">
+  <ol class="crumbs__list list-links" role="list">
     {all.map((item, i) => {
       const last = i === all.length - 1;
       return (
         <li class="crumbs__item">
           {last ? (
-            <span aria-current="page">{item.name}</span>
+            <span class="crumbs__here" aria-current="page">
+              {item.name}
+            </span>
           ) : (
-            <a class="link-quiet" href={item.href}>
+            <a class="crumbs__link" href={item.href}>
               {item.name}
             </a>
           )}
@@ -47,32 +51,42 @@ const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 <style>
   .crumbs {
     padding-block: var(--space-4);
+    font-size: var(--t-caption);
+    line-height: 1.45;
   }
 
   .crumbs__list {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2);
+    align-items: center;
+    column-gap: var(--space-2);
   }
 
   .crumbs__item {
     display: inline-flex;
+    align-items: center;
     gap: var(--space-2);
+    min-inline-size: 0;
   }
 
-  .crumbs a {
-    color: var(--ink-500);
+  .crumbs__link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--muted);
+    text-decoration: none;
   }
 
-  .crumbs a:hover {
-    color: var(--link-hover);
+  .crumbs__link:is(:hover, :focus-visible) {
+    color: var(--fg);
+    text-decoration: underline;
+    text-decoration-color: var(--wipe);
   }
 
   .crumbs__sep {
-    color: var(--ink-300);
+    color: var(--rule-strong);
   }
 
-  [aria-current='page'] {
-    color: var(--ink-700);
+  .crumbs__here {
+    color: var(--fg);
   }
 </style>

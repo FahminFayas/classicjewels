@@ -4,8 +4,7 @@
  */
 
 /** The ground a section declares with data-tone. Components read the tone's semantic variables. */
-export type Tone =
-  'stage' | 'stage-raised' | 'ivory' | 'parchment' | 'white' | 'plum' | 'plum-deep';
+export type Tone = 'stage' | 'stage-raised' | 'ivory' | 'parchment' | 'white';
 
 /** The tone family of a page's first section: decides the header tone and the overscroll ground. */
 export type Ground = 'stage' | 'ivory';
@@ -39,9 +38,9 @@ export function isDisplayKarat(value: unknown): value is DisplayKarat {
   return typeof value === 'string' && (DISPLAY_KARATS as readonly string[]).includes(value);
 }
 
-/** True for the grounds where text is light: stage, stage-raised, plum and plum-deep. */
+/** True for the grounds where text is light: stage and stage-raised. */
 export function isDarkTone(tone: Tone): boolean {
-  return tone.startsWith('stage') || tone.startsWith('plum');
+  return tone.startsWith('stage');
 }
 
 /**

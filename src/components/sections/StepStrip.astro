@@ -1,0 +1,116 @@
+---
+/**
+ * Three or four steps in a row (docs/design-system-v2.md §5.2, §6.9 section 2, §6.10 section 2):
+ * equal columns separated by hairlines (stacked rows on phones), each a large Cormorant numeral
+ * (01, 02 ...) in the tone's --numeral, a title and a short text. Rendered as an <ol>; the
+ * numerals are decorative (the list is already ordered for assistive technology).
+ *
+ * Without `tone` it is content only: the page supplies the Section and SectionHead. With
+ * `tone` it renders its own Section of that tone, for a band that is only the steps.
+ */
+import Section from '@/components/ui/Section.astro';
+import type { Tone } from '@/lib/tones';
+
+export interface Props {
+  steps: { title: string; text: string }[];
+  numerals?: boolean;
+  tone?: Tone;
+}
+
+const { steps, numerals = true, tone } = Astro.props;
+if (steps.length < 3 || steps.length > 4) {
+  console.warn(`[StepStrip] ${steps.length} steps on ${Astro.url.pathname}; use three or four`);
+}
+const two = (n: number) => String(n).padStart(2, '0');
+---
+
+{tone ? (
+  <Section tone={tone}>
+    <ol class="steps" role="list" style={`--n:${steps.length}`}>
+      {steps.map((step, i) => (
+        <li class="steps__item">
+          {numerals && (
+            <span class="steps__n fig" aria-hidden="true">
+              {two(i + 1)}
+            </span>
+          )}
+          <h3 class="steps__title">{step.title}</h3>
+          <p class="steps__text">{step.text}</p>
+        </li>
+      ))}
+    </ol>
+  </Section>
+) : (
+  <ol class="steps" role="list" style={`--n:${steps.length}`}>
+    {steps.map((step, i) => (
+      <li class="steps__item">
+        {numerals && (
+          <span class="steps__n fig" aria-hidden="true">
+            {two(i + 1)}
+          </span>
+        )}
+        <h3 class="steps__title">{step.title}</h3>
+        <p class="steps__text">{step.text}</p>
+      </li>
+    ))}
+  </ol>
+)}
+
+<style>
+  .steps {
+    display: grid;
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .steps__item {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding-block: var(--space-6);
+    border-block-end: 1px solid var(--rule);
+  }
+
+  .steps__n {
+    font-family: var(--ff-display);
+    font-size: var(--t-display);
+    font-weight: var(--fw-display);
+    line-height: var(--lh-numeral);
+    letter-spacing: var(--track-rate);
+    color: var(--numeral);
+    margin-block-end: var(--space-3);
+  }
+
+  .steps__title {
+    max-inline-size: 20ch;
+  }
+
+  .steps__text {
+    max-inline-size: var(--measure);
+    color: var(--body);
+  }
+
+  @media (min-width: 48em) {
+    .steps {
+      grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+      border-block-end: 1px solid var(--rule);
+    }
+
+    .steps__item {
+      padding-block: var(--space-6) var(--space-7);
+      padding-inline: var(--space-6);
+      border-block-end: 0;
+    }
+
+    .steps__item + .steps__item {
+      border-inline-start: 1px solid var(--rule);
+    }
+
+    .steps__item:first-child {
+      padding-inline-start: 0;
+    }
+
+    .steps__item:last-child {
+      padding-inline-end: 0;
+    }
+  }
+</style>

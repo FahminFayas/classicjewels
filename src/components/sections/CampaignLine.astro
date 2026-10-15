@@ -1,0 +1,103 @@
+---
+/**
+ * The one-line campaign band (docs/design-system-v2.md §5.2, §6.1 section 2, §8.2): exists only
+ * while an offer runs. A slim plum band with the bronze seam (or an ivory row on /offers/): the
+ * end date as the label, the offer's headline split at its first colon (the clause after it in
+ * italic), "See the offer" and "Ask on WhatsApp". No countdown, no badge.
+ *
+ * Pages pass an offer from getActiveOffers(); the component checks the dates again (Dubai time)
+ * and renders nothing once the offer has ended, so it can never outlive the campaign.
+ */
+import Button from '@/components/ui/Button.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import Section from '@/components/ui/Section.astro';
+import type { Offer } from '@/lib/content';
+import { formatDate } from '@/lib/format';
+import { routes } from '@/lib/routes';
+import { whatsappGeneral, whatsappUrl } from '@/lib/whatsapp';
+
+export interface Props {
+  offer: Offer;
+  tone?: 'parchment' | 'ivory';
+  headingLevel?: 'h2' | 'p';
+}
+
+const { offer, tone = 'parchment', headingLevel: Tag = 'h2' } = Astro.props;
+const { data } = offer;
+
+const today = new Date(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dubai' }));
+const running = data.startsOn <= today && data.endsOn >= today;
+
+// "Diwali 2026: book the rate, no making charge on selected pieces." -> lead + italic clause.
+const headline = data.headline.trim().replace(/\.$/, '');
+const colon = headline.indexOf(':');
+const lead = colon > 0 ? headline.slice(0, colon + 1) : headline;
+const clause = colon > 0 ? headline.slice(colon + 1).trim() : '';
+const until = `Until ${formatDate(data.endsOn, { year: undefined })}`;
+const ask = data.whatsappMessage ? whatsappUrl(data.whatsappMessage) : whatsappGeneral();
+const titleId = `campaign-${offer.id}`;
+---
+
+{running && (
+  <Section tone={tone} pad="slim" class="campaign" labelledby={Tag === 'h2' ? titleId : undefined}>
+    <div class="cl">
+      <p class="cl__until eyebrow">{until}</p>
+      <Tag class="cl__line" id={Tag === 'h2' ? titleId : undefined}>
+        {lead}
+        {clause && (
+          <>
+            {' '}
+            <em>{clause}</em>
+          </>
+        )}
+      </Tag>
+      <div class="cl__actions">
+        <MoreLink href={routes.offer(offer.id)}>See the offer</MoreLink>
+        <Button href={ask} icon="whatsapp" size="compact" external>
+          Ask on WhatsApp
+        </Button>
+      </div>
+    </div>
+  </Section>
+)}
+
+<style>
+  .cl {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .cl__line {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    letter-spacing: 0;
+    color: var(--fg);
+    text-wrap: balance;
+  }
+
+  .cl__line em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .cl__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-6);
+  }
+
+  @media (min-width: 64em) {
+    .cl {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: var(--space-7);
+    }
+
+    .cl__line {
+      text-wrap: pretty;
+    }
+  }
+</style>

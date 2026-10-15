@@ -1,0 +1,75 @@
+---
+/**
+ * A daylight band with one line (docs/design-system-v2.md §5.2, §6.1 section 3): where the eye
+ * rests and the history is told in one sentence. Centred on ivory (or parchment), the line in
+ * Cormorant at --t-band (24 ch at most), its accent clause in italic, an optional
+ * "A Classic Group house" lockup above it.
+ *
+ * Slot: one short sub-line (a <p>) and a MoreLink. The line is never revealed word by word; add
+ * nothing that moves inside it. The whole band may rise as it enters (the wrapper is .reveal).
+ */
+import GroupLockup from '@/components/ui/GroupLockup.astro';
+import Section from '@/components/ui/Section.astro';
+
+export interface Props {
+  line: string;
+  accent?: string; // italic tail, its own clause
+  as?: 'h2' | 'p';
+  lockup?: boolean; // GroupLockup above the line
+  tone?: 'ivory' | 'parchment';
+  id?: string;
+}
+
+const { line, accent, as: Tag = 'h2', lockup = false, tone = 'ivory', id } = Astro.props;
+const titleId = id && Tag === 'h2' ? `${id}-title` : undefined;
+---
+
+<Section tone={tone} pad="band" id={id} labelledby={titleId}>
+  <div class="olb reveal">
+    {lockup && <GroupLockup />}
+    <Tag class="olb__line h-band" id={titleId}>
+      {line}
+      {accent && (
+        <>
+          {' '}
+          <em>{accent}</em>
+        </>
+      )}
+    </Tag>
+    {Astro.slots.has('default') && (
+      <div class="olb__sub">
+        <slot />
+      </div>
+    )}
+  </div>
+</Section>
+
+<style>
+  .olb {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-6);
+    text-align: center;
+  }
+
+  /*
+   * §5.2 asks for 24 ch. Cormorant's zero is narrow (24 ch is about 610 px at 66 px), which set
+   * the heritage sentence in four short lines; 32 ch gives the prototype's three.
+   */
+  .olb__line {
+    max-inline-size: 32ch;
+  }
+
+  .olb__sub {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-5);
+    max-inline-size: 40rem;
+  }
+
+  .olb__sub :global(p) {
+    font-size: var(--t-lead);
+    line-height: 1.55;
+    color: var(--body);
+  }
+</style>

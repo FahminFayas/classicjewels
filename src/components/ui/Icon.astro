@@ -1,7 +1,9 @@
 ---
 /**
- * Inline icon from the sprite in IconSprite.astro. Decorative by default (aria-hidden);
- * pass `label` when the icon is the only content of a control.
+ * Inline icon from the sprite in IconSprite.astro (docs/design-system-v2.md §5.2). Decorative by
+ * default (aria-hidden); pass `label` when the icon is the only content of a control. Stroke and
+ * size come from the .icon rule in base.css (1.25 px monoline, 1.25em of the surrounding text).
+ * The live-rate marker is CSS (.marker), not an icon.
  */
 export type IconName =
   | 'whatsapp'
@@ -9,8 +11,11 @@ export type IconName =
   | 'map-pin'
   | 'mail'
   | 'clock'
+  | 'calendar'
   | 'arrow-right'
+  | 'arrow-left'
   | 'arrow-up-right'
+  | 'chevron-down'
   | 'plus'
   | 'minus'
   | 'menu'
@@ -24,7 +29,7 @@ export interface Props {
   name: IconName;
   label?: string;
   class?: string;
-  /** CSS size, e.g. "1rem" or "48px". Defaults to 1.25em of the surrounding text. */
+  /** CSS size, e.g. "1rem" or "6rem". Defaults to 1.25em of the surrounding text. */
   size?: string;
 }
 

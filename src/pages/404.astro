@@ -1,83 +1,75 @@
 ---
 /**
- * Not found. Design-spec §6.32: the only centred layout on the site. The C-ring glyph, one
- * sentence, three links and a WhatsApp button. No redirect script; noindex, and no breadcrumb
- * (its BreadcrumbList would point at a URL that does not exist).
+ * Not found (docs/design-system-v2.md §6.18). The stage, centred: a large C-ring, one sentence,
+ * one line and the four pages people look for most. noindex, and no breadcrumb (its
+ * BreadcrumbList would point at a URL that does not exist). No redirect script.
  */
-import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import Section from '@/components/ui/Section.astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { routes } from '@/lib/routes';
-import { whatsappGeneral } from '@/lib/whatsapp';
 
 const links = [
-  { label: 'The jewellery', href: routes.jewellery },
+  { label: 'Jewellery', href: routes.jewellery },
   { label: 'Today’s gold rate', href: routes.goldRate },
-  { label: 'Our branches', href: routes.stores },
+  { label: 'Branches', href: routes.stores },
+  { label: 'Contact', href: routes.contact },
 ];
 
 const title = 'Page not found';
-const description = `There is nothing at this address. See the jewellery, today’s gold rate in Dubai or our branches, or message us on WhatsApp.`;
+const description =
+  'There is nothing at this address. See the jewellery, today’s gold rate in Dubai or our branches, or message us on WhatsApp.';
 ---
 
-<BaseLayout ground="ivory" title={title} description={description} noindex>
-  <section class="section lost">
-    <div class="container lost__inner">
-      <Icon name="c-ring" class="lost__glyph" size="4rem" />
-      <h1>Nothing at this address.</h1>
-      <p class="lead">Try the pieces, today’s rate or our stores, or message us.</p>
+<BaseLayout ground="stage" title={title} description={description} noindex>
+  <Section tone="stage" class="lost" labelledby="lost-title">
+    <div class="lost__inner">
+      <Icon name="c-ring" class="lost__ring" size="6rem" />
+      <h1 id="lost-title">Nothing at this address.</h1>
+      <p class="lead lost__lead">
+        The page may have moved. These are the pages people look for most.
+      </p>
       <ul class="lost__links" role="list">
         {links.map((l) => (
           <li>
-            <a href={l.href}>
-              {l.label} <Icon name="arrow-right" />
-            </a>
+            <MoreLink href={l.href}>{l.label}</MoreLink>
           </li>
         ))}
       </ul>
-      <Button href={whatsappGeneral()} icon="whatsapp" external>
-        WhatsApp the shop
-      </Button>
     </div>
-  </section>
+  </Section>
 </BaseLayout>
 
 <style>
-  .lost {
-    padding-block: var(--space-9) var(--space-10);
+  :global(.sec.lost) {
+    display: grid;
+    align-content: center;
+    min-block-size: min(calc(100svh - var(--header-h)), 48rem);
   }
 
   .lost__inner {
     display: grid;
     justify-items: center;
-    gap: var(--space-5);
-    max-inline-size: 40rem;
+    gap: var(--space-6);
     text-align: center;
   }
 
-  .lost__glyph {
-    color: var(--gold-600);
+  .lost__inner :global(.lost__ring) {
+    color: var(--wipe);
+    stroke-width: 0.75;
+  }
+
+  .lost__lead {
+    margin-inline: auto;
   }
 
   .lost__links {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: var(--space-2) var(--space-6);
-  }
-
-  .lost__links a {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    min-block-size: var(--tap);
-    font-weight: 500;
-    color: var(--plum-700);
-    text-decoration: none;
-  }
-
-  .lost__links a:hover {
-    text-decoration: underline;
-    text-decoration-color: var(--gold-600);
+    gap: var(--space-3) var(--space-7);
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule);
   }
 </style>

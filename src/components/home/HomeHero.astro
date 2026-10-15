@@ -1,0 +1,640 @@
+---
+/**
+ * The home first screen: the rate, lit (docs/design-system-v2.md §5.7, §6.1 section 1, §8.2).
+ *
+ *   Desktop  wide track, 7/5. Left: the two-level H1 (a readable place line, then the display
+ *            line), the rate instrument (200 px numeral, hallmark keys, the three-line status),
+ *            the two actions. Right: one piece in its pool of light, its caption below, then a
+ *            small row of controls: previous and next, and the names of the pieces in the case.
+ *            The fact strip runs across the foot, under a hairline.
+ *   Phones   one column: H1, the piece (name only, the two arrows beside it), the instrument, the
+ *            actions as a pair, the facts as three ruled rows. The H1, the piece, the numeral and
+ *            all four keys fit above the phone bar on a 390 x 844 screen.
+ *
+ * The case holds three or four velvet pieces (`pieces`), one lit at a time. The first is the
+ * page's one priority image: eager, never faded, never masked by an animation. The others are
+ * lazy, fetchpriority low, in slots that are display: none until hero.ts lights them. The light
+ * comes on once after load (a champagne glint sweeps the pool), the set turns once by itself and
+ * the visitor can turn it; the swap is a case light switching (dim to the stage, swap, light up
+ * with the glint), never a crossfade. Without JavaScript the first piece shows, static, and the
+ * controls stay invisible (their space is reserved, so nothing shifts when the script arrives).
+ *
+ * Every piece is one link (photograph and caption) to its page; the shown slot carries
+ * data-morph-href so piece-morph.ts can grow it into the piece page's stage. The whole stage only
+ * recedes as you scroll past it (exit range: LCP is untouched). Nothing on this screen fades or
+ * rises in.
+ */
+import FactStrip from '@/components/home/FactStrip.astro';
+import RateInstrument from '@/components/sections/RateInstrument.astro';
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import Ornament from '@/components/ui/Ornament.astro';
+import Section from '@/components/ui/Section.astro';
+import StageImage from '@/components/ui/StageImage.astro';
+import { emirates } from '@/data/site';
+import { productPath, type Product } from '@/lib/content';
+import { listWords } from '@/lib/format';
+import type { GoldRate } from '@/lib/gold-rate';
+import { KARAT_FACTS, toDisplayKarat } from '@/lib/tones';
+import { whatsappGoldRate } from '@/lib/whatsapp';
+
+export interface Props {
+  rate: GoldRate | null;
+  stale: boolean;
+  fetchedAt: string | null;
+  /** The velvet pieces lit in turn; the first (p03 today) is the page's priority image. */
+  pieces: Product[];
+  /** Collection id -> shortName, for the captions ("22K · Antique · CJ-NK-003"). */
+  collectionNames: Record<string, string>;
+}
+
+const { rate, stale, fetchedAt, pieces, collectionNames } = Astro.props;
+if (pieces.length === 0) throw new Error('HomeHero needs at least one piece');
+
+const lit = pieces.map((piece) => {
+  const { data } = piece;
+  const cover = data.images[0];
+  if (!cover) throw new Error(`HomeHero: ${piece.id} has no image`);
+  if (cover.ground !== 'velvet') {
+    throw new Error(`HomeHero: ${piece.id} is a studio cut-out; the hero lights velvet pieces`);
+  }
+  const collection = data.collection ? (collectionNames[data.collection.id] ?? '') : '';
+  const meta = [KARAT_FACTS[toDisplayKarat(data.karat)].label, collection, data.sku]
+    .filter(Boolean)
+    .join(' · ');
+  return { name: data.name, href: productPath(piece), cover, meta };
+});
+const turns = lit.length > 1;
+const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72vw)';
+---
+
+<Section tone="stage" pad="flush" width="wide" labelledby="home-title">
+  <div class="hero">
+    <div class="hero__grid">
+      <h1 class="hero__title" id="home-title">
+        <span class="hero__kicker">
+          <Ornament class="hero__orn" />
+          <span>Gold and diamond jewellers in {listWords(emirates)}</span>
+        </span>
+        <span class="sr-only">: </span>
+        <span class="hero__line h-hero">
+          Gold by the gram, <em>at today’s rate</em>
+        </span>
+      </h1>
+
+      <div class="hero__case" data-hero>
+        <div class="hero__piece">
+          <div class="hero__stage recede" data-stage>
+            {lit.map((p, i) => (
+              <div
+                class="hero__slot"
+                data-slot
+                data-href={p.href}
+                data-morph-href={i === 0 ? p.href : undefined}
+                data-off={i > 0 ? '' : undefined}
+              >
+                <StageImage
+                  image={p.cover.src}
+                  alt={p.cover.alt}
+                  mask="spot"
+                  cap={560}
+                  priority={i === 0}
+                  sizes={sizes}
+                  class="hero__fig"
+                />
+              </div>
+            ))}
+            <span class="hero__glint" data-glint aria-hidden="true"></span>
+          </div>
+
+          <div class="hero__caps">
+            {lit.map((p, i) => (
+              <p class="hero__cap" data-cap data-href={p.href} data-off={i > 0 ? '' : undefined}>
+                <a class="hero__link" href={p.href}>
+                  <span class="hero__name">{p.name}</span>
+                  <span class="hero__meta fig">{p.meta}</span>
+                  <span class="hero__see">
+                    See the piece <Icon name="arrow-right" />
+                  </span>
+                </a>
+              </p>
+            ))}
+          </div>
+
+          {turns && (
+            <div class="hero__ctl">
+              <button class="hero__btn" type="button" data-step="-1" aria-label="Previous piece">
+                <Icon name="arrow-left" />
+              </button>
+              <ol class="hero__names" role="list">
+                {lit.map((p, i) => (
+                  <li class="hero__nm-item">
+                    <button
+                      class="hero__nm"
+                      type="button"
+                      data-go={i}
+                      aria-current={i === 0 ? 'true' : undefined}
+                      set:text={p.name}
+                    />
+                  </li>
+                ))}
+              </ol>
+              <button class="hero__btn" type="button" data-step="1" aria-label="Next piece">
+                <Icon name="arrow-right" />
+              </button>
+            </div>
+          )}
+        </div>
+        {turns && <p class="sr-only" aria-live="polite" data-live></p>}
+      </div>
+
+      <div class="hero__inst">
+        <RateInstrument rate={rate} stale={stale} fetchedAt={fetchedAt} variant="hero" id="rate" />
+      </div>
+
+      <div class="hero__acts actions actions--pair">
+        <Button href={whatsappGoldRate()} icon="whatsapp" external>
+          Ask on WhatsApp
+        </Button>
+        <Button href="#branches" variant="secondary" icon="map-pin">
+          Find a branch
+        </Button>
+      </div>
+    </div>
+
+    <FactStrip />
+  </div>
+</Section>
+
+<script src="@/scripts/hero.ts"></script>
+<script src="@/scripts/piece-morph.ts"></script>
+
+<style>
+  /*
+   * The hero fills the screen under the header (capped at 60 rem), the fact strip at its foot.
+   * No reveal, fade or @starting-style anywhere in here (§3.8: first viewport).
+   */
+  .hero {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    row-gap: var(--space-6);
+    min-block-size: min(calc(100svh - var(--header-h)), 60rem);
+    padding-block-start: var(--space-5);
+  }
+
+  .hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'title'
+      'piece'
+      'inst'
+      'acts';
+    align-content: center;
+  }
+
+  /* ---------- The two-level H1 ---------- */
+  .hero__title {
+    grid-area: title;
+    display: grid;
+    gap: var(--space-3);
+    font-size: var(--t-hero);
+  }
+
+  .hero__kicker {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    max-inline-size: 26rem;
+    font-family: var(--ff-text);
+    font-size: var(--t-kicker);
+    font-weight: var(--fw-text-strong);
+    line-height: 1.45;
+    letter-spacing: 0;
+    color: var(--body);
+    text-wrap: balance;
+  }
+
+  /* The ornament joins the place line from 48em; phones keep the height for the rate. */
+  .hero__kicker :global(.hero__orn) {
+    display: none;
+  }
+
+  .hero__line {
+    display: block;
+    max-inline-size: 11em;
+  }
+
+  /* ---------- The case: the stage, the captions, the controls ---------- */
+  .hero__case {
+    grid-area: piece;
+    display: grid;
+    justify-items: center;
+    inline-size: min(17.5rem, 72vw);
+    justify-self: center;
+    margin-block-start: var(--space-4);
+  }
+
+  /* One column; the stage in row 1, the captions in row 2 (the controls share it on phones). */
+  .hero__piece {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    inline-size: 100%;
+  }
+
+  /*
+   * The stage holds one slot per piece (display: none except the shown one: a hidden slot's lazy
+   * image stays unfetched until hero.ts asks for it) and the glint. Its ::after is the shade: the
+   * stage's own colour over the pool, up in 200 ms as the light dims, down in 400 ms as it comes
+   * back. Both times derive from the motion tokens, so reduced motion makes them 0 ms.
+   */
+  .hero__stage {
+    --dim: var(--dur-dim);
+    --lit: var(--dur-lit);
+
+    position: relative;
+    inline-size: 100%;
+  }
+
+  .hero__stage :global(.hero__fig) {
+    inline-size: 100%;
+  }
+
+  .hero__slot[data-off] {
+    display: none;
+  }
+
+  .hero__stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--ground);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity var(--lit) var(--ease-lux),
+      visibility 0s var(--lit);
+  }
+
+  .hero__stage[data-light='dim']::after {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity var(--dim) var(--ease-out),
+      visibility 0s;
+  }
+
+  /*
+   * The glint: a champagne strip under the sheen ramp, sweeping the pool once (the same spot
+   * mask as the photograph keeps it inside the light). The image's opacity is never touched.
+   * data-on alternates between "" and "b" so each run restarts the sweep.
+   */
+  .hero__glint {
+    position: absolute;
+    inset: 0;
+    overflow: clip;
+    pointer-events: none;
+    mask-image: var(--mask-spot);
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+  }
+
+  .hero__glint::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: 34%;
+    background: var(--champagne);
+    mask-image: var(--mask-sheen);
+    opacity: 0;
+    translate: -100% 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero__glint[data-on]::after {
+      animation: hero-glint var(--dur-slow) var(--ease-lux) 1 both;
+    }
+
+    .hero__glint[data-on='b']::after {
+      animation-name: hero-glint-b;
+    }
+  }
+
+  @keyframes hero-glint {
+    0% {
+      translate: -100% 0;
+      opacity: 0;
+    }
+    15%,
+    70% {
+      opacity: 0.3;
+    }
+    100% {
+      translate: 300% 0;
+      opacity: 0;
+    }
+  }
+
+  @keyframes hero-glint-b {
+    0% {
+      translate: -100% 0;
+      opacity: 0;
+    }
+    15%,
+    70% {
+      opacity: 0.3;
+    }
+    100% {
+      translate: 300% 0;
+      opacity: 0;
+    }
+  }
+
+  /* ---------- The captions: all in one cell, so the shown one never changes the height ---------- */
+  .hero__caps {
+    grid-row: 2;
+    grid-column: 1;
+    display: grid;
+    inline-size: 100%;
+  }
+
+  .hero__cap {
+    grid-area: 1 / 1;
+    text-align: center;
+  }
+
+  .hero__cap[data-off] {
+    visibility: hidden;
+  }
+
+  .hero__link {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-1);
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  /* One link for the photograph and its caption: the target covers the whole piece. */
+  .hero__link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-raised);
+  }
+
+  .hero__name {
+    font-family: var(--ff-display);
+    font-size: var(--t-name);
+    font-style: italic;
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: transparent;
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color var(--dur-slow) var(--ease-lux);
+  }
+
+  .hero__link:is(:hover, :focus-visible) .hero__name {
+    text-decoration-color: var(--wipe);
+  }
+
+  /* Ring the whole piece, not just the caption, where :has() exists. */
+  @supports selector(:has(*)) {
+    .hero__link:focus-visible {
+      outline: none;
+    }
+
+    .hero__piece:has(.hero__link:focus-visible) {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: var(--space-2);
+    }
+  }
+
+  /* Phones show the name only (§6.1); the reference and the cue join from 48em. */
+  .hero__meta,
+  .hero__see {
+    display: none;
+  }
+
+  .hero__meta {
+    font-size: var(--t-caption);
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .hero__see {
+    position: relative;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-2);
+    font-size: var(--t-small);
+    font-weight: var(--fw-text-strong);
+    color: var(--link);
+  }
+
+  .hero__see :global(.icon) {
+    inline-size: 1.125em;
+    block-size: 1.125em;
+  }
+
+  .hero__see::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: -0.15em;
+    block-size: 1px;
+    background: var(--wipe);
+    scale: 0 1;
+    transform-origin: 0 50%;
+    transition: scale var(--dur-slow) var(--ease-lux);
+  }
+
+  .hero__link:is(:hover, :focus-visible) .hero__see::after {
+    scale: 1 1;
+  }
+
+  /*
+   * ---------- The controls ----------
+   * Invisible until hero.ts runs (visibility, so the space is reserved and nothing shifts). On
+   * phones the row has no height of its own and shares the caption's row: the two arrows sit in
+   * the margins either side of the name, centred on it, and the first screen keeps its budget
+   * (§6.1). From 48em it is a row under the caption: previous, the names, next.
+   */
+  .hero__ctl {
+    grid-row: 2;
+    grid-column: 1;
+    align-self: center;
+    z-index: calc(var(--z-raised) + 1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    inline-size: min(
+      calc(100% + 2 * (var(--tap) + var(--space-2))),
+      calc(100vw - 2 * var(--gutter))
+    );
+    block-size: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .hero__ctl > * {
+    pointer-events: auto;
+  }
+
+  [data-ready] .hero__ctl {
+    visibility: visible;
+  }
+
+  .hero__btn {
+    display: grid;
+    place-items: center;
+    flex: none;
+    inline-size: var(--tap);
+    block-size: var(--tap);
+    border: 1px solid var(--rule-strong);
+    color: var(--fg);
+    transition:
+      border-color var(--dur-quick) var(--ease-out),
+      color var(--dur-quick) var(--ease-out);
+  }
+
+  .hero__btn:is(:hover, :focus-visible) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .hero__names {
+    display: none;
+  }
+
+  /* Each name is a 24 px row (--tap-inline): two lines of names take 48 px at 1440. */
+  .hero__nm-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    line-height: 1.2;
+  }
+
+  .hero__nm-item:not(:last-child)::after {
+    content: '·' / '';
+    color: var(--muted);
+  }
+
+  .hero__nm {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--tap-inline);
+    font-size: var(--t-caption);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: transparent;
+    text-underline-offset: 0.3em;
+    transition:
+      color var(--dur-quick) var(--ease-out),
+      text-decoration-color var(--dur-slow) var(--ease-lux);
+  }
+
+  .hero__nm[aria-current] {
+    color: var(--fg);
+    text-decoration-color: var(--wipe);
+  }
+
+  .hero__nm:is(:hover, :focus-visible) {
+    color: var(--accent);
+  }
+
+  /* ---------- The instrument and the actions ---------- */
+  .hero__inst {
+    grid-area: inst;
+    min-inline-size: 0;
+    margin-block-start: var(--space-5);
+  }
+
+  .hero__acts {
+    grid-area: acts;
+    margin-block-start: var(--space-6);
+  }
+
+  @media (min-width: 48em) {
+    .hero {
+      padding-block-start: var(--space-7);
+    }
+
+    .hero__kicker {
+      max-inline-size: none;
+    }
+
+    .hero__kicker :global(.hero__orn) {
+      display: block;
+    }
+
+    .hero__case {
+      inline-size: min(24rem, 60vw);
+    }
+
+    .hero__meta,
+    .hero__see {
+      display: inline-flex;
+    }
+
+    .hero__ctl {
+      grid-row: auto;
+      inline-size: 100%;
+      block-size: auto;
+      margin-block-start: var(--space-1);
+    }
+
+    .hero__names {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      column-gap: var(--space-3);
+      padding-inline: var(--space-2);
+      text-align: center;
+    }
+  }
+
+  /*
+   * 1440 x 900: the hero's content fits the 828 px under the header, facts included (the names
+   * row under the caption is paid for by 8 px less above the H1 and 8 px less above the facts).
+   */
+  @media (min-width: 64em) {
+    .hero {
+      row-gap: var(--space-5);
+      padding-block-start: var(--space-4);
+    }
+
+    .hero__grid {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      grid-template-rows: auto auto auto;
+      grid-template-areas:
+        'title piece'
+        'inst  piece'
+        'acts  piece';
+      column-gap: calc(var(--grid-gap) * 2);
+    }
+
+    .hero__case {
+      align-self: center;
+      inline-size: min(100%, var(--cap-hero));
+      margin-block-start: 0;
+    }
+
+    .hero__inst {
+      margin-block-start: var(--space-6);
+    }
+
+    .hero__acts {
+      margin-block-start: var(--space-5);
+    }
+  }
+</style>

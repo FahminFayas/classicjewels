@@ -1,7 +1,10 @@
 ---
 /**
- * Product specification table: a parchment head column and one row per known fact.
- * Rows whose value is missing are dropped by the component, so a page never prints a dash.
+ * A piece's specification (docs/design-system-v2.md §5.5, §6.4): a ruled two-column table that
+ * reads like a definition list, the label in eyebrow type (bronze on the stage, gold on light
+ * grounds), the value in the tone's body colour. Tone-aware, so it sits on the stage or ivory.
+ * Rows whose value is missing are dropped, so a page never prints a dash; the page decides the
+ * wording of a fact it does not have yet (weight: "On request, weighed in front of you").
  */
 export interface Props {
   /** Label and value pairs in display order. Empty or undefined values are omitted. */
@@ -25,10 +28,10 @@ const present = rows
   <tbody>
     {present.map((r) => (
       <tr class="spec__row">
-        <th class="spec__label" scope="row">
+        <th class="spec__label eyebrow" scope="row">
           {r.label}
         </th>
-        <td class="spec__value tabular">{r.value}</td>
+        <td class="spec__value">{r.value}</td>
       </tr>
     ))}
   </tbody>
@@ -36,31 +39,31 @@ const present = rows
 
 <style>
   .spec {
-    border-block: 1px solid var(--rule-2);
-    font-size: var(--t-small);
+    border-block-start: 1px solid var(--rule);
   }
 
-  .spec__row + .spec__row > * {
-    border-block-start: 1px solid var(--rule-1);
+  .spec__row {
+    border-block-end: 1px solid var(--rule);
   }
 
   .spec__label,
   .spec__value {
     padding-block: var(--space-3);
-    padding-inline: var(--space-4);
     text-align: start;
-    vertical-align: top;
+    vertical-align: baseline;
   }
 
+  /* .eyebrow is inline-flex; in a cell it stays a table cell. */
   .spec__label {
-    inline-size: 42%;
-    background: var(--surface-2);
-    font-weight: 500;
-    color: var(--ink-700);
+    display: table-cell;
+    inline-size: 38%;
+    padding-inline-end: var(--space-5);
+    line-height: 1.6;
   }
 
   .spec__value {
-    font-size: var(--t-body);
-    color: var(--ink-900);
+    font-size: var(--t-small);
+    font-variant-numeric: lining-nums tabular-nums;
+    color: var(--body);
   }
 </style>

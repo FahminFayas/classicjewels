@@ -34,22 +34,19 @@
   --surface-1: #faf7f2; /* ivory: breath bands, reading pages, the piece ticket */
   --surface-2: #f3eee6; /* parchment: the one warm alternate band */
   --plate-lilac: #eae5e9; /* sampled: the exact ground of every studio cut-out */
-  --surface-plum: #4b2849; /* plum band */
-  --surface-plum-deep: #2e1a2d; /* footer, estimator panel */
 
   /* ---------- Ink on light grounds ---------- */
   --ink-900: #1c1418; /* 16.90:1 on ivory */
   --ink-700: #4a3f46; /* 9.40:1 */
   --ink-500: #6b5f66; /* 5.69:1 */
   --ink-300: #b8afb3; /* non-text only */
-  --ink-on-plum: #faf7f2; /* 11.57:1 on plum, 15.10:1 on plum-deep */
-  --ink-on-plum-muted: #d9ccd6; /* 7.98:1 on plum */
+  --ink-on-plum: #faf7f2; /* text on the plum button: 11.57:1 */
 
   /* ---------- Plum scale (brand #4B2849 kept verbatim as plum-700) ---------- */
   --plum-900: #2e1a2d;
   --plum-700: #4b2849;
   --plum-500: #6b3f68;
-  --plum-300: #b498b2; /* small print on plum-deep only: 6.20:1 */
+  --plum-300: #b498b2; /* decorative only */
   --plum-100: #eadfe9;
   --plum-050: #f6f0f5;
 
@@ -58,19 +55,14 @@
   --rule-2: #cfc6b8; /* stronger decorative hairline on light grounds */
   --rule-input: #8f858b; /* field borders on light grounds: 3.33:1 on ivory */
   --rule-gold: var(--bronze); /* seams, eyebrow ornaments, the rate rule */
-  --rule-on-plum: rgb(250 247 242 / 0.22); /* decorative hairline on plum */
-  --rule-on-plum-strong: rgb(250 247 242 / 0.5); /* control borders on plum: 4.13:1 */
-  --wash-plum: rgb(250 247 242 / 0.08); /* hover wash on outlined controls on plum */
 
   /* ---------- Semantic ---------- */
   --ok: #2e6b4f;
   --err: #a3362b;
-  --ok-on-plum: #8fd1b0;
-  --err-on-plum: #f3a89c;
   --ok-on-stage: #8fd1b0;
   --err-on-stage: #f3a89c;
   --focus: #4b2849; /* focus ring on light grounds */
-  --focus-on-dark: #dcc29a; /* focus ring on stage, plum and plum-deep */
+  --focus-on-dark: #dcc29a; /* focus ring on the stage */
   --link: #4b2849;
   --link-hover: #8a5c32;
 
@@ -129,8 +121,8 @@
   --space-8: 4rem;
   --space-9: 6rem;
   --space-10: 8rem;
-  --section-y: clamp(4rem, 2.6rem + 6.2vw, 9.5rem); /* 66 → 131 */
-  --band-y: clamp(5rem, 2.6rem + 10vw, 12rem); /* 81 → 186: one-line bands */
+  --section-y: clamp(3.5rem, 2.2rem + 4.2vw, 7rem); /* 56 → 96 (WP6: was 66 → 131) */
+  --band-y: clamp(4rem, 2rem + 7vw, 9rem); /* 64 → 133: one-line bands (WP6: was 81 → 186) */
   --slim-y: clamp(2.5rem, 1.8rem + 2.4vw, 4rem); /* 40 → 63: campaign and slim bands */
 
   /* ---------- Layout ---------- */
@@ -164,11 +156,22 @@
   --dur-sheen: 1800ms; /* the single hairline sheen */
   --dur-page: 240ms; /* cross-document root fade */
   --dur-morph: 320ms; /* the piece growing into its page */
+  --dur-dim: 200ms; /* the home hero's case light going down before a switch */
+  --dur-lit: 400ms; /* the case light coming back up on the next piece */
   --dur-enter: var(--dur-ui); /* top-layer entry */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* interface */
   --ease-lux: cubic-bezier(0.19, 1, 0.22, 1); /* decoration (Van Cleef's curve) */
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* the sheen */
   --ease-wipe: cubic-bezier(0.4, 0, 0.2, 1); /* bars that fill */
+  /*
+   * Scroll-driven timelines, always written as var() in components: a literal
+   * `animation-timeline: view()` next to an `animation` shorthand gets folded into that
+   * shorthand by the CSS minifier (Lightning CSS), browsers reject the result, and the effect
+   * silently dies in the build. A var() cannot be folded. Named timelines (--sline, --btb,
+   * --rail) are safe as they are.
+   */
+  --tl-view: view();
+  --tl-scroll: scroll(root);
 
   /* ---------- Masks (gradients appear only here, as alpha ramps) ---------- */
   --feather-x: 14%;
@@ -210,13 +213,6 @@
   --z-header: 30;
   --z-dialog: 40; /* fallback when the top layer is unavailable */
   --z-skip: 50;
-
-  /* ---------- Deprecated aliases: WP6 removes them once no component uses them ---------- */
-  --ease: var(--ease-out);
-  --dur-fast: var(--dur-quick);
-  --dur-base: var(--dur-ui);
-  --z-nav: var(--z-header);
-  --strip-h: 0rem;
 }
 
 @media (min-width: 64em) {
@@ -235,5 +231,7 @@
     --dur-sheen: 0ms;
     --dur-page: 0ms;
     --dur-morph: 0ms;
+    --dur-dim: 0ms;
+    --dur-lit: 0ms;
   }
 }

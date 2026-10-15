@@ -1,0 +1,592 @@
+---
+/**
+ * The styles line (docs/design-system-v2.md §5.5, §8.2 section 6): the place-based collections
+ * set west to east of Dubai on one bronze axis. Schematic, and says so: positions come from each
+ * collection's rounded `longitude`, Dubai from the flagship's map pin; no degrees are printed.
+ *
+ *   full  Desktop (64em): a 1 px bronze axis across the track, drawn outward from Dubai in two
+ *         segments (scale, transform-origin at Dubai); labels alternate above and below in
+ *         west-to-east order, the first edge-aligned to the start and the last to the end; the
+ *         west and east label groups fade in as two wrappers (four animated elements in all).
+ *         Each label: shortName in Cormorant italic, the content `origin` line, karats in .fig.
+ *         Dubai is the C-ring with "Our {four} branches" (to /stores/). Phones: a vertical axis
+ *         at the inline start, labels stacked west to east. Two visible captions follow.
+ *   mini  Names only: a 120 px strip on desktop, a 240 px column on phones. The `lit` style is
+ *         in --accent with a filled marker; the others --muted with hollow ones; Dubai marked.
+ *
+ * Every animation sits inside prefers-reduced-motion: no-preference and @supports view(); the
+ * static state is the drawn line with every label shown.
+ */
+import Icon from '@/components/ui/Icon.astro';
+import { flagship, openBranches, site } from '@/data/site';
+import type { DesignCollection } from '@/lib/content';
+import { countWord } from '@/lib/format';
+import { routes } from '@/lib/routes';
+
+export interface Props {
+  collections: DesignCollection[];
+  variant?: 'full' | 'mini';
+  /** Collection id to light (mini on collection pages). */
+  lit?: string;
+}
+
+const { collections, variant = 'full', lit } = Astro.props;
+
+const dubaiLon = flagship.map?.geo?.longitude ?? site.map.geo.longitude;
+type Stop =
+  { kind: 'style'; lon: number; entry: DesignCollection } | { kind: 'dubai'; lon: number };
+const stops: Stop[] = [
+  ...collections
+    .filter((c) => typeof c.data.longitude === 'number')
+    .map((entry) => ({ kind: 'style' as const, lon: entry.data.longitude as number, entry })),
+  { kind: 'dubai' as const, lon: dubaiLon },
+].sort((a, b) => a.lon - b.lon);
+
+const lons = stops.map((s) => s.lon);
+const min = Math.min(...lons);
+const max = Math.max(...lons);
+const pos = (lon: number) => (max > min ? (lon - min) / (max - min) : 0.5);
+const dubaiIndex = stops.findIndex((s) => s.kind === 'dubai');
+const dubaiX = pos(dubaiLon);
+/** Phones: where Dubai sits down the stacked list (centre of its row), for the axis split. */
+const dubaiY = (dubaiIndex + 0.5) / stops.length;
+
+const placed = stops.map((stop, i) => ({
+  ...stop,
+  x: pos(stop.lon),
+  side: i % 2 === 0 ? 'up' : 'down',
+  edge: i === 0 ? 'first' : i === stops.length - 1 ? 'last' : undefined,
+}));
+const west = placed.slice(0, dubaiIndex);
+const east = placed.slice(dubaiIndex + 1);
+const dubai = placed[dubaiIndex]!;
+type Placed = (typeof placed)[number];
+const styleOf = (s: Placed) => (s.kind === 'style' ? s.entry : null);
+
+const others = collections.filter((c) => typeof c.data.longitude !== 'number');
+const branchCount = countWord(openBranches.length).toLowerCase();
+const karatList = (c: DesignCollection) => c.data.karats.map((k) => `${k}K`).join(' · ');
+const fmt = (n: number) => n.toFixed(4);
+---
+
+<div
+  class="sline"
+  data-variant={variant}
+  style={`--dubai:${fmt(dubaiX)};--dubai-y:${fmt(dubaiY)};--n:${stops.length}`}
+>
+  <div class="sline__line">
+    <div class="sline__axis" aria-hidden="true">
+      <i class="sline__seg sline__seg--west"></i>
+      <i class="sline__seg sline__seg--east"></i>
+    </div>
+    {[west, 'dubai', east].map((group) =>
+      group === 'dubai' ? (
+        <p
+          class="sline__stop sline__stop--dubai"
+          data-side={dubai.side}
+          style={`--x:${fmt(dubai.x)};--i:${dubaiIndex}`}
+        >
+          <Icon name="c-ring" class="sline__ring" />
+          <span class="sline__label">
+            <span class="sline__name">Dubai</span>
+            {variant === 'full' && (
+              <a class="sline__meta link-quiet" href={routes.stores}>
+                Our {branchCount} branches
+              </a>
+            )}
+          </span>
+        </p>
+      ) : (
+        <ol
+          class="sline__group"
+          role="list"
+          data-group={group === west ? 'west' : 'east'}
+          aria-label={group === west ? 'West of Dubai' : 'East of Dubai'}
+        >
+          {(group as Placed[]).map((stop) => {
+            const c = styleOf(stop);
+            if (!c) return null;
+            const on = lit === c.id;
+            return (
+              <li
+                class="sline__stop"
+                data-side={stop.side}
+                data-edge={stop.edge}
+                data-lit={on ? '' : undefined}
+                style={`--x:${fmt(stop.x)};--i:${placed.indexOf(stop)}`}
+              >
+                <i class="sline__mark" aria-hidden="true" />
+                <a
+                  class="sline__label"
+                  href={routes.collection(c.id)}
+                  aria-current={on ? 'page' : undefined}
+                >
+                  <span class="sline__name">{c.data.shortName}</span>
+                  {variant === 'full' && (
+                    <>
+                      <span class="sline__meta">{c.data.origin}</span>
+                      <span class="sline__karats fig">{karatList(c)}</span>
+                    </>
+                  )}
+                </a>
+              </li>
+            );
+          })}
+        </ol>
+      ),
+    )}
+  </div>
+  {variant === 'full' && (
+    <div class="sline__captions">
+      <p class="caption">Schematic, west to east. Each style sits roughly where it comes from.</p>
+      {others.length > 0 && (
+        <p class="caption">
+          Also at the counter:{' '}
+          {others.map((c, i) => [
+            i === 0 ? '' : i === others.length - 1 ? ' and ' : ', ',
+            <a href={routes.collection(c.id)}>{c.data.shortName}</a>,
+            i === others.length - 1 ? '.' : '',
+          ])}
+        </p>
+      )}
+    </div>
+  )}
+</div>
+
+<style>
+  /* ============================== Shared ============================== */
+  .sline {
+    --mark: var(--space-2);
+    --ring: var(--space-6);
+    min-inline-size: 0;
+  }
+
+  .sline__line {
+    position: relative;
+  }
+
+  .sline__axis {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .sline__seg {
+    position: absolute;
+    background: var(--rule-gold);
+  }
+
+  .sline__group {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sline__stop {
+    position: relative;
+    margin: 0;
+  }
+
+  /* A square turned 45°: hollow, filled when lit. */
+  .sline__mark {
+    position: absolute;
+    inline-size: var(--mark);
+    block-size: var(--mark);
+    background: var(--ground);
+    border: 1px solid var(--accent);
+    rotate: 45deg;
+  }
+
+  .sline__stop[data-lit] .sline__mark {
+    background: var(--accent);
+  }
+
+  .sline :global(.sline__ring) {
+    position: absolute;
+    inline-size: var(--ring);
+    block-size: var(--ring);
+    max-inline-size: none;
+    color: var(--accent);
+    background: var(--ground);
+  }
+
+  .sline__label {
+    display: grid;
+    gap: var(--space-1);
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  .sline__name {
+    position: relative;
+    justify-self: start;
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-style: italic;
+    font-weight: var(--fw-display-small);
+    line-height: 1.1;
+    color: var(--fg);
+  }
+
+  /* The underline wipe on a style's name. */
+  a.sline__label .sline__name::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: -0.1em;
+    block-size: 1px;
+    background: var(--wipe);
+    scale: 0 1;
+    transform-origin: 0 50%;
+    transition: scale var(--dur-slow) var(--ease-lux);
+  }
+
+  a.sline__label:is(:hover, :focus-visible) .sline__name::after {
+    scale: 1 1;
+  }
+
+  a.sline__label:is(:hover, :focus-visible) .sline__name {
+    color: var(--accent);
+  }
+
+  .sline__stop--dubai .sline__name {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .sline__meta {
+    font-size: var(--t-small);
+    line-height: 1.4;
+    color: var(--muted);
+  }
+
+  a.sline__meta {
+    min-block-size: var(--tap-inline);
+    color: var(--link);
+  }
+
+  .sline__karats {
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    color: var(--eyebrow);
+  }
+
+  .sline__captions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-3) var(--space-6);
+    margin-block-start: var(--space-7);
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .sline__captions .caption {
+    max-inline-size: 40rem;
+  }
+
+  .sline__captions a {
+    color: var(--body);
+  }
+
+  .sline__captions a:hover {
+    color: var(--link-hover);
+  }
+
+  /* ============================== Vertical (phones; mini on phones) ============================== */
+  .sline__line {
+    display: grid;
+    padding-inline-start: var(--space-7);
+  }
+
+  .sline__axis {
+    inset-block: var(--space-5);
+    inset-inline-start: var(--space-3);
+    inline-size: 1px;
+  }
+
+  .sline__seg {
+    inset-inline: 0;
+  }
+
+  .sline__seg--west {
+    inset-block: 0 calc((1 - var(--dubai-y)) * 100%);
+    transform-origin: 50% 100%;
+  }
+
+  .sline__seg--east {
+    inset-block: calc(var(--dubai-y) * 100%) 0;
+    transform-origin: 50% 0;
+  }
+
+  .sline__stop {
+    padding-block: var(--space-3);
+  }
+
+  .sline__mark {
+    inset-inline-start: calc(var(--space-3) - var(--space-7) - var(--mark) / 2);
+    inset-block-start: calc(var(--space-3) + 0.85em);
+  }
+
+  .sline :global(.sline__ring) {
+    inset-inline-start: calc(var(--space-3) - var(--space-7) - var(--ring) / 2);
+    inset-block-start: calc(var(--space-3) + 0.85em - var(--ring) / 2 + var(--mark) / 2);
+  }
+
+  .sline__stop--dubai {
+    padding-block: var(--space-4);
+  }
+
+  /* mini on phones: a 240 px column, names only. */
+  .sline[data-variant='mini'] .sline__line {
+    block-size: 15rem;
+    grid-template-rows: repeat(var(--n), 1fr);
+    align-content: stretch;
+  }
+
+  .sline[data-variant='mini'] .sline__axis {
+    inset-block: 0;
+  }
+
+  .sline[data-variant='mini'] .sline__group {
+    display: contents;
+  }
+
+  .sline[data-variant='mini'] .sline__stop {
+    display: flex;
+    align-items: center;
+    padding-block: 0;
+  }
+
+  .sline[data-variant='mini'] .sline__mark {
+    inset-block-start: calc(50% - var(--mark) / 2);
+  }
+
+  .sline[data-variant='mini'] :global(.sline__ring) {
+    --ring: var(--space-5);
+    inline-size: var(--ring);
+    block-size: var(--ring);
+    inset-inline-start: calc(var(--space-3) - var(--space-7) - var(--ring) / 2);
+    inset-block-start: calc(50% - var(--ring) / 2);
+  }
+
+  .sline[data-variant='mini'] .sline__name {
+    font-size: var(--t-name);
+  }
+
+  .sline[data-variant='mini'] .sline__stop:not([data-lit], .sline__stop--dubai) .sline__name {
+    color: var(--muted);
+  }
+
+  .sline[data-variant='mini'] .sline__stop:not([data-lit]) .sline__mark {
+    border-color: var(--rule-strong);
+  }
+
+  .sline[data-variant='mini'] .sline__label {
+    min-block-size: var(--tap-inline);
+    align-content: center;
+  }
+
+  /* ============================== Horizontal (desktop) ============================== */
+  @media (min-width: 64em) {
+    .sline {
+      --label: 11rem;
+      --gap: var(--space-5);
+    }
+
+    .sline__line {
+      display: block;
+      block-size: 18rem;
+      padding: 0;
+    }
+
+    .sline__axis {
+      inset-inline: 0;
+      inset-block: 50% auto;
+      inline-size: auto;
+      block-size: 1px;
+    }
+
+    .sline__seg {
+      inset-block: 0;
+    }
+
+    .sline__seg--west {
+      inset-inline: 0 calc((1 - var(--dubai)) * 100%);
+      transform-origin: 100% 50%;
+    }
+
+    .sline__seg--east {
+      inset-inline: calc(var(--dubai) * 100%) 0;
+      transform-origin: 0 50%;
+    }
+
+    .sline__group {
+      position: absolute;
+      inset: 0;
+    }
+
+    .sline__stop,
+    .sline__stop--dubai {
+      position: absolute;
+      inset-inline-start: calc(var(--x) * 100%);
+      inset-block-start: 50%;
+      padding: 0;
+    }
+
+    .sline__mark {
+      inset-inline-start: calc(var(--mark) / -2);
+      inset-block-start: calc(var(--mark) / -2);
+    }
+
+    .sline :global(.sline__ring) {
+      inset-inline-start: calc(var(--ring) / -2);
+      inset-block-start: calc(var(--ring) / -2);
+    }
+
+    .sline__label {
+      position: absolute;
+      inline-size: var(--label);
+      translate: -50% 0;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .sline__name {
+      justify-self: center;
+    }
+
+    /* The tick from the axis to the label. */
+    .sline__label::before {
+      content: '';
+      position: absolute;
+      inset-inline-start: 50%;
+      inline-size: 1px;
+      block-size: calc(var(--gap) - var(--space-2));
+      background: var(--rule-strong);
+    }
+
+    [data-side='up'] > .sline__label {
+      inset-block-end: var(--gap);
+    }
+
+    [data-side='up'] > .sline__label::before {
+      inset-block-end: calc((var(--gap) - var(--space-2)) * -1);
+    }
+
+    [data-side='down'] > .sline__label {
+      inset-block-start: var(--gap);
+    }
+
+    [data-side='down'] > .sline__label::before {
+      inset-block-start: calc((var(--gap) - var(--space-2)) * -1);
+    }
+
+    .sline__stop--dubai > .sline__label {
+      inset-block-start: calc(var(--gap) + var(--space-3));
+    }
+
+    .sline__stop--dubai > .sline__label::before {
+      display: none;
+    }
+
+    [data-edge='first'] > .sline__label {
+      translate: 0 0;
+      justify-items: start;
+      text-align: start;
+    }
+
+    [data-edge='first'] .sline__name {
+      justify-self: start;
+    }
+
+    [data-edge='first'] > .sline__label::before {
+      inset-inline-start: 0;
+    }
+
+    [data-edge='last'] > .sline__label {
+      translate: -100% 0;
+      justify-items: end;
+      text-align: end;
+    }
+
+    [data-edge='last'] .sline__name {
+      justify-self: end;
+    }
+
+    [data-edge='last'] > .sline__label::before {
+      inset-inline-start: auto;
+      inset-inline-end: 0;
+    }
+
+    /* mini on desktop: a 120 px strip, names only. */
+    .sline[data-variant='mini'] {
+      --label: 8rem;
+      --gap: var(--space-4);
+    }
+
+    .sline[data-variant='mini'] .sline__line {
+      display: block;
+      block-size: 7.5rem;
+    }
+
+    .sline[data-variant='mini'] .sline__group {
+      display: block;
+    }
+
+    .sline[data-variant='mini'] .sline__stop {
+      display: block;
+    }
+
+    .sline[data-variant='mini'] .sline__axis {
+      inset-block: 50% auto;
+    }
+
+    .sline[data-variant='mini'] .sline__mark {
+      inset-block-start: calc(var(--mark) / -2);
+    }
+
+    .sline[data-variant='mini'] :global(.sline__ring) {
+      inset-inline-start: calc(var(--ring) / -2);
+      inset-block-start: calc(var(--ring) / -2);
+    }
+
+    .sline[data-variant='mini'] .sline__stop--dubai > .sline__label {
+      inset-block-start: calc(var(--gap) + var(--space-1));
+    }
+  }
+
+  /* ============================== Motion ============================== */
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .sline[data-variant='full'] .sline__line {
+        view-timeline: --sline block;
+      }
+
+      .sline[data-variant='full'] .sline__seg {
+        animation: grow-y linear both;
+        animation-timeline: --sline;
+        animation-range: entry 20% cover 45%;
+      }
+
+      .sline[data-variant='full'] .sline__group {
+        animation: sline-fade linear both;
+        animation-timeline: --sline;
+        animation-range: entry 45% cover 50%;
+      }
+
+      @media (min-width: 64em) {
+        .sline[data-variant='full'] .sline__seg {
+          animation-name: grow-x;
+          animation-range: entry 40% cover 40%;
+        }
+      }
+    }
+  }
+
+  @keyframes sline-fade {
+    from {
+      opacity: 0;
+    }
+  }
+</style>

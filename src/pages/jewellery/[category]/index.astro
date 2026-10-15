@@ -1,35 +1,52 @@
 ---
 /**
- * Category page (/jewellery/{category}/): the pieces of one type in a filterable tray, with a
- * short buying guide for that type. Follows docs/design-spec.md §7.3; the guide copy draws on
- * docs/research/facts-and-sources.md (karat purities, pricing formula, VAT).
+ * A category (/jewellery/{category}/), docs/design-system-v2.md §6.3. The ground follows the
+ * category's photographs (content `ground`):
+ *
+ *   velvet (necklaces)  opens on the stage: the name at display size in italic, the intro, and a
+ *                       small salon of the first three pieces lit at 300 px (the first is the
+ *                       priority image); then the filters and the lit wall (stage).
+ *   studio, several     opens on ivory with the first cut-out on its lilac plate at native width;
+ *                       then the filters and the lilac counter (PlateGrid).
+ *   studio, one piece   the opener's plate is that piece (a link, with its name, today's rate and
+ *                       WhatsApp beneath), so the same photograph is never shown twice; no
+ *                       filters, and the honest line "One piece photographed so far."
+ *   nothing yet         (coins and bars) a typeset parchment square with the name and today's
+ *                       rate for the category's karat; never a borrowed photograph.
+ *
+ * Then the buying notes for the category (three short numbered notes) and the enquiry band.
+ * No FAQ on category pages.
  */
 import type { InferGetStaticPropsType } from 'astro';
 
-import AssuranceLedger from '@/components/sections/AssuranceLedger.astro';
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
-import Faq from '@/components/sections/Faq.astro';
+import CaseWall from '@/components/sections/CaseWall.astro';
+import EnquiryBand from '@/components/sections/EnquiryBand.astro';
 import Filters from '@/components/sections/Filters.astro';
-import Hero from '@/components/sections/Hero.astro';
-import ProductCard from '@/components/sections/ProductCard.astro';
-import TrayGrid from '@/components/sections/TrayGrid.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
-import Button from '@/components/ui/Button.astro';
-import Icon from '@/components/ui/Icon.astro';
+import PlateGrid from '@/components/sections/PlateGrid.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Plate from '@/components/ui/Plate.astro';
+import RateFigure from '@/components/ui/RateFigure.astro';
+import Section from '@/components/ui/Section.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
+import StageImage from '@/components/ui/StageImage.astro';
+import { site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import {
+  collectionShortNames,
   getCategories,
   getDesignCollections,
-  getFaqGroup,
   getProductsByCategory,
+  productPath,
+  splitByGround,
 } from '@/lib/content';
-import { countWord } from '@/lib/format';
+import { formatKarat } from '@/lib/format';
 import { getRates } from '@/lib/rates';
 import { routes } from '@/lib/routes';
 import { itemListSchema } from '@/lib/schema';
 import { TITLE_MAX } from '@/lib/seo';
-import { whatsappForRange } from '@/lib/whatsapp';
+import { KARAT_FACTS, toDisplayKarat, type DisplayKarat } from '@/lib/tones';
+import { whatsappForProduct, whatsappForRange, whatsappUrl } from '@/lib/whatsapp';
 
 export async function getStaticPaths() {
   const categories = await getCategories();
@@ -43,50 +60,59 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { category } = Astro.props as Props;
 const { data } = category;
 
-const [products, categories, collections, faq, rates] = await Promise.all([
+const [products, categories, collections, rates] = await Promise.all([
   getProductsByCategory(category.id),
   getCategories(),
   getDesignCollections(),
-  getFaqGroup('jewellery'),
   getRates(),
 ]);
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const rate = rates.latest;
+const names = collectionShortNames(collections);
 const shortName = data.shortName ?? data.name;
-const collectionName = new Map(collections.map((c) => [c.id, c.data.name]));
-const shortCollection = (name: string) => name.replace(/ (Collection|Jewellery)$/i, '');
+const lower = shortName.toLowerCase();
+const { velvet, lilac } = splitByGround(products);
 
+/** Which opener: the ground follows the category's photographs. */
+const mode =
+  products.length === 0
+    ? 'none'
+    : data.ground === 'velvet' && velvet.length > 0
+      ? 'velvet'
+      : products.length === 1
+        ? 'single'
+        : 'studio';
+const ground = mode === 'velvet' ? 'stage' : 'ivory';
+const salon = velvet.slice(0, 3);
+const lead = lilac[0];
+const single = mode === 'single' ? products[0] : undefined;
+
+/** Facets present, in the order the counter reads them. */
 const karats = [22, 21, 18, 24].filter((k) => products.some((p) => p.data.karat === k));
-const collectionsHere = collections
+const stylesHere = collections
   .filter((c) => products.some((p) => p.data.collection?.id === c.id))
-  .map((c) => ({
-    id: c.id,
-    name: shortCollection(c.data.name),
-    count: products.filter((p) => p.data.collection?.id === c.id).length,
-  }));
+  .map((c) => ({ id: c.id, name: c.data.shortName }));
 const otherCategories = categories
   .filter((c) => c.id !== category.id)
   .map((c) => ({ id: c.id, name: c.data.shortName ?? c.data.name }));
+const grids = [velvet.length ? 'grid-velvet' : '', lilac.length ? 'grid-studio' : ''].filter(
+  Boolean,
+);
 
-/** Name only the facets the Filters block will actually offer (it renders nothing under three). */
-const facets = [
-  karats.length > 1 ? 'karat' : null,
-  collectionsHere.length > 1 ? 'collection' : null,
-].filter(Boolean);
-const filterLine =
-  products.length >= 3 && facets.length > 0
-    ? `Filter by ${facets.join(' or ')}; the address stays the same. `
-    : '';
+/** Nothing photographed: today's rate for the karat the category is sold in (24K for bullion). */
+const emptyKarat: DisplayKarat = category.id === 'gold-coins-bars' ? '24k' : '22k';
+const typesetName = shortName.replace(/\s*&\s*/g, ' and ');
 
-/** The lead is the first sentence of the intro; the prose block repeats the whole intro. */
-const firstSentence = data.intro.match(/^[^.!?]+[.!?]/)?.[0]?.trim() ?? data.intro;
 const title = data.title.length <= TITLE_MAX ? data.title : `${data.name} in Dubai`;
-const whatsapp = whatsappForRange(`${data.name} range`);
+const rangeWhatsapp = whatsappForRange(`${data.name} range`);
+const coinsWhatsapp = whatsappUrl(
+  `${site.whatsapp.greeting} what is today’s price for gold coins and bars?`,
+);
 
 /**
- * Buying notes per category: karat choice, weight and making charge, from the facts file.
- * Keyed by category id; the fallback covers any category added later.
+ * Buying notes per category: karat, weight and making charge (from docs/research). Keyed by
+ * category id; the fallback covers any category added later.
  */
 const guides: Record<string, string[]> = {
   necklaces: [
@@ -156,216 +182,438 @@ const jsonLd =
         ),
       ]
     : [];
+const crumbs = [
+  { name: 'Jewellery', href: routes.jewellery },
+  { name: shortName, href: routes.category(category.id) },
+];
 ---
 
-<BaseLayout ground="ivory" title={title} description={data.description} jsonLd={jsonLd}>
-  <div class="container container--wide">
-    <Breadcrumbs
-      items={[
-        { name: 'Jewellery', href: routes.jewellery },
-        { name: shortName, href: routes.category(category.id) },
-      ]}
-    />
-  </div>
+<BaseLayout ground={ground} title={title} description={data.description} jsonLd={jsonLd}>
+  {mode === 'velvet' && (
+    <PageHead
+      tone="stage"
+      id="category"
+      layout="split"
+      size="display"
+      italic
+      breadcrumbs={crumbs}
+      eyebrow="By piece"
+      title={data.name}
+      lead={data.intro}
+    >
+      <div slot="media" class="salon" data-count={salon.length}>
+        {salon.map((p, i) => (
+          <a class="salon__case" href={productPath(p)} aria-label={p.data.name}>
+            <StageImage
+              image={p.data.images[0]!.src}
+              alt=""
+              mask="spot"
+              cap={300}
+              priority={i === 0}
+              sizes="(min-width: 64em) 300px, 33vw"
+            />
+          </a>
+        ))}
+      </div>
+    </PageHead>
+  )}
 
-  <Hero
-    eyebrow="By piece"
-    title={data.name}
-    lead={firstSentence}
-    media={data.image ? 'banner' : 'none'}
-    image={data.image}
-    imageAlt={data.imageAlt ?? ''}
-  >
-    <Button href={routes.goldRate}>Today’s gold rate</Button>
-    <Button href={whatsapp} variant="secondary" icon="whatsapp" external>
-      Ask what is in the trays
-    </Button>
-  </Hero>
+  {mode === 'studio' && lead && (
+    <PageHead
+      tone="ivory"
+      id="category"
+      layout="split"
+      size="display"
+      italic
+      breadcrumbs={crumbs}
+      eyebrow="By piece"
+      title={data.name}
+      lead={data.intro}
+    >
+      <div slot="media" class="counter">
+        <Plate
+          image={lead.data.images[0]!.src}
+          alt={lead.data.images[0]!.alt}
+          cap={lead.data.images[0]!.src.width}
+          priority
+        />
+      </div>
+    </PageHead>
+  )}
 
-  <section class="section section--ruled" id="pieces">
-    <div class="container container--wide">
-      {products.length > 0 ? (
-        <Fragment>
-          <SectionHead
-            eyebrow="In the trays"
-            title={`${countWord(products.length)} ${products.length === 1 ? 'piece' : 'pieces'} online. More in store.`}
-          >
-            {filterLine}Enquire sends the piece’s reference straight to the counter.
-          </SectionHead>
+  {mode === 'single' && single && (
+    <PageHead
+      tone="ivory"
+      id="category"
+      layout="split"
+      size="display"
+      italic
+      breadcrumbs={crumbs}
+      eyebrow="By piece"
+      title={data.name}
+      lead={data.intro}
+    >
+      <figure slot="media" class="counter counter--piece">
+        <a class="counter__plate" href={productPath(single)} data-morph-href={productPath(single)}>
+          <Plate
+            image={single.data.images[0]!.src}
+            alt={single.data.images[0]!.alt}
+            cap={single.data.images[0]!.src.width}
+            priority
+          />
+        </a>
+        <figcaption class="counter__cap">
+          {single.data.collection && names[single.data.collection.id] && (
+            <span class="eyebrow">{names[single.data.collection.id]}</span>
+          )}
+          <a class="counter__name" href={productPath(single)}>
+            {single.data.name}
+          </a>
+          <span class="counter__meta small fig">
+            {formatKarat(single.data.karat)}
+            {rate && (
+              <>
+                {' · '}
+                <RateFigure rate={rate} karat={toDisplayKarat(single.data.karat)} format="aed" /> a
+                gram today
+              </>
+            )}
+          </span>
+          <span class="counter__note small">One piece photographed so far. Ask us for more.</span>
+          <span class="counter__acts">
+            <MoreLink href={productPath(single)}>See the piece</MoreLink>
+            <MoreLink
+              href={whatsappForProduct({
+                name: single.data.name,
+                sku: single.data.sku,
+                url: new URL(productPath(single), origin).toString(),
+              })}
+              external
+              icon="whatsapp"
+            >
+              Ask on WhatsApp
+            </MoreLink>
+          </span>
+        </figcaption>
+      </figure>
+    </PageHead>
+  )}
+
+  {mode === 'none' && (
+    <PageHead
+      tone="ivory"
+      id="category"
+      layout="split"
+      size="display"
+      italic
+      breadcrumbs={crumbs}
+      eyebrow="By piece"
+      title={data.name}
+      lead={data.intro}
+    >
+      <div slot="media" class="typeset">
+        <p class="typeset__name">{typesetName}</p>
+        <p class="typeset__note small">Not photographed yet.</p>
+        <p class="typeset__rate">
+          <span class="eyebrow">{KARAT_FACTS[emptyKarat].label} today, per gram</span>
+          <RateFigure rate={rate} karat={emptyKarat} format="aed" class="typeset__fig" />
+        </p>
+      </div>
+    </PageHead>
+  )}
+
+  {(mode === 'velvet' || mode === 'studio') && (
+    <Section
+      tone={mode === 'velvet' ? 'stage' : 'ivory'}
+      class="pieces"
+      labelledby="pieces-title"
+      ruled={mode === 'studio'}
+    >
+      <h2 id="pieces-title" class="sr-only">
+        {data.name}, photographed
+      </h2>
+      {products.length >= 3 && (
+        <div class="pieces__filters">
           <Filters
-            gridId="tray-category"
+            grids={grids}
             total={products.length}
             karats={karats}
-            collections={collectionsHere}
+            collections={stylesHere}
             categories={otherCategories}
+            rate={rate}
           />
-          <TrayGrid id="tray-category" filterable>
-            {products.map((p) => (
-              <ProductCard
-                product={p}
-                collectionName={
-                  p.data.collection ? collectionName.get(p.data.collection.id) : undefined
-                }
-                rate={rate}
-              />
-            ))}
-          </TrayGrid>
-        </Fragment>
-      ) : (
-        <div class="empty">
-          <div class="empty__text">
-            <h2 class="empty__title">Nothing from this tray is online yet.</h2>
-            <p class="lead">
-              Ask us on WhatsApp; we have more in the trays than on the site. Tell us the weight and
-              karat you have in mind and we will reply with what is in stock.
-            </p>
-          </div>
-          <Button href={whatsapp} icon="whatsapp" external>
-            Ask on WhatsApp
-          </Button>
         </div>
       )}
-    </div>
-  </section>
+      {velvet.length > 0 && (
+        <CaseWall
+          products={velvet}
+          rate={rate}
+          collectionNames={names}
+          layout="grid"
+          columns={3}
+          id="grid-velvet"
+          filterable
+        />
+      )}
+      {mode === 'studio' && (
+        <PlateGrid
+          products={lilac}
+          rate={rate}
+          collectionNames={names}
+          columns={3}
+          id="grid-studio"
+          filterable
+        />
+      )}
+    </Section>
+  )}
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <div class="prose guide">
-          <h2>Choosing {shortName.toLowerCase()} in the UAE</h2>
-          <p>{data.intro}</p>
-          {guide.map((para) => (
-            <p>{para}</p>
-          ))}
-          <p class="small">
-            Rates and pricing in full on the <a href={routes.goldRate}>gold-rate page</a>; the
-            hallmark, diamond and return terms on <a href={routes.promise}>our promise page</a>.
-          </p>
-        </div>
-        {collectionsHere.length > 0 && (
-          <div class="also">
-            <h3 class="also__title">Also by collection</h3>
-            <ul class="rows" role="list">
-              {collectionsHere.map((c) => (
-                <li>
-                  <a class="also__link link-quiet" href={routes.collection(c.id)}>
-                    <span>{c.name}</span>
-                    <span class="small tabular">
-                      {c.count} {c.count === 1 ? 'piece' : 'pieces'} here
-                      <Icon name="arrow-right" />
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <Faq heading={faq.data.heading} items={faq.data.items} />
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <SectionHead
-        eyebrow="Our terms, in writing"
-        title="Hallmark on every piece. Diamonds tested. 14 days to return."
-      >
-        <Fragment slot="aside">
-          <a class="link-quiet section__link" href={routes.promise}>
-            All six promises <Icon name="arrow-right" />
-          </a>
-        </Fragment>
-      </SectionHead>
-      <AssuranceLedger variant="condensed" />
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <EnquiryBlock
-        heading={`Ask about ${shortName.toLowerCase()}`}
-        text={`Send a photo of what you are looking for, or the weight and karat you have in mind, and we will reply with what is in the ${shortName.toLowerCase()} trays and today’s price.`}
-        whatsappUrl={whatsapp}
-        whatsappLabel="Enquire on WhatsApp"
+  {mode === 'velvet' && lilac.length > 0 && (
+    <Section tone="ivory" labelledby="studio-title">
+      <SectionHead id="studio-title" title="From the studio" shape="stack" />
+      <PlateGrid
+        products={lilac}
+        rate={rate}
+        collectionNames={names}
+        columns={3}
+        id="grid-studio"
+        filterable
       />
-    </div>
-  </section>
+    </Section>
+  )}
+
+  <Section tone={ground === 'stage' ? 'ivory' : 'parchment'} labelledby="notes-title">
+    <SectionHead id="notes-title" title={`Choosing ${lower}`} shape="split" class="reveal">
+      Three things to ask at the counter.
+      <Fragment slot="aside">
+        <MoreLink href={`${routes.goldRate}#price`}>How a price is built</MoreLink>
+      </Fragment>
+    </SectionHead>
+    <ol class="notes" role="list">
+      {guide.map((note, i) => (
+        <li class="notes__item">
+          <span class="notes__n fig" aria-hidden="true">
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <p class="notes__text">{note}</p>
+        </li>
+      ))}
+    </ol>
+  </Section>
+
+  {mode === 'none' && category.id === 'gold-coins-bars' ? (
+    <EnquiryBand
+      title="Ask which"
+      accent="weights are in stock"
+      text="Tell us the weight you want, in 24K or 22K, and we will reply with what the counter has today and its price at the day’s rate."
+      whatsappUrl={coinsWhatsapp}
+      secondary={{ href: routes.goldRate, label: 'Today’s gold rate' }}
+      rate={rate}
+      rateKarat="24k"
+    />
+  ) : (
+    <EnquiryBand
+      title="Ask what we have in"
+      accent={`${lower} today`}
+      text={`We photograph a few pieces; the ${lower} trays hold many more. Send a photo of what you have in mind, or the weight and karat, and we will reply with what is in stock.`}
+      whatsappUrl={rangeWhatsapp}
+      secondary={{ href: routes.stores, label: 'Find a branch' }}
+    />
+  )}
 </BaseLayout>
 
+<script src="@/scripts/piece-morph.ts"></script>
+
 <style>
-  .section__link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-weight: 500;
-    color: var(--plum-700);
-  }
-
-  /* The section rule above already divides the tray; no second rule around the empty state. */
-  .empty {
+  /* ---------- Velvet opener: a small salon of lit cases ---------- */
+  .salon {
     display: grid;
-    gap: var(--space-5);
-    align-items: start;
-  }
-
-  .empty__text {
-    max-inline-size: 40rem;
-  }
-
-  .empty__title {
-    margin-block-end: var(--space-4);
-  }
-
-  .guide > h2 {
-    margin-block-start: 0;
-  }
-
-  .also {
-    align-self: start;
-  }
-
-  .also__title {
-    margin-block-end: var(--space-4);
-  }
-
-  .also__link {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    min-block-size: var(--tap);
-    padding-block: var(--space-3);
-    color: var(--ink-900);
-    font-size: var(--t-title);
-    font-weight: 500;
-  }
-
-  .also__link .small {
-    display: inline-flex;
-    align-items: center;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-2);
-    white-space: nowrap;
   }
 
-  .also__link .icon {
-    color: var(--gold-600);
+  .salon__case {
+    display: block;
+    min-inline-size: 0;
+  }
+
+  .salon[data-count='1'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .salon[data-count='2'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Three: two above, one below between them, the pools of light overlapping. */
+  .salon[data-count='3'] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+  }
+
+  .salon[data-count='3'] .salon__case:nth-child(1) {
+    grid-column: 1 / span 2;
+  }
+
+  .salon[data-count='3'] .salon__case:nth-child(2) {
+    grid-column: 3 / span 2;
+  }
+
+  .salon[data-count='3'] .salon__case:nth-child(3) {
+    grid-column: 2 / span 2;
+    margin-block-start: -18%;
+  }
+
+  /* ---------- Studio opener: the cut-out on a lilac counter ---------- */
+  .counter {
+    display: grid;
+    justify-items: center;
+    margin: 0;
+  }
+
+  .counter > :global(.plate) {
+    inline-size: min(100%, var(--cap));
+  }
+
+  .counter--piece {
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  .counter__plate {
+    display: grid;
+    place-items: center;
+    inline-size: min(100%, var(--cap-velvet));
+    aspect-ratio: 1;
+    padding: var(--space-5);
+    background: var(--plate-lilac);
+  }
+
+  .counter__cap {
+    display: grid;
+    gap: var(--space-2);
+    justify-items: start;
+  }
+
+  .counter__cap .eyebrow {
+    margin: 0;
+  }
+
+  .counter__name {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-style: italic;
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  .counter__name:hover {
+    color: var(--fg);
+    text-decoration: underline;
+    text-decoration-color: var(--wipe);
+  }
+
+  .counter__meta,
+  .counter__note {
+    color: var(--muted);
+  }
+
+  .counter__acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-6);
+  }
+
+  /* ---------- Nothing photographed: the typeset square ---------- */
+  .typeset {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: var(--space-4);
+    inline-size: min(100%, var(--cap-case));
+    aspect-ratio: 1;
+    margin-inline: auto;
+    padding: var(--space-6);
+    background: var(--surface-2);
+    outline: 1px solid var(--rule);
+    outline-offset: calc(var(--space-3) * -1);
+    text-align: center;
+  }
+
+  .typeset__name {
+    font-family: var(--ff-display);
+    font-size: var(--t-display);
+    font-style: italic;
+    font-weight: var(--fw-display);
+    line-height: var(--lh-display);
+    letter-spacing: var(--track-display);
+    color: var(--fg);
+    text-wrap: balance;
+  }
+
+  .typeset__note {
+    color: var(--muted);
+  }
+
+  .typeset__rate {
+    display: grid;
+    gap: var(--space-1);
+    justify-items: center;
+  }
+
+  .typeset__rate .eyebrow {
+    margin: 0;
+  }
+
+  .typeset__rate :global(.typeset__fig) {
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral);
+    font-weight: var(--fw-display-small);
+    color: var(--numeral);
+  }
+
+  /* ---------- The pieces ---------- */
+  :global(.sec.pieces) {
+    padding-block-start: var(--space-6);
+  }
+
+  .pieces__filters {
+    margin-block-end: var(--space-8);
+  }
+
+  /* ---------- Buying notes ---------- */
+  .notes {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .notes__item {
+    display: grid;
+    gap: var(--space-3);
+    align-content: start;
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--rule-strong);
+  }
+
+  .notes__n {
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral);
+    font-weight: var(--fw-display-small);
+    line-height: 1;
+    color: var(--numeral);
+  }
+
+  .notes__text {
+    max-inline-size: var(--measure);
+    color: var(--body);
   }
 
   @media (min-width: 64em) {
-    .empty {
-      grid-template-columns: 7fr 5fr;
-      column-gap: calc(var(--grid-gap) * 2);
-      align-items: center;
-    }
-
-    .empty .btn {
-      justify-self: start;
+    .notes {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: calc(var(--grid-gap) * 1.5);
     }
   }
 </style>

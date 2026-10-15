@@ -1,0 +1,128 @@
+---
+/**
+ * The wide photograph (docs/design-system-v2.md §1.3 "No text on images, retired narrowly", §5.2).
+ * Today story/banner-about.jpg (1920 x 478, a pendant on navy leather); branch photographs later.
+ * Lives in a stage section; never adjacent to plum.
+ *
+ *   Desktop (64em+)  full bleed up to its source width (--cap-pano), its own aspect ratio (no
+ *                    crop), the bottom 28 % feathered into the section ground (--mask-pano); past
+ *                    120 rem it is centred and the sides feather too. The slot sits over the dark
+ *                    field (field="start": columns 1 to 6), where ivory reads at 13.11:1 or better.
+ *   Phones           a 240 px band cropped to the jewel's side; the slot stacks below it on the
+ *                    section ground, never over the photograph.
+ *
+ * Lazy, fetchpriority low, widths 960 / 1440 / 1920 filtered to the source. The root breaks out
+ * of the Section's track by itself (class "bleed") and lays its slot on the same named lines.
+ */
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+export interface Props {
+  image: ImageMetadata; // story/banner-about.jpg today; branch photographs later
+  alt: string;
+  /** Where the dark field is, for text placement and phone crop. */
+  field?: 'start' | 'end';
+  class?: string;
+}
+
+const { image, alt, field = 'start', class: className } = Astro.props;
+
+const widths = [...new Set([960, 1440, 1920, image.width].filter((w) => w <= image.width))].sort(
+  (a, b) => a - b,
+);
+---
+
+<div
+  class:list={['pano', 'bleed', 'track', className]}
+  data-field={field}
+  style={`--pano-cap:min(${image.width}px, var(--cap-pano));--ar:${image.width}/${image.height}`}
+>
+  <figure class="pano__fig bleed">
+    <Picture
+      src={image}
+      alt={alt}
+      formats={['avif', 'webp']}
+      widths={widths}
+      sizes={`(min-width: 120em) ${image.width}px, 100vw`}
+      loading="lazy"
+      decoding="async"
+      fetchpriority="low"
+    />
+  </figure>
+  {Astro.slots.has('default') && (
+    <div class="pano__body">
+      <slot />
+    </div>
+  )}
+</div>
+
+<style>
+  .pano {
+    position: relative;
+    row-gap: var(--space-6);
+  }
+
+  .pano__fig {
+    justify-self: center;
+    inline-size: min(100%, var(--pano-cap));
+    margin: 0;
+    overflow: clip;
+  }
+
+  .pano__fig :global(picture) {
+    display: block;
+  }
+
+  /* Phones: a 240 px band on the jewel's side of the frame (the pendant sits right of centre). */
+  .pano__fig :global(img) {
+    display: block;
+    inline-size: 100%;
+    block-size: 15rem;
+    object-fit: cover;
+    object-position: 64% 50%;
+  }
+
+  .pano[data-field='end'] .pano__fig :global(img) {
+    object-position: 36% 50%;
+  }
+
+  .pano__body {
+    grid-column: content;
+  }
+
+  @media (min-width: 64em) {
+    /* The photograph and the text share one row: the text sits over the dark field. */
+    .pano__fig,
+    .pano__body {
+      grid-row: 1;
+    }
+
+    .pano__fig :global(img) {
+      block-size: auto;
+      aspect-ratio: var(--ar);
+      object-fit: cover;
+      mask-image: var(--mask-pano);
+      mask-size: 100% 100%;
+      mask-repeat: no-repeat;
+    }
+
+    .pano__body {
+      position: relative;
+      align-self: center;
+      inline-size: 50%;
+      padding-block: var(--space-7);
+    }
+
+    .pano[data-field='end'] .pano__body {
+      justify-self: end;
+    }
+  }
+
+  /* Wider than the photograph: centre it and feather its sides into the ground too. */
+  @media (min-width: 120em) {
+    .pano__fig :global(img) {
+      mask-image: var(--mask-pano), var(--mask-pano-sides);
+      mask-composite: intersect;
+    }
+  }
+</style>

@@ -1,0 +1,125 @@
+---
+/**
+ * Every page ends at a person (docs/design-system-v2.md §1.2 rule 7, §5.2). A centred band on
+ * parchment (or the stage): the heading at --t-band with its italic accent, one line of text, the WhatsApp
+ * button (plum on parchment, bronze on the stage) and a quieter second action, and, when given,
+ * today's rate under the actions. Never a photograph. On the stage it opens with the 1 px bronze
+ * seam, because it usually follows another dark section.
+ */
+import Button from '@/components/ui/Button.astro';
+import RateFigure from '@/components/ui/RateFigure.astro';
+import Section from '@/components/ui/Section.astro';
+import type { GoldRate } from '@/lib/gold-rate';
+import { KARAT_FACTS, type DisplayKarat } from '@/lib/tones';
+
+export interface Props {
+  title: string;
+  accent?: string;
+  text?: string;
+  whatsappUrl: string;
+  whatsappLabel?: string; // default "Ask on WhatsApp"
+  secondary?: { href: string; label: string; external?: boolean };
+  tone?: 'parchment' | 'stage'; // default parchment
+  /** Prints "22K today: AED 468.25 a gram" under the actions. */
+  rate?: GoldRate | null;
+  rateKarat?: DisplayKarat;
+  seam?: boolean; // default true when tone is stage
+  id?: string;
+}
+
+const {
+  title,
+  accent,
+  text,
+  whatsappUrl,
+  whatsappLabel = 'Ask on WhatsApp',
+  secondary,
+  tone = 'parchment',
+  rate,
+  rateKarat = '22k',
+  seam = tone === 'stage',
+  id,
+} = Astro.props;
+
+// Unique per band even without an id (a page may close with two).
+const slug = title
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-|-$/g, '');
+const titleId = `${id ?? `enquiry-${slug}`}-title`;
+const secondaryIcon = secondary?.href.startsWith('tel:') ? 'phone' : undefined;
+---
+
+<Section tone={tone} pad="section" seam={seam} id={id} labelledby={titleId}>
+  <div class="enq">
+    <h2 class="enq__title h-band" id={titleId}>
+      {title}
+      {accent && (
+        <>
+          {' '}
+          <em>{accent}</em>
+        </>
+      )}
+    </h2>
+    {text && <p class="enq__text">{text}</p>}
+    <div class="enq__actions actions actions--pair">
+      <Button href={whatsappUrl} icon="whatsapp" external>
+        {whatsappLabel}
+      </Button>
+      {secondary && (
+        <Button
+          href={secondary.href}
+          variant="secondary"
+          icon={secondaryIcon}
+          external={secondary.external}
+        >
+          {secondary.label}
+        </Button>
+      )}
+    </div>
+    {rate && (
+      <p class="enq__rate small">
+        {KARAT_FACTS[rateKarat].label} today:{' '}
+        <RateFigure rate={rate} karat={rateKarat} format="aed" class="enq__fig" /> a gram
+      </p>
+    )}
+  </div>
+</Section>
+
+<style>
+  .enq {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-6);
+    text-align: center;
+  }
+
+  .enq__title {
+    max-inline-size: 22ch;
+  }
+
+  .enq__text {
+    max-inline-size: var(--measure);
+    font-size: var(--t-lead);
+    line-height: 1.55;
+    color: var(--body);
+  }
+
+  .enq__actions {
+    justify-content: center;
+  }
+
+  .enq__rate {
+    color: var(--muted);
+  }
+
+  .enq__rate :global(.enq__fig) {
+    color: var(--fg);
+  }
+
+  @media (max-width: 39.99em) {
+    .enq__actions {
+      inline-size: 100%;
+    }
+  }
+</style>

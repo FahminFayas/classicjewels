@@ -1,8 +1,16 @@
 ---
 /**
- * Button or link styled as a button. Renders <a> when `href` is given, otherwise <button>.
- * Variants: primary (plum fill), secondary (plum outline), text (underline on hover).
- * On a plum surface the colours invert automatically via [data-surface="plum"] in base.css.
+ * Button, or a link styled as one (docs/design-system-v2.md §3.5, §5.2). Renders <a> when `href`
+ * is given, otherwise <button>. Colours come only from the section tone, never from a prop:
+ *
+ *   primary    plum fill and ivory text on light grounds; bronze fill and stage ink on the stage
+ *              and on plum. One filled button per group.
+ *   secondary  1 px outline in the tone's line colour, with a wash on hover.
+ *   text       the link colour with the 1 px underline wipe, at button height.
+ *
+ * 48 px tall (44 px compact), square, sentence case. No shine, no padding growth, no transform.
+ * `external` opens a new tab with rel="noopener" and adds a visually hidden "(opens WhatsApp)" or
+ * "(opens in a new tab)", chosen from the URL.
  */
 import type { HTMLAttributes } from 'astro/types';
 
@@ -11,10 +19,11 @@ import Icon, { type IconName } from '@/components/ui/Icon.astro';
 export interface Props extends HTMLAttributes<'a'> {
   href?: string;
   variant?: 'primary' | 'secondary' | 'text';
+  size?: 'md' | 'compact';
+  block?: boolean;
   icon?: IconName;
   iconEnd?: IconName;
   type?: 'button' | 'submit';
-  /** Opens in a new tab with rel="noopener". Used for WhatsApp and Maps links. */
   external?: boolean;
   class?: string;
 }
@@ -22,6 +31,8 @@ export interface Props extends HTMLAttributes<'a'> {
 const {
   href,
   variant = 'primary',
+  size = 'md',
+  block = false,
   icon,
   iconEnd,
   type = 'button',
@@ -30,7 +41,25 @@ const {
   ...rest
 } = Astro.props;
 
-const classes = ['btn', `btn--${variant}`, className];
+const classes = [
+  'btn',
+  `btn--${variant}`,
+  size === 'compact' && 'btn--compact',
+  block && 'btn--block',
+  className,
+];
+
+/** "(opens WhatsApp)" for wa.me and WhatsApp hosts, "(opens in a new tab)" for anything else. */
+function newTabNote(url: string): string {
+  try {
+    const host = new URL(url, 'https://classicjewels.ae').hostname;
+    return /(^|\.)wa\.me$|(^|\.)whatsapp\.com$/.test(host)
+      ? '(opens WhatsApp)'
+      : '(opens in a new tab)';
+  } catch {
+    return '(opens in a new tab)';
+  }
+}
 ---
 
 {href ? (
@@ -44,6 +73,7 @@ const classes = ['btn', `btn--${variant}`, className];
     {icon && <Icon name={icon} />}
     <slot />
     {iconEnd && <Icon name={iconEnd} />}
+    {external && <span class="sr-only"> {newTabNote(href)}</span>}
   </a>
 ) : (
   <button type={type} class:list={classes} {...(rest as HTMLAttributes<'button'>)}>

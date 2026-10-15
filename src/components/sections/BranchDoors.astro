@@ -1,0 +1,339 @@
+---
+/**
+ * The four doors (docs/design-system-v2.md §5.6, §6.1 section 9, §6.11, §8.2): every branch as a
+ * way in, on a schematic route drawn west to east. Each door is a StoreCard.
+ *
+ *   variant  full     /stores/: facts and long labels; on phones the route turns into a vertical
+ *                     line at the inline start with a station per door. Static (it opens the page).
+ *            home     the home page's closing module: as full, on the wide track; the route draws
+ *                     west to east (.draw-x) and the doors rise as they enter. No route on phones.
+ *            compact  the rate, exchange, contact and about pages, and the foot of a branch page:
+ *                     name and actions only, on the content column. No route on phones.
+ *   lit      a branch id. With `compact` it draws the route miniature for a branch page's opener
+ *            (the four stops by name, this one lit and marked as the current page); with `full`
+ *            or `home` it lights that door's station.
+ *   showSoon the one-line "Opening soon: {names}. Dates to follow." row (default true).
+ *
+ * Data: the open branches in `routeOrder` (west to east: Madinat Zayed, Deira, Rolla Mall, Safari
+ * Mall) and the opening-soon ones, all from src/data/site.ts. Each door prints the hours its
+ * branch publishes on Google, captioned as such until the company confirms them (StoreCard,
+ * src/lib/hours.ts); the route is labelled as a schematic.
+ */
+import StoreCard from '@/components/sections/StoreCard.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { branches, openBranches } from '@/data/site';
+import { hoursCaption } from '@/lib/hours';
+import { routes } from '@/lib/routes';
+
+export interface Props {
+  /** full: /stores/; home: home section; compact: rate, exchange, contact and about pages. */
+  variant?: 'full' | 'home' | 'compact';
+  /** Branch id to light (branch pages). */
+  lit?: string;
+  showSoon?: boolean; // default true
+}
+
+const { variant = 'home', lit, showSoon = true } = Astro.props;
+
+const doors = [...openBranches].sort((a, b) => (a.routeOrder ?? 99) - (b.routeOrder ?? 99));
+const soon = branches.filter((b) => b.status === 'opening-soon');
+// "Mohamed bin Zayed City, Abu Dhabi; Musaffah and Al Ain": names carry commas, so semicolons.
+const soonNames = soon.map((b) => b.name).join('; ');
+
+const mini = variant === 'compact' && Boolean(lit);
+/* Motion only where the doors sit below the first screen: never on /stores/ or an opener. */
+const moving = variant === 'home' || (variant === 'compact' && !lit);
+const caption = 'Schematic, west to east. Not to scale.';
+/* Home: the doors' hours source once, under the four doors ("Hours as listed on Google, ..."). */
+const hoursNote = variant === 'home' ? doors.map((b) => hoursCaption(b)).find(Boolean) : undefined;
+const hoursLine = hoursNote
+  ? `Hours ${hoursNote.charAt(0).toLowerCase()}${hoursNote.slice(1)}.`
+  : undefined;
+---
+
+{mini ? (
+  <nav class="mini" aria-label="Our branches, west to east">
+    <ol class="mini__stops" role="list">
+      {doors.map((b) => {
+        const here = b.id === lit;
+        return (
+          <li class="mini__stop" data-lit={here ? '' : undefined}>
+            {b.isFlagship ? (
+              <Icon name="c-ring" class="mini__ring" />
+            ) : (
+              <span class="mini__station" aria-hidden="true" />
+            )}
+            <a
+              class="mini__name"
+              href={routes.store(b.id)}
+              aria-current={here ? 'page' : undefined}
+            >
+              {b.shortName}
+            </a>
+            <span class="mini__emirate">{b.emirate}</span>
+          </li>
+        );
+      })}
+    </ol>
+    <p class="mini__caption caption">{caption}</p>
+  </nav>
+) : (
+  <div
+    class:list={['doors', variant !== 'compact' && 'wide']}
+    data-variant={variant}
+    data-moving={moving ? '' : undefined}
+  >
+    <div class="doors__route">
+      <p class="doors__ends" aria-hidden="true">
+        <span>West</span>
+        <span class="doors__caption">{caption}</span>
+        <span>East</span>
+      </p>
+      <span class:list={['doors__line', moving && 'draw-x']} aria-hidden="true" />
+      <ol class="doors__list" role="list">
+        {doors.map((b) => (
+          <li class:list={['doors__item', moving && 'reveal']}>
+            <StoreCard branch={b} variant={variant} lit={b.id === lit} />
+          </li>
+        ))}
+      </ol>
+      <p class="doors__caption-phone caption">{caption}</p>
+    </div>
+    {hoursLine && <p class="doors__checked caption">{hoursLine}</p>}
+    {showSoon && soon.length > 0 && (
+      <p class="doors__soon">
+        <span class="eyebrow doors__soon-label">Opening soon</span>
+        <span class="sr-only">: </span>
+        <span>{soonNames}. Dates to follow.</span>
+      </p>
+    )}
+  </div>
+)}
+
+<style>
+  /* ============================== Doors ============================== */
+  .doors {
+    min-inline-size: 0;
+  }
+
+  .doors__route {
+    position: relative;
+  }
+
+  .doors__ends,
+  .doors__line,
+  .doors__caption-phone {
+    display: none;
+  }
+
+  .doors__list {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  /* Phones, home and compact: plain stacked doors; each door's ruled action row closes it. */
+  .doors:not([data-variant='full']) .doors__list {
+    gap: var(--space-7);
+  }
+
+  /* Phones, full: the route turns vertical at the inline start, a station beside each door. */
+  @media (max-width: 63.99em) {
+    .doors[data-variant='full'] .doors__list {
+      padding-inline-start: var(--space-6);
+      border-inline-start: 1px solid var(--wipe);
+    }
+
+    .doors[data-variant='full'] .doors__item {
+      --station-display: block;
+      --station-x: calc(-1 * var(--space-6));
+      --station-y: 0.4em;
+    }
+
+    .doors[data-variant='full'] .doors__caption-phone {
+      display: block;
+      margin-block-start: var(--space-5);
+    }
+  }
+
+  .doors__checked {
+    margin-block-start: var(--space-5);
+  }
+
+  .doors__soon {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-5);
+    margin-block-start: var(--space-7);
+    padding-block: var(--space-4);
+    border-block: 1px solid var(--rule);
+    font-size: var(--t-small);
+    color: var(--body);
+  }
+
+  .doors__checked + .doors__soon {
+    margin-block-start: var(--space-4);
+  }
+
+  .doors__soon-label {
+    margin: 0;
+  }
+
+  /* Desktop: four doors in a row under the route; a station over each column's start. */
+  @media (min-width: 64em) {
+    .doors__ends {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-5);
+      margin-block-end: var(--space-4);
+      font-size: var(--t-eyebrow);
+      font-weight: var(--fw-text-strong);
+      letter-spacing: var(--track-eyebrow);
+      line-height: 1.3;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .doors__caption {
+      font-size: var(--t-caption);
+      font-weight: var(--fw-text);
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .doors__line {
+      position: absolute;
+      display: block;
+      inset-inline: 0;
+      block-size: 1px;
+      background: var(--wipe);
+      transform-origin: 0 50%;
+    }
+
+    [dir='rtl'] .doors__line {
+      transform-origin: 100% 50%;
+    }
+
+    .doors__list {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--grid-gap);
+    }
+
+    /* The station sits on the line: the item's top padding above the door, centred on it. */
+    .doors .doors__item {
+      --pad: var(--space-7);
+      --station-display: block;
+      --station-x: 0;
+      --station-y: calc(-1 * var(--pad));
+
+      padding-block-start: var(--pad);
+    }
+
+    .doors:not([data-variant='full']) .doors__list {
+      gap: var(--grid-gap);
+    }
+
+    .doors[data-variant='compact'] .doors__item {
+      --pad: var(--space-6);
+    }
+  }
+
+  /* ============================== The route miniature (branch opener) ============================== */
+  .mini {
+    min-inline-size: 0;
+  }
+
+  .mini__stops {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+    padding-block-start: var(--space-5);
+  }
+
+  /* The line runs from the first station to the last column's start. */
+  .mini__stops::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    block-size: 1px;
+    background: var(--wipe);
+  }
+
+  .mini__stop {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: var(--space-1);
+    min-inline-size: 0;
+  }
+
+  .mini__station,
+  .mini :global(.mini__ring) {
+    position: absolute;
+    inset-block-start: calc(-1 * var(--space-5));
+    inset-inline-start: 0;
+    background: var(--ground);
+    translate: -50% -50%;
+  }
+
+  [dir='rtl'] :is(.mini__station, .mini :global(.mini__ring)) {
+    translate: 50% -50%;
+  }
+
+  .mini__station {
+    inline-size: var(--space-3);
+    block-size: var(--space-3);
+    border: 1px solid var(--accent);
+    rotate: 45deg;
+  }
+
+  .mini :global(.mini__ring) {
+    inline-size: var(--space-6);
+    block-size: var(--space-6);
+    color: var(--accent);
+  }
+
+  .mini__stop[data-lit] .mini__station {
+    inline-size: var(--space-4);
+    block-size: var(--space-4);
+    background: var(--accent);
+  }
+
+  .mini__stop[data-lit] :global(.mini__ring) {
+    stroke-width: 2;
+  }
+
+  .mini__name {
+    display: inline-flex;
+    align-items: flex-start;
+    min-block-size: var(--tap);
+    padding-block-start: var(--space-2);
+    font-size: var(--t-small);
+    font-weight: var(--fw-text-strong);
+    line-height: 1.3;
+    color: var(--body);
+    text-decoration: none;
+  }
+
+  .mini__name:is(:hover, :focus-visible) {
+    color: var(--fg);
+    text-decoration: underline;
+    text-decoration-color: var(--wipe);
+  }
+
+  .mini__stop[data-lit] .mini__name {
+    color: var(--fg);
+  }
+
+  .mini__emirate {
+    font-size: var(--t-caption);
+    line-height: 1.3;
+    color: var(--muted);
+  }
+
+  .mini__caption {
+    margin-block-start: var(--space-4);
+  }
+</style>

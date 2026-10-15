@@ -1,0 +1,142 @@
+---
+/**
+ * "Your quote, in three lines" (docs/design-system-v2.md §5.2, §6.4 section 3, §6.8 section 4):
+ * how a price is built, as three numbered rows beside the heading (a 5/7 split from 64em).
+ * Gold value (today's rate for the karat, times the gold in the piece), making charge, 5% VAT.
+ * The rate is a RateFigure, so a newer posting reaches it too.
+ *
+ * Content only, designed for an ivory section: the page supplies the Section (and its id, e.g.
+ * id="price" on /gold-rate/) and anything that follows the rows.
+ */
+import RateFigure from '@/components/ui/RateFigure.astro';
+import { site } from '@/data/site';
+import type { GoldRate } from '@/lib/gold-rate';
+import { KARAT_FACTS, type DisplayKarat } from '@/lib/tones';
+
+export interface Props {
+  karat: DisplayKarat;
+  rate: GoldRate | null;
+  title?: string;
+  accent?: string;
+  headingLevel?: 'h2' | 'h3';
+}
+
+const {
+  karat,
+  rate,
+  title = 'Your quote,',
+  accent = 'in three lines',
+  headingLevel: Tag = 'h2',
+} = Astro.props;
+const RowTag = Tag === 'h2' ? 'h3' : 'h4';
+const label = KARAT_FACTS[karat].label;
+const vat = `${Math.round(site.rate.vat * 100)}% VAT`;
+---
+
+<div class="quote">
+  <Tag class="quote__title">
+    {title}
+    {accent && (
+      <>
+        {' '}
+        <em>{accent}</em>
+      </>
+    )}
+  </Tag>
+  <ol class="quote__rows rows" role="list">
+    <li class="quote__row">
+      <span class="quote__n fig" aria-hidden="true">
+        1
+      </span>
+      <div>
+        <RowTag class="quote__name">Gold value</RowTag>
+        <p class="quote__text">
+          Today’s {label} rate,{' '}
+          {rate ? (
+            <>
+              <RateFigure rate={rate} karat={karat} format="aed" class="quote__fig" /> a gram,
+            </>
+          ) : (
+            'asked for at the counter,'
+          )}{' '}
+          times the gold in the piece. We weigh it in front of you.
+        </p>
+      </div>
+    </li>
+    <li class="quote__row">
+      <span class="quote__n fig" aria-hidden="true">
+        2
+      </span>
+      <div>
+        <RowTag class="quote__name">Making charge</RowTag>
+        <p class="quote__text">
+          For the work in the piece, quoted for this piece before you decide.
+        </p>
+      </div>
+    </li>
+    <li class="quote__row">
+      <span class="quote__n fig" aria-hidden="true">
+        3
+      </span>
+      <div>
+        <RowTag class="quote__name">{vat}</RowTag>
+        <p class="quote__text">On the gold value and the making charge.</p>
+      </div>
+    </li>
+  </ol>
+</div>
+
+<style>
+  .quote {
+    display: grid;
+    gap: var(--space-7);
+  }
+
+  .quote__title {
+    font-size: var(--t-h2);
+    max-inline-size: 14ch;
+  }
+
+  .quote__row {
+    display: grid;
+    grid-template-columns: var(--space-7) minmax(0, 1fr);
+    gap: var(--space-4);
+    padding-block: var(--space-5);
+  }
+
+  .quote__n {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
+    line-height: 1.2;
+    color: var(--numeral);
+  }
+
+  .quote__name {
+    font-family: var(--ff-display);
+    font-size: var(--t-h3);
+    line-height: 1.2;
+    color: var(--fg);
+    font-weight: var(--fw-display-small);
+  }
+
+  .quote__text {
+    margin-block-start: var(--space-2);
+    max-inline-size: var(--measure);
+    color: var(--body);
+  }
+
+  .quote__text :global(.quote__fig) {
+    color: var(--fg);
+    font-weight: var(--fw-text-strong);
+    white-space: nowrap;
+  }
+
+  @media (min-width: 64em) {
+    .quote {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: calc(var(--grid-gap) * 2);
+      align-items: start;
+    }
+  }
+</style>

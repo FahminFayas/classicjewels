@@ -1,0 +1,147 @@
+---
+/**
+ * Three facts at the foot of the home hero (docs/design-system-v2.md §5.7, §6.1 section 1, §8.2):
+ * the Google rating of the flagship (linked to the listing, dated), the open branches and where
+ * they are, and the hallmark on 22K. Each is a numeral in Cormorant 400 at --t-numeral in the
+ * tone's --numeral, then two short lines. Three cells across the hero's wide track on desktop,
+ * three ruled rows on phones. Every figure is read from src/data/site.ts and src/lib/tones.ts;
+ * nothing here is typed by hand.
+ */
+import { branches, emirates, openBranches, site } from '@/data/site';
+import { formatDate, listWords } from '@/lib/format';
+import { KARAT_FACTS } from '@/lib/tones';
+
+const { rating, count, asOf, url, of } = site.reviews;
+const soon = [
+  ...new Set(branches.filter((b) => b.status === 'opening-soon').map((b) => b.emirate)),
+];
+const stamps = (['21k', '18k'] as const)
+  .map((k) => `${KARAT_FACTS[k].stamp} on ${KARAT_FACTS[k].label}`)
+  .join(', ');
+---
+
+<ul class="facts" role="list">
+  <li class="facts__cell">
+    <a class="facts__link" href={url} target="_blank" rel="noopener">
+      <span class="facts__n fig">{rating}</span>
+      <span class="facts__text">
+        <span class="facts__line">
+          on Google, from {count} reviews of {of}
+        </span>
+        <span class="facts__sub">as of {formatDate(asOf)}</span>
+      </span>
+      <span class="sr-only"> (opens in a new tab)</span>
+    </a>
+  </li>
+  <li class="facts__cell">
+    <span class="facts__n fig">{openBranches.length}</span>
+    <span class="facts__text">
+      <span class="facts__line">branches in {listWords(emirates)}</span>
+      {soon.length > 0 && <span class="facts__sub">More opening in {listWords(soon)}</span>}
+    </span>
+  </li>
+  <li class="facts__cell">
+    <span class="facts__n fig">{KARAT_FACTS['22k'].stamp}</span>
+    <span class="facts__text">
+      <span class="facts__line">the UAE hallmark on {KARAT_FACTS['22k'].label}</span>
+      <span class="facts__sub">{stamps}</span>
+    </span>
+  </li>
+</ul>
+
+<style>
+  .facts {
+    display: grid;
+    border-block-start: 1px solid var(--rule);
+  }
+
+  /* The numeral and its two lines share a baseline; the numeral never shrinks. */
+  .facts__cell,
+  .facts__link {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-4);
+    min-inline-size: 0;
+  }
+
+  .facts__cell {
+    padding-block: var(--space-4);
+  }
+
+  .facts__cell + .facts__cell {
+    border-block-start: 1px solid var(--rule);
+  }
+
+  .facts__link {
+    flex: 1;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Phones: wide enough for three tabular figures, so the stacked rows' lines align. */
+  .facts__n {
+    flex: none;
+    min-inline-size: 3.2ch;
+    font-family: var(--ff-display);
+    font-size: var(--t-numeral);
+    font-weight: var(--fw-display-small);
+    line-height: 1;
+    color: var(--numeral);
+  }
+
+  .facts__text {
+    display: grid;
+    gap: var(--space-1);
+    min-inline-size: 0;
+  }
+
+  .facts__line {
+    font-size: var(--t-small);
+    line-height: 1.45;
+    color: var(--body);
+  }
+
+  .facts__sub {
+    font-size: var(--t-caption);
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  /* The rating links to the listing: the line takes the bronze wipe colour on hover and focus. */
+  .facts__link .facts__line {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--rule-strong);
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color var(--dur-quick) var(--ease-out);
+  }
+
+  .facts__link:is(:hover, :focus-visible) .facts__line {
+    color: var(--fg);
+    text-decoration-color: var(--wipe);
+  }
+
+  @media (min-width: 48em) {
+    .facts {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .facts__cell {
+      padding-block: var(--space-5);
+    }
+
+    .facts__n {
+      min-inline-size: 0;
+    }
+
+    .facts__cell + .facts__cell {
+      padding-inline-start: var(--space-5);
+      border-block-start: 0;
+      border-inline-start: 1px solid var(--rule);
+    }
+
+    .facts__cell:not(:last-child) {
+      padding-inline-end: var(--space-5);
+    }
+  }
+</style>

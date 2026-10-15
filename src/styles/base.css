@@ -194,57 +194,21 @@ table {
   --ground: var(--stage-1);
 }
 
-/* Plum: where a visitor asks a person. data-surface="plum" is a compatibility alias (WP6 removes). */
-[data-tone='plum'],
-[data-tone='plum-deep'],
-[data-surface='plum'] {
-  --ground: var(--surface-plum);
-  --fg: var(--ink-on-plum);
-  --body: var(--ink-on-plum-muted);
-  --muted: var(--ink-on-plum-muted);
-  --accent: var(--champagne);
-  --eyebrow: var(--champagne);
-  --numeral: var(--champagne);
-  --rule: var(--rule-on-plum);
-  --rule-strong: var(--rule-on-plum-strong);
-  --link: var(--champagne);
-  --link-hover: var(--ink-on-plum);
-  --wipe: var(--champagne);
-  --focus-ring: var(--focus-on-dark);
-  --btn-bg: var(--bronze);
-  --btn-fg: var(--stage-0);
-  --btn-bg-hover: var(--champagne);
-  --btn-fg-hover: var(--stage-0);
-  --btn-line: var(--rule-on-plum-strong);
-  --btn-line-fg: var(--ink-on-plum);
-  --btn-wash: var(--wash-plum);
-  --chip-line: var(--rule-on-plum-strong);
-  --chip-on-bg: var(--champagne);
-  --chip-on-fg: var(--plum-900);
-  --field-bg: transparent;
-  --field-line: var(--rule-on-plum-strong);
-  --ok-tone: var(--ok-on-plum);
-  --err-tone: var(--err-on-plum);
-  color-scheme: dark;
-}
+/* Plum is never a ground (owner decision, 15 October 2026): beside the velvet-sampled stage it
+   read as a second, competing dark. It stays the colour of asking a person on light grounds (the
+   filled button, links, chips) and of the logo. Bands where a visitor asks use parchment. */
 
-[data-tone='plum-deep'] {
-  --ground: var(--surface-plum-deep);
-}
-
-[data-tone],
-[data-surface='plum'] {
+[data-tone] {
   background-color: var(--ground);
   color: var(--body);
 }
 
-[data-tone^='stage'] ::selection,
-[data-tone^='plum'] ::selection {
+[data-tone^='stage'] ::selection {
   background: var(--champagne);
   color: var(--stage-0);
 }
 
-/* The bronze seam between a stage section and a plum section (rule 1). */
+/* The bronze seam where two dark sections meet. */
 .seam {
   border-block-start: 1px solid var(--rule-gold);
 }
@@ -596,7 +560,7 @@ textarea.field__input {
   resize: vertical;
 }
 
-/* Underline-only fields: plum forms and the estimator (the store's personalisation style). */
+/* Underline-only fields: the enquiry forms and the estimator (the store's personalisation style). */
 .field--line .field__input {
   padding-inline: 0;
   background: transparent;
@@ -691,36 +655,6 @@ textarea.field__input {
   grid-column: bleed;
 }
 
-/* Legacy containers stay for pages that have not migrated yet. */
-.container {
-  inline-size: 100%;
-  max-inline-size: var(--container);
-  margin-inline: auto;
-  padding-inline: var(--gutter);
-}
-
-.container--wide {
-  max-inline-size: var(--container-wide);
-}
-
-.grid-12 {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  column-gap: var(--grid-gap);
-}
-
-@media (min-width: 40em) {
-  .grid-12 {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 64em) {
-  .grid-12 {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-}
-
 .split {
   display: grid;
   gap: var(--grid-gap);
@@ -764,15 +698,6 @@ textarea.field__input {
 }
 
 .sec--ruled {
-  border-block-start: 1px solid var(--rule);
-}
-
-/* Legacy section classes (WP6 removes). */
-.section {
-  padding-block: var(--section-y);
-}
-
-.section--ruled {
   border-block-start: 1px solid var(--rule);
 }
 
@@ -1012,34 +937,34 @@ dialog.sheet::backdrop {
     /* Section heads, cards, doors: rise 24 px. Never on first-viewport content. */
     .reveal {
       animation: reveal-rise linear both;
-      animation-timeline: view();
+      animation-timeline: var(--tl-view);
       animation-range: entry 0% entry 45%;
     }
 
     /* The hero piece recedes as you leave it (exit only: LCP untouched). */
     .recede {
       animation: recede linear both;
-      animation-timeline: view();
+      animation-timeline: var(--tl-view);
       animation-range: exit 0% exit 100%;
     }
 
     /* A case light comes on: fully lit by a quarter of the way into view. Opacity only. */
     .stage-img[data-light='scroll'] img {
       animation: light-on linear both;
-      animation-timeline: view();
+      animation-timeline: var(--tl-view);
       animation-range: entry 0% cover 25%;
     }
 
     /* Hairlines that draw (route, styles line, stamp bars). Set transform-origin per use. */
     .draw-x {
       animation: grow-x linear both;
-      animation-timeline: view();
+      animation-timeline: var(--tl-view);
       animation-range: entry 40% cover 40%;
     }
 
     .draw-y {
       animation: grow-y linear both;
-      animation-timeline: view();
+      animation-timeline: var(--tl-view);
       animation-range: entry 20% cover 45%;
     }
 
@@ -1308,65 +1233,6 @@ img[data-fade='in'] {
   }
 }
 
-/* Legacy tray (TrayGrid). WP6 removes it with the component. */
-.tray {
-  display: grid;
-  gap: 1px;
-  padding: 1px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.tray > * {
-  background: var(--surface-0);
-  outline: 1px solid var(--rule-1);
-  min-inline-size: 0;
-}
-
-@media (min-width: 40em) {
-  .tray {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 64em) {
-  .tray {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-/*
- * Legacy layout helpers still used by pages and components that have not migrated to Section,
- * PageHead and the new chrome. Not part of the v2 system: WP6 removes them with their last user.
- */
-@media (min-width: 64em) {
-  .split--reverse {
-    grid-template-columns: 7fr 5fr;
-  }
-
-  .split--reverse > :first-child {
-    order: 2;
-  }
-}
-
-@media (max-width: 74.99em) {
-  .from-xl {
-    display: none !important;
-  }
-}
-
-.section--ruled > .container > .enquiry:first-child,
-.section--ruled > .container > :first-child > .enquiry:first-child {
-  padding-block-start: 0;
-  border-block-start: 0;
-}
-
-@media (max-width: 63.99em) {
-  .faq + .enquiry {
-    border-block-start: 0;
-    padding-block-start: var(--space-5);
-  }
-}
-
 /* ============================== Forced colours and print ============================== */
 @media (forced-colors: active) {
   .btn,
@@ -1382,7 +1248,6 @@ img[data-fade='in'] {
 
 @media print {
   [data-tone],
-  [data-surface='plum'],
   body,
   body[data-ground='stage'] {
     --fg: #000;

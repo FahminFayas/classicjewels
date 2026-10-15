@@ -1,14 +1,29 @@
 {
+  "id": "/",
   "name": "Classic Jewels & Diamonds",
   "short_name": "Classic Jewels",
-  "description": "Gold & diamond jewellers in the Gold Souq Extension, Deira, Dubai.",
+  "description": "Gold & diamond jewellers in Dubai, Sharjah and Abu Dhabi",
+  "lang": "en",
   "start_url": "/",
   "display": "browser",
-  "background_color": "#FBF8F3",
-  "theme_color": "#4B2849",
+  "background_color": "#0b0918",
+  "theme_color": "#0b0918",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

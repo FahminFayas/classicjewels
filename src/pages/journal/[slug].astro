@@ -1,19 +1,25 @@
 ---
 /**
- * Journal article (design-spec §7.16). One page per entry in src/content/journal, rendered from
- * Markdown. A 7/5 split puts the text in the wide column and a sticky "On this page" list in the
- * gutter; the footer links the collections the article names and today's rate, then three more
- * articles, then the enquiry block.
+ * A journal article (docs/design-system-v2.md §6.16). Ivory, one reading column.
+ *
+ *   - the headline as the H1, the standfirst, the date and the byline;
+ *   - the cover, drawn at most its source width (750 CSS px), the page's one priority image;
+ *   - the Markdown body at --prose;
+ *   - a 2 px bronze reading-progress hairline fixed under the header, driven by the page's own
+ *     scroll (scroll(root)); only where scroll-driven animation exists and motion is welcome,
+ *     hidden everywhere else;
+ *   - the collections the article names and today's rate as a row of links, then an enquiry band.
+ *
+ * One JPEG for the share card and the Article image, never wider than the source; its real size
+ * goes to the Open Graph tags.
  */
 import { getImage, Picture } from 'astro:assets';
 import { getEntries, render } from 'astro:content';
 
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
-import JournalCard from '@/components/sections/JournalCard.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
-import Eyebrow from '@/components/ui/Eyebrow.astro';
-import Icon from '@/components/ui/Icon.astro';
-import SectionHead from '@/components/ui/SectionHead.astro';
+import EnquiryBand from '@/components/sections/EnquiryBand.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import RateFigure from '@/components/ui/RateFigure.astro';
+import Section from '@/components/ui/Section.astro';
 import { site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getArticles, type Article } from '@/lib/content';
@@ -25,64 +31,39 @@ import { whatsappUrl } from '@/lib/whatsapp';
 
 export async function getStaticPaths() {
   const articles = await getArticles();
-  return articles.map((article) => ({
-    params: { slug: article.id },
-    props: { article, more: articles.filter((a) => a.id !== article.id).slice(0, 3) },
-  }));
+  return articles.map((article) => ({ params: { slug: article.id }, props: { article } }));
 }
 
 interface Props {
   article: Article;
-  /** Up to three other articles, newest first, for the footer. */
-  more: Article[];
 }
 
-const { article, more } = Astro.props;
+const { article } = Astro.props;
 const { data } = article;
 
-const [{ Content, headings }, relatedCollections, rates] = await Promise.all([
+const [{ Content }, relatedCollections, rates] = await Promise.all([
   render(article),
   getEntries(data.relatedCollections),
   getRates(),
 ]);
 
 const headline = data.headline ?? data.title;
-const words = (article.body ?? '').split(/\s+/).filter(Boolean).length;
-const minutes = Math.max(1, Math.round(words / 200));
-const sections = headings.filter((h) => h.depth === 2);
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 
 const origin = (Astro.site ?? new URL(Astro.url.origin)).toString();
 const canonical = new URL(routes.article(article.id), origin).toString();
 
-/** Rendition widths for the cover: the standard set below the source width, plus the source. */
-const coverWidths = [480, 800, 1200, 1600].filter((w) => w < data.cover.width);
-if (data.cover.width <= 1600) coverWidths.push(data.cover.width);
+/* The cover: never wider than its source (about 750 px), sharp where the screen allows. */
+const cover = data.cover;
+const coverCap = Math.min(750, cover.width);
+const coverWidths = [...new Set([360, 480, 600, coverCap])]
+  .filter((w) => w <= cover.width)
+  .sort((a, b) => a - b);
 
-/**
- * One JPEG for the share card and the Article image, never wider than the source. Its real size
- * goes to the Open Graph tags, so a 600 px square is not announced as a 1200 x 630 card.
- */
-const shareWidth = Math.min(1200, data.cover.width);
-const shareHeight = Math.round((shareWidth * data.cover.height) / data.cover.width);
-const share = await getImage({
-  src: data.cover,
-  width: shareWidth,
-  format: 'jpeg',
-  layout: 'none',
-});
+const shareWidth = Math.min(1200, cover.width);
+const shareHeight = Math.round((shareWidth * cover.height) / cover.width);
+const share = await getImage({ src: cover, width: shareWidth, format: 'jpeg', layout: 'none' });
 const coverUrl = new URL(share.src, origin).toString();
-
-/* The rate line in the related list carries rate.ts hooks, so it moves with the board. */
-const rate = rates.latest;
-const related: { name: string; detail?: string; href: string; rate?: boolean }[] = [
-  ...relatedCollections.map((c) => ({
-    name: c.data.name,
-    detail: c.data.summary,
-    href: routes.collection(c.id),
-  })),
-  { name: 'Today’s gold rate in Dubai', href: routes.goldRate, rate: true },
-];
 
 /* The breadcrumb repeats the sentence-case heading, not the SEO title. */
 const crumb = headline.replace(/[.!]$/, '');
@@ -117,316 +98,185 @@ const jsonLd = [
   modifiedTime={data.updatedDate}
   jsonLd={jsonLd}
 >
-  <article class="article">
-    <div class="container">
-      <Breadcrumbs
-        items={[
-          { name: 'Journal', href: routes.journal },
-          { name: crumb, href: routes.article(article.id) },
-        ]}
-      />
+  <div class="progress" aria-hidden="true"></div>
 
-      <div class="article__grid">
-        <header class="article__head">
-          <Eyebrow>
-            <span>
-              <time datetime={isoDate(data.pubDate)}>{formatDate(data.pubDate)}</time>
-              {' · '}
-              {minutes} min read
+  <PageHead
+    tone="ivory"
+    breadcrumbs={[
+      { name: 'Journal', href: routes.journal },
+      { name: crumb, href: routes.article(article.id) },
+    ]}
+    eyebrow="Journal"
+    title={headline}
+    lead={data.description}
+  >
+    <p class="byline">
+      <time datetime={isoDate(data.pubDate)}>{formatDate(data.pubDate)}</time>
+      <span aria-hidden="true">·</span>
+      <span>{data.author}</span>
+    </p>
+  </PageHead>
+
+  <Section tone="ivory" class="article" labelledby="page-title">
+    <figure class="article__cover" style={`--cap:${coverCap}px`}>
+      <Picture
+        src={cover}
+        alt={data.coverAlt}
+        formats={['avif', 'webp']}
+        widths={coverWidths}
+        sizes={`(min-width: 64em) ${coverCap}px, min(${coverCap}px, calc(100vw - 2rem))`}
+        fit="cover"
+        priority
+      />
+    </figure>
+    <div class="article__body prose">
+      <Content />
+      {data.updatedDate && (
+        <p class="article__updated">
+          Updated <time datetime={isoDate(data.updatedDate)}>{formatDate(data.updatedDate)}</time>
+        </p>
+      )}
+    </div>
+    <nav class="related" aria-label="Related">
+      <p class="related__row list-links">
+        <span class="related__label eyebrow">Read on</span>
+        {relatedCollections.map((c) => (
+          <a class="link-wipe" href={routes.collection(c.id)}>
+            {c.data.shortName}
+          </a>
+        ))}
+        <a class="link-wipe" href={routes.goldRate}>
+          Today’s gold rate
+          {rates.latest && (
+            <span class="related__rate">
+              (22K <RateFigure rate={rates.latest} karat="22k" />)
             </span>
-          </Eyebrow>
-          <h1 class="article__title">{headline}</h1>
-          <p class="article__standfirst lead">{data.description}</p>
-          <p class="article__byline small">By {data.author}</p>
-        </header>
-
-        <figure class="article__cover">
-          <Picture
-            src={data.cover}
-            alt={data.coverAlt}
-            formats={['avif', 'webp']}
-            widths={coverWidths}
-            sizes="(min-width: 64em) 58vw, 100vw"
-            fit="cover"
-            priority
-          />
-        </figure>
-
-        {sections.length >= 3 && (
-          <nav class="article__toc" aria-label="On this page">
-            <Eyebrow>On this page</Eyebrow>
-            <ol class="rows" role="list">
-              {sections.map((h, i) => (
-                <li>
-                  <a class="toc__link" href={`#${h.slug}`}>
-                    <span class="toc__no tabular" aria-hidden="true">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <span class="toc__text">{h.text}</span>
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </nav>
-        )}
-
-        <div class="article__body prose">
-          <Content />
-          {data.updatedDate && (
-            <p class="article__updated small">
-              Updated{' '}
-              <time datetime={isoDate(data.updatedDate)}>{formatDate(data.updatedDate)}</time>.
-            </p>
           )}
-        </div>
-      </div>
-    </div>
-  </article>
+        </a>
+      </p>
+    </nav>
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      <div class="split">
-        <div class="related__head">
-          <Eyebrow>Related</Eyebrow>
-          <h2>The collections this article names, and today’s rate.</h2>
-          <p class="lead">
-            Every piece in them is weighed in front of you and priced at the posted rate for its
-            karat, plus the making charge and 5% VAT.
-          </p>
-        </div>
-        <ol class="rows" role="list">
-          {related.map((r) => (
-            <li>
-              <a class="related__link" href={r.href}>
-                <span class="related__text">
-                  <span class="related__name">{r.name}</span>
-                  {r.rate ? (
-                    <span class="related__detail small">
-                      {rate ? (
-                        <>
-                          22K:{' '}
-                          <span class="nowrap">
-                            AED <span data-rate="22k">{rate.perGram['22k'].toFixed(2)}</span>
-                          </span>{' '}
-                          per gram, posted{' '}
-                          <time datetime={rate.date} data-rate-date={rate.date}>
-                            <span data-rate-date-text data-format="full">
-                              {formatDate(rate.date)}
-                            </span>
-                          </time>
-                          . 24K, 21K and 18K are on the board.
-                        </>
-                      ) : (
-                        'AED per gram for 24K, 22K, 21K and 18K, as posted on our board.'
-                      )}
-                    </span>
-                  ) : (
-                    <span class="related__detail small">{r.detail}</span>
-                  )}
-                </span>
-                <Icon name="arrow-right" class="related__arrow" />
-              </a>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </div>
-  </section>
-
-  {more.length > 0 && (
-    <section class="section section--ruled">
-      <div class="container">
-        <SectionHead eyebrow="Journal" title="More from the counter.">
-          <Fragment slot="aside">
-            <a class="link-quiet section__link" href={routes.journal}>
-              All articles <Icon name="arrow-right" />
-            </a>
-          </Fragment>
-        </SectionHead>
-        <div class="more">
-          {more.map((a) => (
-            <JournalCard article={a} />
-          ))}
-        </div>
-      </div>
-    </section>
-  )}
-
-  <section class="section section--ruled">
-    <div class="container">
-      <EnquiryBlock
-        heading="Ask the counter about anything in this article."
-        text="Send the question on WhatsApp, with a photo if you have one. We reply with figures: the rate, the weight, the making charge."
-        whatsappUrl={enquiry}
-        whatsappLabel="Ask on WhatsApp"
-      />
-    </div>
-  </section>
+  <EnquiryBand
+    title="Ask the counter"
+    accent="about this"
+    text="Send the question on WhatsApp, with a photo if you have one. We reply with figures: the rate, the weight, the making charge."
+    whatsappUrl={enquiry}
+    secondary={{ href: routes.journal, label: 'More from the journal' }}
+  />
 </BaseLayout>
 
 <style>
-  .article {
-    padding-block-end: var(--section-y);
+  :global(.sec.article) {
+    padding-block-start: 0;
   }
 
-  .article__grid {
-    display: grid;
-    gap: var(--space-6);
-    margin-block-start: var(--space-6);
+  .byline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    font-size: var(--t-small);
+    color: var(--muted);
   }
 
-  .article__head {
-    max-inline-size: 44rem;
+  .article__cover {
+    inline-size: min(100%, var(--cap));
+    margin: 0 0 var(--space-8);
+    padding: var(--space-2);
+    border: 1px solid var(--rule-strong);
   }
 
-  .article__title {
-    margin-block-end: var(--space-5);
-  }
-
-  .article__standfirst {
-    max-inline-size: 40rem;
-  }
-
-  .article__byline {
-    margin-block-start: var(--space-4);
+  .article__cover :global(picture) {
+    display: block;
   }
 
   .article__cover :global(img) {
+    display: block;
     inline-size: 100%;
     block-size: auto;
-    aspect-ratio: 3 / 2;
-    object-fit: cover;
   }
 
-  .toc__link {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: var(--space-3);
-    align-items: baseline;
-    min-block-size: var(--tap);
-    padding-block: var(--space-3);
-    color: var(--ink-700);
-    text-decoration: none;
+  .article__body {
+    font-size: var(--t-lead);
+    line-height: 1.65;
   }
 
-  .toc__no {
-    font-family: var(--ff-display);
-    color: var(--gold-600);
-    min-inline-size: 2.2ch;
+  .article__body :global(h2) {
+    font-size: var(--t-h3);
+    font-weight: var(--fw-display-small);
   }
 
-  .toc__link:hover .toc__text {
-    color: var(--plum-700);
-    text-decoration: underline;
-    text-decoration-color: var(--gold-600);
-    text-underline-offset: 0.15em;
-  }
-
-  .article__updated {
-    padding-block-start: var(--space-4);
-    border-block-start: 1px solid var(--rule-1);
-  }
-
-  /* Markdown tables keep their layout on wide screens; on phones they scroll inside their box
-     instead of pushing the page sideways. */
+  /* Markdown tables scroll inside their own box on phones instead of widening the page. */
   @media (max-width: 47.99em) {
     .article__body :global(table) {
       display: block;
       overflow-x: auto;
-      border-block: 0;
-    }
-
-    .article__body :global(thead tr) {
-      border-block-start: 1px solid var(--rule-2);
-    }
-
-    .article__body :global(tbody tr:last-child) {
-      border-block-end: 1px solid var(--rule-2);
     }
   }
 
-  .related__head > h2 {
-    margin-block-end: var(--space-4);
-    max-inline-size: 20ch;
+  .article__updated {
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--rule);
+    font-size: var(--t-small);
+    color: var(--muted);
   }
 
-  .related__head > .lead {
-    max-inline-size: 34rem;
+  .related {
+    max-inline-size: var(--prose);
+    margin-block-start: var(--space-8);
+    padding-block-start: var(--space-5);
+    border-block-start: 1px solid var(--rule-strong);
   }
 
-  .related__link {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: var(--space-4);
-    align-items: center;
-    padding-block: var(--space-4);
-    color: var(--ink-900);
-    text-decoration: none;
+  .related__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-5);
   }
 
-  .related__name {
-    display: block;
-    font-family: var(--ff-display);
-    font-size: var(--t-h3);
-    font-weight: 600;
-    line-height: 1.25;
+  .related__label {
+    margin-inline-end: var(--space-3);
   }
 
-  .related__link:hover .related__name {
-    text-decoration: underline;
-    text-decoration-color: var(--gold-700);
-    text-underline-offset: 0.15em;
+  .related__rate {
+    font-weight: var(--fw-text);
+    color: var(--muted);
   }
 
-  .related__detail {
-    display: block;
-    margin-block-start: var(--space-1);
-    color: var(--ink-700);
+  /* Reading progress: a 2 px bronze hairline under the header, scaled by the page's scroll. */
+  .progress {
+    display: none;
   }
 
-  .related__arrow {
-    color: var(--gold-600);
-  }
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: scroll()) {
+      .progress {
+        position: fixed;
+        display: block;
+        inset-block-start: var(--header-h);
+        inset-inline: 0;
+        z-index: var(--z-header);
+        block-size: 2px;
+        background: var(--rule-gold);
+        transform-origin: 0 50%;
+        animation: read-progress linear both;
+        animation-timeline: var(--tl-scroll);
+      }
 
-  .section__link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-weight: 500;
-    color: var(--plum-700);
-  }
-
-  .more {
-    display: grid;
-    gap: var(--space-7) var(--grid-gap);
-  }
-
-  @media (min-width: 40em) {
-    .more {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      :global([dir='rtl']) .progress {
+        transform-origin: 100% 50%;
+      }
     }
   }
 
-  @media (min-width: 64em) {
-    .article__grid {
-      grid-template-columns: 7fr 5fr;
-      column-gap: calc(var(--grid-gap) * 2);
-      row-gap: var(--space-7);
+  @keyframes read-progress {
+    from {
+      scale: 0 1;
     }
 
-    .article__head,
-    .article__cover,
-    .article__body {
-      grid-column: 1;
-    }
-
-    /* Beside the body, sticking below the desktop header as the reader scrolls. */
-    .article__toc {
-      grid-column: 2;
-      grid-row: 3;
-      align-self: start;
-      position: sticky;
-      inset-block-start: calc(var(--header-h) + var(--space-6));
+    to {
+      scale: 1 1;
     }
   }
 </style>

@@ -1,0 +1,221 @@
+---
+/**
+ * The rate chip in the header and its popover (docs/design-system-v2.md §5.3, §8.4). It replaces
+ * the old utility strip: the visitor's chosen karat (22K by default, karat="follow") and today's
+ * rate per gram, in Cormorant numerals beside a bronze marker (hollow when the rate is stale).
+ *
+ * The chip is a popover invoker; #rate-pop lists the four karats with their hallmark stamps, the
+ * source and time of the posting, what the rate leaves out, and a link to the gold-rate page.
+ * Anchored under the chip where CSS anchor positioning exists, otherwise fixed under the header
+ * at the inline end. Without a rate the chip is a plain link to /gold-rate/.
+ *
+ * Hooks for rate.ts: every figure carries data-rate; the marker carries data-stale; the posting
+ * date carries data-rate-date and the fetch time data-rate-time. nav.ts mirrors aria-expanded.
+ */
+import MoreLink from '@/components/ui/MoreLink.astro';
+import RateFigure from '@/components/ui/RateFigure.astro';
+import { site } from '@/data/site';
+import { formatDate, formatRateDate, formatRateTime } from '@/lib/format';
+import type { GoldRate } from '@/lib/gold-rate';
+import { routes } from '@/lib/routes';
+import { DISPLAY_KARATS, KARAT_FACTS } from '@/lib/tones';
+
+export interface Props {
+  rate: GoldRate | null;
+  stale: boolean;
+  fetchedAt: string | null;
+  /** Hides the karat label below 24 rem (the phone header is tight). */
+  compact?: boolean;
+}
+
+const { rate, stale, fetchedAt, compact = false } = Astro.props;
+/** The status line, as RateInstrument writes it, with the same rate.ts hooks: data-rate-lead
+ * swaps "Last published rate" for the source when a fresh posting arrives, and the <time
+ * data-rate-time> becomes "checked {HH:MM}". */
+const freshLead = `${site.rate.source} ${site.rate.basis}`;
+const status = rate
+  ? stale || !fetchedAt
+    ? {
+        lead: stale ? 'Last published rate' : freshLead,
+        at: rate.date,
+        text: formatDate(rate.date, { year: undefined }),
+      }
+    : {
+        lead: freshLead,
+        at: fetchedAt,
+        text: `${formatRateDate(fetchedAt)}, ${formatRateTime(fetchedAt)}`,
+      }
+  : null;
+---
+
+{rate ? (
+  <>
+    <button
+      class="rchip"
+      type="button"
+      popovertarget="rate-pop"
+      data-compact={compact ? '' : undefined}
+    >
+      <span class="marker" data-stale={stale ? '' : undefined} aria-hidden="true" />
+      <RateFigure rate={rate} karat="follow" format="label" class="rchip__fig" />
+      <span class="sr-only">, AED per gram, today’s rate. Show all karats</span>
+    </button>
+    <div
+      id="rate-pop"
+      popover
+      class="sheet rpop"
+      data-tone="stage-raised"
+      aria-label="Today’s gold rate"
+    >
+      <p class="eyebrow">Today, AED per gram</p>
+      <ul class="rows rpop__rows" role="list">
+        {DISPLAY_KARATS.map((k) => (
+          <li class="rpop__row">
+            <span class="rpop__k">{KARAT_FACTS[k].label}</span>
+            <span class="rpop__stamp fig">{KARAT_FACTS[k].stamp}</span>
+            <RateFigure rate={rate} karat={k} class="rpop__v" />
+          </li>
+        ))}
+      </ul>
+      <p class="caption rpop__status">
+        <span data-rate-lead data-fresh={`${freshLead},`}>{`${status!.lead},`}</span>{' '}
+        <time class="nowrap" datetime={status!.at} data-rate-time>
+          {status!.text}
+        </time>
+      </p>
+      <p class="caption">{site.rate.excludes}</p>
+      <MoreLink href={routes.goldRate} class="rpop__more">
+        Today’s gold rate
+      </MoreLink>
+    </div>
+  </>
+) : (
+  <a class="rchip rchip--link" href={routes.goldRate}>
+    Gold rate
+  </a>
+)}
+
+<style>
+  /* ---------- The chip ---------- */
+  .rchip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-block-size: var(--tap);
+    padding-inline: var(--space-3);
+    border: 1px solid var(--rule-strong);
+    color: var(--fg);
+    white-space: nowrap;
+    text-decoration: none;
+    anchor-name: --rate-chip;
+    transition:
+      border-color var(--dur-quick) var(--ease-out),
+      background-color var(--dur-quick) var(--ease-out);
+  }
+
+  .rchip:hover,
+  .rchip[aria-expanded='true'] {
+    border-color: var(--accent);
+    background: var(--btn-wash);
+    color: var(--fg);
+  }
+
+  .rchip--link {
+    font-size: var(--t-small);
+    font-weight: var(--fw-text-strong);
+  }
+
+  /* Karat label: Plex 500, 12 px, uppercase. Value: Cormorant 400 in the tone's numeral colour. */
+  .rchip :global(.rate-fig__k) {
+    font-family: var(--ff-text);
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    color: var(--eyebrow);
+  }
+
+  .rchip :global(.rchip__fig .fig) {
+    font-family: var(--ff-display);
+    font-size: var(--t-name);
+    font-weight: var(--fw-display-small);
+    line-height: 1;
+    color: var(--numeral);
+  }
+
+  @media (max-width: 23.99em) {
+    .rchip[data-compact] :global(.rate-fig__k) {
+      display: none;
+    }
+  }
+
+  /* ---------- The popover ---------- */
+  .rpop {
+    position: fixed;
+    inset-block: var(--header-h) auto;
+    inset-inline: var(--gutter);
+    inline-size: auto;
+    block-size: auto;
+    max-block-size: calc(100dvh - var(--header-h) - var(--space-4));
+    margin: 0;
+    margin-block-start: var(--space-2);
+    padding: var(--space-5);
+    border: 1px solid var(--rule-strong);
+    overflow-y: auto;
+  }
+
+  @media (min-width: 40em) {
+    .rpop {
+      inset-inline: auto var(--gutter);
+      inline-size: 20rem;
+    }
+
+    @supports (position-area: block-end) {
+      .rpop {
+        position-anchor: --rate-chip;
+        position-area: block-end span-inline-start;
+        position-try-fallbacks: flip-inline;
+        inset: auto;
+      }
+    }
+  }
+
+  .rpop__rows {
+    margin-block: var(--space-3) var(--space-4);
+  }
+
+  .rpop__row {
+    display: grid;
+    grid-template-columns: var(--space-7) 1fr auto;
+    align-items: baseline;
+    gap: var(--space-3);
+    padding-block: var(--space-2);
+  }
+
+  .rpop__k {
+    font-size: var(--t-eyebrow);
+    font-weight: var(--fw-text-strong);
+    letter-spacing: var(--track-eyebrow);
+    color: var(--eyebrow);
+  }
+
+  .rpop__stamp {
+    font-size: var(--t-caption);
+    color: var(--muted);
+  }
+
+  .rpop :global(.rpop__v) {
+    font-family: var(--ff-display);
+    font-size: var(--t-name);
+    font-weight: var(--fw-display-small);
+    line-height: 1.1;
+    color: var(--numeral);
+  }
+
+  .rpop__status {
+    color: var(--body);
+  }
+
+  .rpop :global(.rpop__more) {
+    margin-block-start: var(--space-4);
+  }
+</style>

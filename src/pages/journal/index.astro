@@ -1,13 +1,14 @@
 ---
 /**
- * Journal index (design-spec §7.16): buying guides and rate notes, newest first.
- * Cards come from the `journal` collection through getArticles(); the ItemList JSON-LD mirrors
- * the grid so search engines see the same order a reader does.
+ * Journal index (docs/design-system-v2.md §6.16). Ivory, a reading room: buying guides and rate
+ * notes from the counter, newest first, as cards in three columns (one on phones). No reading
+ * times. The ItemList JSON-LD mirrors the grid so search engines see the order a reader does.
  */
-import EnquiryBlock from '@/components/sections/EnquiryBlock.astro';
-import Hero from '@/components/sections/Hero.astro';
+import EnquiryBand from '@/components/sections/EnquiryBand.astro';
 import JournalCard from '@/components/sections/JournalCard.astro';
-import Breadcrumbs from '@/components/ui/Breadcrumbs.astro';
+import MoreLink from '@/components/ui/MoreLink.astro';
+import PageHead from '@/components/ui/PageHead.astro';
+import Section from '@/components/ui/Section.astro';
 import { site } from '@/data/site';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { getArticles } from '@/lib/content';
@@ -37,62 +38,62 @@ const enquiry = whatsappUrl(`${site.whatsapp.greeting} I have a question about b
   description="Buying guides and rate notes from the counter: what the 916 and 750 stamps mean, how making charges and 5% VAT are added, which karat to choose. Ask us on WhatsApp."
   jsonLd={jsonLd}
 >
-  <div class="container">
-    <Breadcrumbs items={[{ name: 'Journal', href: routes.journal }]} />
-  </div>
+  <PageHead
+    tone="ivory"
+    breadcrumbs={[{ name: 'Journal', href: routes.journal }]}
+    eyebrow="Journal"
+    title="Notes"
+    accent="from the counter"
+    lead="Buying guides and rate notes: what the stamps mean, how a price is built, which karat to choose."
+  />
 
-  <Hero eyebrow="Journal" title="Journal" lead="Buying guides and rate notes from the counter." />
+  <Section tone="ivory" class="journal-list">
+    {articles.length > 0 ? (
+      <>
+        <h2 class="sr-only">Articles, newest first</h2>
+        <ul class="articles" role="list">
+          {articles.map((a, i) => (
+            <li class:list={['articles__cell', i > 2 && 'reveal']}>
+              <JournalCard article={a} headingLevel="h3" />
+            </li>
+          ))}
+        </ul>
+      </>
+    ) : (
+      <p class="lead">
+        No articles yet. <MoreLink href={routes.goldRate}>Today’s gold rate</MoreLink>
+      </p>
+    )}
+  </Section>
 
-  <section class="section section--ruled">
-    <div class="container">
-      {articles.length > 0 ? (
-        <Fragment>
-          <p class="articles__meta small">
-            {articles.length} {articles.length === 1 ? 'article' : 'articles'}, newest first.
-          </p>
-          <div class="articles">
-            {articles.map((a) => (
-              <JournalCard article={a} />
-            ))}
-          </div>
-        </Fragment>
-      ) : (
-        <p class="lead">
-          No articles yet. Today’s rate is on the <a href={routes.goldRate}>gold rate page</a>.
-        </p>
-      )}
-    </div>
-  </section>
-
-  <section class="section section--ruled">
-    <div class="container">
-      <EnquiryBlock
-        heading="Ask the counter what the journal has not covered."
-        text="Send the question on WhatsApp, with a photo if you have one. We reply with figures: today’s rate, the weight, the making charge."
-        whatsappUrl={enquiry}
-        whatsappLabel="Ask on WhatsApp"
-      />
-    </div>
-  </section>
+  <EnquiryBand
+    title="Ask what the journal"
+    accent="has not covered"
+    text="Send the question on WhatsApp, with a photo if you have one. We reply with figures: today’s rate, the weight, the making charge."
+    whatsappUrl={enquiry}
+    secondary={{ href: routes.goldRate, label: 'Today’s gold rate' }}
+  />
 </BaseLayout>
 
 <style>
-  .articles__meta {
-    margin-block-end: var(--space-5);
+  :global(.sec.journal-list) {
+    padding-block-start: 0;
   }
 
-  /* Three-column ruled grid: each card opens with a hairline, so rows read as a ledger. */
   .articles {
     display: grid;
-    gap: var(--space-7) var(--grid-gap);
+    gap: var(--space-8) var(--grid-gap);
+    padding-block-start: var(--space-7);
+    border-block-start: 1px solid var(--rule);
   }
 
-  .articles > :global(.journal-card) {
-    padding-block-start: var(--space-4);
-    border-block-start: 1px solid var(--rule-1);
+  @media (min-width: 48em) {
+    .articles {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
-  @media (min-width: 40em) {
+  @media (min-width: 64em) {
     .articles {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
