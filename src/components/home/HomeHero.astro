@@ -31,7 +31,6 @@ import FactStrip from '@/components/home/FactStrip.astro';
 import RateInstrument from '@/components/sections/RateInstrument.astro';
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
-import Ornament from '@/components/ui/Ornament.astro';
 import Section from '@/components/ui/Section.astro';
 import StageImage from '@/components/ui/StageImage.astro';
 import { emirates } from '@/data/site';
@@ -75,10 +74,7 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
   <div class="hero">
     <div class="hero__grid">
       <h1 class="hero__title" id="home-title">
-        <span class="hero__kicker">
-          <Ornament class="hero__orn" />
-          <span>Gold and diamond jewellers in {listWords(emirates)}</span>
-        </span>
+        <span class="hero__kicker">Gold and diamond jewellers in {listWords(emirates)}</span>
         <span class="sr-only">: </span>
         <span class="hero__line h-hero">
           Every jewel has a tale, <em>and a hallmark</em>
@@ -202,9 +198,7 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
   }
 
   .hero__kicker {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
+    display: block;
     max-inline-size: 26rem;
     font-family: var(--ff-text);
     font-size: var(--t-kicker);
@@ -213,11 +207,6 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
     letter-spacing: 0;
     color: var(--body);
     text-wrap: balance;
-  }
-
-  /* The ornament joins the place line from 48em; phones keep the height for the rate. */
-  .hero__kicker :global(.hero__orn) {
-    display: none;
   }
 
   .hero__line {
@@ -567,10 +556,6 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
 
     .hero__kicker {
       max-inline-size: none;
-    }
-
-    .hero__kicker :global(.hero__orn) {
-      display: block;
     }
 
     .hero__case {
