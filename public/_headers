@@ -13,6 +13,16 @@
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
 
+# The Pages hostnames (classicjewels.pages.dev and each preview deployment) are never indexed:
+# every page there carries a canonical to https://classicjewels.ae/, and until the custom domain
+# is attached that still serves the old site. Cloudflare matches a full-URL pattern on the host
+# too, so these two blocks never apply on the custom domain.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex
+
 # Prerender rules for Chromium (moderate eagerness: hover or pointer-down). Served as a file, not an
 # inline <script type="speculationrules">, which the CSP would block. docs/design-system-v2.md §3.8.
 /speculation-rules.json

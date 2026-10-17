@@ -14,9 +14,12 @@ compatibility_date = "2026-09-01"
 # Plain settings read by functions/ at request time. None of them reaches the browser
 # (PUBLIC_* build-time values are set in deploy.yml, not here).
 [vars]
-# The store's rate script on the PHP host, reached by a name that is not the site itself.
-# TODO(owner): point feed.classicjewels.ae at the current cPanel host (docs/deployment.md, step 3).
-ORIGIN_FEED_URL = "https://feed.classicjewels.ae/gold-rates.php"
+# The store's rate script on the PHP host. While classicjewels.ae still points at that host this
+# URL works as it is. The day the domain moves to Cloudflare, this would point at the site itself
+# (the function then refuses it and answers "Feed not configured"), so before the move create
+# feed.classicjewels.ae on the cPanel host and change this to
+# "https://feed.classicjewels.ae/gold-rates.php" (docs/deployment.md, step 3).
+ORIGIN_FEED_URL = "https://classicjewels.ae/gold-rates.php"
 FEED_CACHE_SECONDS = "300"
 # TODO(owner): confirm the inbox for enquiries (the same value as public/api/contact.php).
 CONTACT_TO = "hello@classicgroup.ae"

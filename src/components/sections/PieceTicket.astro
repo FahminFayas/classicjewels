@@ -46,6 +46,9 @@ const categoryName = category.data.shortName ?? category.data.name;
 const sold = data.availability === 'sold';
 const value = goldValue(data, rate);
 const stale = rate ? isStale(rate.date) : false;
+/** The status line's leads, with the rate.ts hooks every other rate surface carries. */
+const freshLead = `${site.rate.source} ${site.rate.basis},`;
+const STALE_LEAD = 'Last published rate,';
 const vat = `${Math.round(site.rate.vat * 100)}% VAT`;
 
 const phone = flagship.phone ?? site.phone.landline;
@@ -94,16 +97,14 @@ const visit = `${routes.contact}?piece=${encodeURIComponent(data.sku)}`;
     </div>
     {rate && fetchedAt && (
       <p class="caption">
-        {stale ? (
-          <>Last published rate, {formatRateDate(fetchedAt)}</>
-        ) : (
-          <>
-            {site.rate.source} {site.rate.basis},{' '}
-            <time datetime={fetchedAt} data-rate-time>
-              {formatRateDate(fetchedAt)}, {formatRateTime(fetchedAt)}
-            </time>
-          </>
-        )}
+        <span data-rate-lead data-fresh={freshLead} data-stale-lead={STALE_LEAD}>
+          {stale ? STALE_LEAD : freshLead}
+        </span>{' '}
+        <time datetime={stale ? rate.date : fetchedAt} data-rate-time>
+          {stale
+            ? formatRateDate(rate.date)
+            : `${formatRateDate(fetchedAt)}, ${formatRateTime(fetchedAt)}`}
+        </time>
       </p>
     )}
     {value ? (

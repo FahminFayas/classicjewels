@@ -6,7 +6,8 @@
  *      large rows: WhatsApp (the primary action), the landline, the email address.
  *   2. Book a visit, plum: the four-step visit form. ?piece=, ?reason= and ?branch= are read in
  *      the browser by form.ts (the page is static), so a piece page can link straight here.
- *   3. Branches, stage-raised: the doors, so the page ends at a person.
+ *   3. Branches, stage, seam: the doors, so the page ends at a person (stage, not stage-raised,
+ *      because the footer is stage-raised and two dark grounds in a row must differ, §1.2 rule 2).
  *
  * Numbers are data: set with lining tabular figures (.fig), every one from src/data/site.ts.
  */
@@ -75,7 +76,7 @@ const description = `WhatsApp ${site.whatsapp.display}, call ${site.phone.landli
     <ContactForm variant="visit" />
   </Section>
 
-  <Section tone="stage-raised" seam labelledby="doors-title">
+  <Section tone="stage" seam labelledby="doors-title">
     <SectionHead
       id="doors-title"
       eyebrow="Branches"

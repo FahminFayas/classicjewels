@@ -45,10 +45,12 @@ const dayMonth = (date: string) => formatDate(date, { year: undefined });
 
 /** "Dubai Jewellery Group suggested retail rate": the fresh lead of the status line. */
 const freshLead = `${site.rate.source} ${site.rate.basis}`;
+/** The lead once the posting is more than two days old (§1.2 rule 6); rate.ts writes it too. */
+const STALE_LEAD = 'Last published rate';
 /** Status line 1: source and fetch time, or "Last published rate, {date}" when stale. */
 const status = rate
   ? stale || !fetchedAt
-    ? { lead: stale ? 'Last published rate' : freshLead, at: rate.date, text: dayMonth(rate.date) }
+    ? { lead: stale ? STALE_LEAD : freshLead, at: rate.date, text: dayMonth(rate.date) }
     : {
         lead: freshLead,
         at: fetchedAt,
@@ -78,7 +80,7 @@ function change(k: DisplayKarat): string {
               {KARAT_FACTS[k].label}
             </span>
           ))}{' '}
-          <span data-rate-lead data-fresh="today, AED per gram">
+          <span data-rate-lead data-fresh="today, AED per gram" data-stale-lead="AED per gram">
             {stale ? 'AED per gram' : 'today, AED per gram'}
           </span>
         </span>
@@ -99,6 +101,7 @@ function change(k: DisplayKarat): string {
 
       <fieldset class="inst__keys">
         <legend class="sr-only">Show the rate for</legend>
+        <span class="sr-only">Figures in AED per gram.</span>
         <div class="inst__board">
           {DISPLAY_KARATS.map((k) => (
             <label class="inst__key" for={`${id}-${k}`}>
@@ -116,7 +119,6 @@ function change(k: DisplayKarat): string {
                 <span class="inst__stamp">{KARAT_FACTS[k].stamp}</span>
               </span>
               <RateFigure rate={rate} karat={k} class="inst__val" />
-              <span class="sr-only">AED per gram</span>
               {variant === 'page' && <span class="inst__fine">{KARAT_FACTS[k].percent} gold</span>}
               {variant === 'page' && (
                 <span class="inst__change" data-rate-delta={k}>
@@ -130,7 +132,9 @@ function change(k: DisplayKarat): string {
 
       <div class="inst__status">
         <p class="small">
-          <span data-rate-lead data-fresh={`${freshLead},`}>{`${status.lead},`}</span>{' '}
+          <span data-rate-lead data-fresh={`${freshLead},`} data-stale-lead={`${STALE_LEAD},`}>
+            {`${status.lead},`}
+          </span>{' '}
           <time datetime={status.at} data-rate-time>
             {status.text}
           </time>

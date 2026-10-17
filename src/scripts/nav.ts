@@ -95,10 +95,14 @@ on(doc, 'click', (e) => {
   else (menu as HTMLElement | undefined)?.hidePopover();
 });
 
-// 4. The phone action bar steps aside while a field has focus.
+// 4. The phone action bar steps aside while a text field has focus (the keyboard needs the
+// room). Radios and checkboxes (the karat keys, the estimator chips) take focus on Android without
+// a keyboard, and the bar follows the chosen karat, so it stays for those.
 const bar = doc.querySelector<HTMLElement>('[data-action-bar]');
+const TYPING =
+  'textarea, select, input:not([type=radio], [type=checkbox], [type=submit], [type=button], [type=file])';
 if (bar) {
-  on(doc, 'focusin', (e) => (bar.hidden = (e.target as Element).matches('input,textarea,select')));
+  on(doc, 'focusin', (e) => (bar.hidden = (e.target as Element).matches(TYPING)));
   on(doc, 'focusout', () => (bar.hidden = false));
 }
 

@@ -83,7 +83,7 @@ const jsonLd = openBranches
     </dl>
   </PageHead>
 
-  <Section tone="stage" seam class="stores-doors" labelledby="doors-title">
+  <Section tone="stage-raised" seam class="stores-doors" labelledby="doors-title">
     <h2 class="sr-only" id="doors-title">
       The branches, west to east
     </h2>
@@ -107,9 +107,10 @@ const jsonLd = openBranches
 </BaseLayout>
 
 <style>
-  /* The doors continue the opener's stage: one room, no second band edge between them. */
+  /* The doors are the second dark room (stage-raised under a bronze seam, §1.2 rule 2); the
+     route starts 24 px under the seam rather than a full section pad. */
   :global(.sec.stores-doors) {
-    padding-block-start: 0;
+    padding-block-start: var(--space-5);
   }
 
   /* Two counts on the right of the opener: champagne numerals, the names under them. */

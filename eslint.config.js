@@ -11,6 +11,8 @@ export default defineConfig([
       'dist/**',
       '.astro/**',
       'node_modules/**',
+      // Wrangler's local bundle (npm run pages:dev); git-ignored, never linted.
+      '.wrangler/**',
       'public/**',
       'lighthouse/**',
       // Design prototypes (moved out of public/ in WP6): reference only, never built.

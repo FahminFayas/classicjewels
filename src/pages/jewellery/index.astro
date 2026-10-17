@@ -5,8 +5,9 @@
  *
  *   1  Opener (stage): eyebrow, H1, one-sentence lead, then the filters (karat chips with
  *      today's rate, style chips, sort) driving both grids.
- *   2  On the velvet (stage): every velvet piece in a lit wall, filterable. A catalogue, not a
- *      moment, so no stagger.
+ *   2  On the velvet (stage-raised, seam): every velvet piece in a lit wall, filterable. A
+ *      catalogue, not a moment, so no stagger. The raised tone keeps the opener and the wall two
+ *      rooms (§1.2 rule 2), as the mega panel lights its previews on the same ground.
  *   3  By piece (ivory): one plate per category, a rail on phones.
  *   4  From the trays (ivory, ruled): every studio cut-out on its lilac counter, filterable.
  *   5  Ask what we have in the cases today (plum, seam).
@@ -106,7 +107,7 @@ const jsonLd = [
   </PageHead>
 
   {velvet.length > 0 && (
-    <Section tone="stage" seam class="cases" labelledby="velvet-title">
+    <Section tone="stage-raised" seam class="cases" labelledby="velvet-title">
       <h2 id="velvet-title" class="cases__title eyebrow">
         On the velvet
         <span class="cases__count fig">

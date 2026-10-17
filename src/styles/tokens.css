@@ -150,7 +150,7 @@
   /* ---------- Motion ---------- */
   --dur-quick: 160ms; /* colour and chip state */
   --dur-ui: 320ms; /* buttons, popovers, drawer, mega panel, crossfades */
-  --dur-slow: 600ms; /* underline wipes, image fades, karat numeral crossfade */
+  --dur-slow: 600ms; /* underline wipes, image fades (a karat switch swaps, then rolls) */
   --dur-roll: 640ms; /* one digit of the rate */
   --roll-stagger: 55ms; /* per digit, from the right */
   --dur-sheen: 1800ms; /* the single hairline sheen */

@@ -4,20 +4,23 @@
  *
  *   Desktop  wide track, 7/5. Left: the two-level H1 (a readable place line, then the display
  *            line), the rate instrument (200 px numeral, hallmark keys, the three-line status),
- *            the two actions. Right: one piece in its pool of light, its caption below, then a
- *            small row of controls: previous and next, and the names of the pieces in the case.
- *            The fact strip runs across the foot, under a hairline.
- *   Phones   one column: H1, the piece (name only, the two arrows beside it), the instrument, the
- *            actions as a pair, the facts as three ruled rows. The H1, the piece, the numeral and
- *            all four keys fit above the phone bar on a 390 x 844 screen.
+ *            the two actions. Right: one piece in its pool of light, its caption below, then the
+ *            names of the pieces in the case in one quiet row (the shown one in ivory, the rest
+ *            bronze): each name is a button that lights that piece. The fact strip runs across
+ *            the foot, under a hairline.
+ *   Phones   one column: H1, the piece (name only, then one text button, "Next piece"; a swipe
+ *            across the case does the same), the instrument, the actions as a pair, the facts as
+ *            three ruled rows. The H1, the piece, the numeral and all four keys fit above the
+ *            phone bar on a 390 x 844 screen. No boxed arrows anywhere (owner, 16 October 2026).
  *
  * The case holds three or four velvet pieces (`pieces`), one lit at a time. The first is the
  * page's one priority image: eager, never faded, never masked by an animation. The others are
  * lazy, fetchpriority low, in slots that are display: none until hero.ts lights them. The light
  * comes on once after load (a champagne glint sweeps the pool), the set turns once by itself and
- * the visitor can turn it; the swap is a case light switching (dim to the stage, swap, light up
- * with the glint), never a crossfade. Without JavaScript the first piece shows, static, and the
- * controls stay invisible (their space is reserved, so nothing shifts when the script arrives).
+ * the visitor can turn it (a name, "Next piece", or a swipe); the swap is a case light switching
+ * (dim to the stage, swap, light up with the glint), never a crossfade. Without JavaScript the
+ * first piece shows, static, and the controls stay invisible (their space is reserved, so nothing
+ * shifts when the script arrives).
  *
  * Every piece is one link (photograph and caption) to its page; the shown slot carries
  * data-morph-href so piece-morph.ts can grow it into the piece page's stage. The whole stage only
@@ -78,7 +81,7 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
         </span>
         <span class="sr-only">: </span>
         <span class="hero__line h-hero">
-          Gold by the gram, <em>at today’s rate</em>
+          Every jewel has a tale, <em>and a hallmark</em>
         </span>
       </h1>
 
@@ -122,10 +125,7 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
           </div>
 
           {turns && (
-            <div class="hero__ctl">
-              <button class="hero__btn" type="button" data-step="-1" aria-label="Previous piece">
-                <Icon name="arrow-left" />
-              </button>
+            <div class="hero__ctl" role="group" aria-label="Pieces in the case">
               <ol class="hero__names" role="list">
                 {lit.map((p, i) => (
                   <li class="hero__nm-item">
@@ -139,9 +139,9 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
                   </li>
                 ))}
               </ol>
-              <button class="hero__btn" type="button" data-step="1" aria-label="Next piece">
-                <Icon name="arrow-right" />
-              </button>
+              <Button variant="text" iconEnd="arrow-right" class="hero__next" data-step="1">
+                Next piece
+              </Button>
             </div>
           )}
         </div>
@@ -232,10 +232,14 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
     justify-items: center;
     inline-size: min(17.5rem, 72vw);
     justify-self: center;
-    margin-block-start: var(--space-4);
+    /* 8 px under the H1 (16 before the control row, 16 October 2026): the spot mask already
+       leaves dark velvet above the piece, and the page keeps inside its 12,700 px (§6.1). */
+    margin-block-start: var(--space-2);
+    /* A sideways swipe stays with hero.ts; the page still scrolls and zooms. */
+    touch-action: pan-y pinch-zoom;
   }
 
-  /* One column; the stage in row 1, the captions in row 2 (the controls share it on phones). */
+  /* One column; the stage in row 1, the captions in row 2, the controls in row 3. */
   .hero__piece {
     position: relative;
     display: grid;
@@ -461,24 +465,20 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
 
   /*
    * ---------- The controls ----------
-   * Invisible until hero.ts runs (visibility, so the space is reserved and nothing shifts). On
-   * phones the row has no height of its own and shares the caption's row: the two arrows sit in
-   * the margins either side of the name, centred on it, and the first screen keeps its budget
-   * (§6.1). From 48em it is a row under the caption: previous, the names, next.
+   * Invisible until hero.ts runs (visibility, so the space is reserved and nothing shifts). Below
+   * 64em: one quiet text button under the name, "Next piece" (a swipe across the case does the
+   * same). Its hit area is 44 px (--tap) but the row takes 24 px of the column (--tap-inline):
+   * the rest overlaps the instrument's top margin, where nothing is pressed, so the first screen
+   * keeps the H1, the piece, the numeral and the keys above the bar (§6.1). From 64em: the names
+   * of the pieces in one row under the caption, the shown one in ivory, the rest bronze; each is
+   * a button, spaced by the gap alone. No boxes, no arrows in boxes, no dots, no separators.
    */
   .hero__ctl {
-    grid-row: 2;
-    grid-column: 1;
-    align-self: center;
     z-index: calc(var(--z-raised) + 1);
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    inline-size: min(
-      calc(100% + 2 * (var(--tap) + var(--space-2))),
-      calc(100vw - 2 * var(--gutter))
-    );
-    block-size: 0;
+    justify-content: center;
+    inline-size: 100%;
+    margin-block-end: calc(var(--tap-inline) - var(--tap));
     visibility: hidden;
     pointer-events: none;
   }
@@ -491,22 +491,14 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
     visibility: visible;
   }
 
-  .hero__btn {
-    display: grid;
-    place-items: center;
-    flex: none;
-    inline-size: var(--tap);
-    block-size: var(--tap);
-    border: 1px solid var(--rule-strong);
-    color: var(--fg);
-    transition:
-      border-color var(--dur-quick) var(--ease-out),
-      color var(--dur-quick) var(--ease-out);
+  /* The text button (44 px tall, the wipe, no border) at the caption's small size. */
+  .hero__ctl :global(.hero__next) {
+    padding-inline: var(--space-2);
+    font-size: var(--t-small);
   }
 
-  .hero__btn:is(:hover, :focus-visible) {
-    border-color: var(--accent);
-    color: var(--accent);
+  .hero__ctl :global(.hero__next)::after {
+    inset-inline: var(--space-2);
   }
 
   .hero__names {
@@ -517,16 +509,11 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
   .hero__nm-item {
     display: inline-flex;
     align-items: center;
-    gap: var(--space-3);
     line-height: 1.2;
   }
 
-  .hero__nm-item:not(:last-child)::after {
-    content: '·' / '';
-    color: var(--muted);
-  }
-
   .hero__nm {
+    position: relative;
     display: inline-flex;
     align-items: center;
     min-block-size: var(--tap-inline);
@@ -534,29 +521,38 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
     font-weight: var(--fw-text-strong);
     letter-spacing: 0.02em;
     color: var(--muted);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-decoration-color: transparent;
-    text-underline-offset: 0.3em;
-    transition:
-      color var(--dur-quick) var(--ease-out),
-      text-decoration-color var(--dur-slow) var(--ease-lux);
+    transition: color var(--dur-quick) var(--ease-out);
   }
 
-  .hero__nm[aria-current] {
-    color: var(--fg);
-    text-decoration-color: var(--wipe);
+  /* The underline wipe (as .link-wipe): drawn on hover and focus, never at rest. */
+  .hero__nm::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0.15em;
+    block-size: 1px;
+    background: var(--wipe);
+    scale: 0 1;
+    transform-origin: 0 50%;
+    transition: scale var(--dur-slow) var(--ease-lux);
   }
 
+  .hero__nm[aria-current],
   .hero__nm:is(:hover, :focus-visible) {
-    color: var(--accent);
+    color: var(--fg);
+  }
+
+  .hero__nm:is(:hover, :focus-visible)::after {
+    scale: 1 1;
   }
 
   /* ---------- The instrument and the actions ---------- */
+  /* 16 px under "Next piece" (24 before the control had a row): the status block still starts
+     above the phone bar at 390 x 844 (§6.1). */
   .hero__inst {
     grid-area: inst;
     min-inline-size: 0;
-    margin-block-start: var(--space-5);
+    margin-block-start: var(--space-4);
   }
 
   .hero__acts {
@@ -585,22 +581,6 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
     .hero__see {
       display: inline-flex;
     }
-
-    .hero__ctl {
-      grid-row: auto;
-      inline-size: 100%;
-      block-size: auto;
-      margin-block-start: var(--space-1);
-    }
-
-    .hero__names {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      column-gap: var(--space-3);
-      padding-inline: var(--space-2);
-      text-align: center;
-    }
   }
 
   /*
@@ -627,6 +607,24 @@ const sizes = '(min-width: 64em) 560px, (min-width: 48em) 24rem, min(17.5rem, 72
       align-self: center;
       inline-size: min(100%, var(--cap-hero));
       margin-block-start: 0;
+    }
+
+    /* The names row takes over from "Next piece" (never truncated: a second line if needed). */
+    .hero__ctl {
+      margin-block: var(--space-1) 0;
+    }
+
+    .hero__ctl :global(.hero__next) {
+      display: none;
+    }
+
+    .hero__names {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      column-gap: var(--space-5);
+      padding-inline: var(--space-2);
+      text-align: center;
     }
 
     .hero__inst {

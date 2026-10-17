@@ -46,11 +46,13 @@ function inOurCases(k: DisplayKarat): string | null {
   return `${names.slice(0, 3).join(', ')} and ${countWord(names.length - 3).toLowerCase()} more`;
 }
 
+/** The lead once the posting is more than two days old (§1.2 rule 6); rate.ts writes it too. */
+const STALE_LEAD = 'last published rate,';
 /** "Dubai Jewellery Group suggested retail rate, 13 October, 12:02." */
 const source = rate
   ? stale || !fetchedAt
     ? {
-        lead: 'last published rate,',
+        lead: STALE_LEAD,
         at: rate.date,
         text: formatDate(rate.date, { year: undefined }),
       }
@@ -102,7 +104,11 @@ const source = rate
       {source && (
         <p class="stamps__src small">
           Rates:{' '}
-          <span data-rate-lead data-fresh={`${site.rate.source} ${site.rate.basis},`}>
+          <span
+            data-rate-lead
+            data-fresh={`${site.rate.source} ${site.rate.basis},`}
+            data-stale-lead={STALE_LEAD}
+          >
             {source.lead}
           </span>{' '}
           <time datetime={source.at} data-rate-time>

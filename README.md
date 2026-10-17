@@ -31,7 +31,7 @@ Opens `http://localhost:4321/`. In development the gold-rate feed is proxied to 
 | `npm run assets:brand`        | Regenerate favicon, app icons, manifest and the default share image from the traced mark; `assets:brand:check` reports fidelity   |
 | `npm run functions:check`     | Type-check the Cloudflare Pages functions in `functions/`                                                                         |
 | `npm run pages:dev`           | Serve `dist/` with the functions locally through Wrangler (port 8788)                                                             |
-| `npm run pages:deploy`        | Upload `dist/` to Cloudflare Pages by hand (CI does this on push)                                                                 |
+| `npm run pages:deploy`        | Upload `dist/` to Cloudflare Pages by hand, after pruning the Apache-only files (CI does this on push)                            |
 
 Requires Node 22 (`.nvmrc`).
 

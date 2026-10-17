@@ -35,10 +35,12 @@ const tel = site.phone.landline;
  * swaps "Last published rate" for the source when a fresh posting arrives, and the <time
  * data-rate-time> becomes "checked {HH:MM}". */
 const freshLead = `${site.rate.source} ${site.rate.basis}`;
+/** The lead once the posting is more than two days old (§1.2 rule 6); rate.ts writes it too. */
+const STALE_LEAD = 'Last published rate';
 const status = rate
   ? stale || !fetchedAt
     ? {
-        lead: stale ? 'Last published rate' : freshLead,
+        lead: stale ? STALE_LEAD : freshLead,
         at: rate.date,
         text: formatDate(rate.date, { year: undefined }),
       }
@@ -130,7 +132,13 @@ const legal = [
                 ))}
               </ul>
               <p class="ftr__small">
-                <span data-rate-lead data-fresh={`${freshLead},`}>{`${status!.lead},`}</span>{' '}
+                <span
+                  data-rate-lead
+                  data-fresh={`${freshLead},`}
+                  data-stale-lead={`${STALE_LEAD},`}
+                >
+                  {`${status!.lead},`}
+                </span>{' '}
                 <time class="nowrap" datetime={status!.at} data-rate-time>
                   {status!.text}
                 </time>

@@ -474,6 +474,15 @@ const fmt = (n: number) => n.toFixed(4);
       inset-block-end: calc((var(--gap) - var(--space-2)) * -1);
     }
 
+    /*
+     * Up labels hang from the axis, so a note that wraps to two lines (Rajkot) would lift its name
+     * 20 px above Italian, Kuwaiti and Kolkata. Every note on the full line reserves two lines
+     * (1.4 line-height, so 2.8 em), and the names share one row.
+     */
+    .sline[data-variant='full'] .sline__group [data-side='up'] > .sline__label > .sline__meta {
+      min-block-size: 2.8em;
+    }
+
     [data-side='down'] > .sline__label {
       inset-block-start: var(--gap);
     }

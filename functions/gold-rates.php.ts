@@ -23,7 +23,7 @@ interface Env {
 }
 
 const DEFAULT_CACHE_SECONDS = 300;
-const ORIGIN_TIMEOUT_MS = 8000;
+const ORIGIN_TIMEOUT_MS = 15000; // the cPanel host has answered in 9 s; a Function is not charged while it waits
 const KARATS = ['24k', '22k', '21k', '18k', '14k'];
 
 function json(status: number, body: unknown, cacheControl: string): Response {

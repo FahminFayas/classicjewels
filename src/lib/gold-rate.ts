@@ -78,7 +78,7 @@ export async function fetchGoldRate(
 let buildSnapshot: Promise<GoldRate | null> | undefined;
 export function fetchGoldRateAtBuild(origin: string): Promise<GoldRate | null> {
   buildSnapshot ??= fetchGoldRate(new URL('/gold-rates.php', origin).toString(), {
-    timeoutMs: 8000,
+    timeoutMs: 15000,
   });
   return buildSnapshot;
 }

@@ -42,11 +42,13 @@ About an hour, in this order. Steps 1 to 3 can be done days before the switch; n
 
 | Trigger                                                   | What runs                                                                                                                                                                                                                                                                     |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A push to `main`                                          | `deploy.yml`: `npm ci`, `npm run build`, `npm run audit`, remove `dist/.htaccess` and `dist/api/contact.php`, `wrangler pages deploy --branch=main`                                                                                                                           |
+| A push to `main`                                          | `deploy.yml`: `npm ci`, `npm run build`, `npm run audit`, `node scripts/prune-pages-dist.mjs` (removes `dist/.htaccess` and `dist/api/contact.php`), `wrangler pages deploy --branch=main`                                                                                    |
 | "Gold rate snapshot" (`rates.yml`) finishing successfully | The same, through `workflow_run`. The snapshot commits with `GITHUB_TOKEN`, and a push made with that token never starts a workflow by itself; a `workflow_run` event does. It runs after every snapshot, changed file or not, so each deploy bakes the current feed value in |
 | Actions > Run workflow                                    | The same, by hand                                                                                                                                                                                                                                                             |
 
 The build fetches the live feed once (`fetchGoldRateAtBuild` in `src/lib/gold-rate.ts`) from `https://classicjewels.ae/gold-rates.php`, which on Pages is the function, so the baked figure is the feed's at build time. `wrangler pages deploy` reads `wrangler.toml` for the project name and output folder, compiles `functions/` into the deployment and writes `_routes.json` so only the two function paths invoke a Worker; every other request is a static asset, free and unlimited. Deployments are one at a time, in order (`concurrency` in the workflow). `ci.yml` keeps running checks, lint, format, build, audit and Lighthouse on every push and pull request.
+
+**By hand.** `npm run build && npm run audit && npm run pages:deploy` does the same from a machine that has run `npx wrangler@4 login`: the `pages:deploy` script prunes the two Apache-only files before uploading. A bare `npx wrangler@4 pages deploy dist` skips the pruning and the live site then serves `/.htaccess` as a download (the first deployment of 15 October 2026 did).
 
 **Cloudflare's Git builds instead of the workflow.** Possible, but a project is either Git-connected or Direct Upload, never both. To use Git builds: create the project from Workers & Pages > Create > Pages > Connect to Git, build command `npm run build`, output `dist`, environment variable `NODE_VERSION=22`, and delete `deploy.yml`. The rates commit then builds automatically (the GitHub App sees every push). The downside is that `npm run audit` no longer gates a deploy and the build minutes count against the plan's 500.
 
@@ -54,15 +56,15 @@ The build fetches the live feed once (`fetchGoldRateAtBuild` in `src/lib/gold-ra
 
 Plain values live in `wrangler.toml` under `[vars]`, are deployed with every build, and show read-only in the dashboard. The secret lives only in the project.
 
-| Name                 | Where           | Default                                              | Purpose                                                               |
-| -------------------- | --------------- | ---------------------------------------------------- | --------------------------------------------------------------------- |
-| `ORIGIN_FEED_URL`    | `wrangler.toml` | `https://feed.classicjewels.ae/gold-rates.php`       | The PHP script, by a name that is not the site (step 3)               |
-| `FEED_CACHE_SECONDS` | `wrangler.toml` | `300`                                                | Edge cache lifetime for the feed                                      |
-| `CONTACT_TO`         | `wrangler.toml` | `hello@classicgroup.ae`                              | Inbox for enquiries; several addresses separated by commas            |
-| `CONTACT_FROM`       | `wrangler.toml` | `Classic Jewels Website <no-reply@classicjewels.ae>` | Sender, on the Resend-verified domain                                 |
-| `SITE_ORIGIN`        | `wrangler.toml` | `https://classicjewels.ae`                           | Origin the form may post from (the deployment's own is also accepted) |
-| `RESEND_API_KEY`     | Pages secret    | none                                                 | Resend key; without it the form answers 500 and logs the reason       |
-| `PUBLIC_GTM_ID`      | GitHub variable | none                                                 | Build-time: Google Tag Manager container                              |
+| Name                 | Where           | Default                                              | Purpose                                                                                                                                                           |
+| -------------------- | --------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ORIGIN_FEED_URL`    | `wrangler.toml` | `https://classicjewels.ae/gold-rates.php`            | The PHP script. Works while the domain still points at the old host; switch it to `https://feed.classicjewels.ae/gold-rates.php` before the domain moves (step 3) |
+| `FEED_CACHE_SECONDS` | `wrangler.toml` | `300`                                                | Edge cache lifetime for the feed                                                                                                                                  |
+| `CONTACT_TO`         | `wrangler.toml` | `hello@classicgroup.ae`                              | Inbox for enquiries; several addresses separated by commas                                                                                                        |
+| `CONTACT_FROM`       | `wrangler.toml` | `Classic Jewels Website <no-reply@classicjewels.ae>` | Sender, on the Resend-verified domain                                                                                                                             |
+| `SITE_ORIGIN`        | `wrangler.toml` | `https://classicjewels.ae`                           | Origin the form may post from (the deployment's own is also accepted)                                                                                             |
+| `RESEND_API_KEY`     | Pages secret    | none                                                 | Resend key; without it the form answers 500 and logs the reason                                                                                                   |
+| `PUBLIC_GTM_ID`      | GitHub variable | none                                                 | Build-time: Google Tag Manager container                                                                                                                          |
 
 ### A.5 Testing the functions locally
 

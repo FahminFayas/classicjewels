@@ -23,7 +23,7 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve as resolvePath } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
@@ -506,7 +506,8 @@ const slug = (path) => path.replace(/[?#].*$/, '').replace(/^\/+|\/+$/g, '') || 
 
 async function auditPath(cdp, path, vp) {
   const url = `${opt.base}${path}`;
-  const dir = join(ROOT, opt.out, ...slug(path).split('/'));
+  // resolve, not join: an absolute --out stays absolute instead of being nested under ROOT.
+  const dir = resolvePath(ROOT, opt.out, ...slug(path).split('/'));
   const result = { path, viewport: `${vp.width}x${vp.height}`, failures: [] };
 
   // 1. Normal run: first-viewport opacity at load, page metrics, scroll screenshots, contrast.

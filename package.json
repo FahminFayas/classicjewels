@@ -17,7 +17,7 @@
     "functions:check": "tsc --noEmit -p functions/tsconfig.json",
     "validate": "npm run check && npm run lint && npm run format:check && npm run functions:check",
     "pages:dev": "npx --yes wrangler@4 pages dev dist --port 8788",
-    "pages:deploy": "npx --yes wrangler@4 pages deploy --branch=main",
+    "pages:deploy": "node scripts/prune-pages-dist.mjs && npx --yes wrangler@4 pages deploy --branch=main",
     "assets:placeholders": "node scripts/make-placeholders.mjs",
     "assets:fetch-legacy": "node scripts/fetch-legacy-assets.mjs",
     "assets:brand": "node scripts/generate-brand-assets.mjs",

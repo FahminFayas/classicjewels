@@ -5,7 +5,8 @@
  *
  *   velvet (necklaces)  opens on the stage: the name at display size in italic, the intro, and a
  *                       small salon of the first three pieces lit at 300 px (the first is the
- *                       priority image); then the filters and the lit wall (stage).
+ *                       priority image); then the filters and the lit wall (stage-raised, seam:
+ *                       two rooms, never one dark run, §1.2 rule 2).
  *   studio, several     opens on ivory with the first cut-out on its lilac plate at native width;
  *                       then the filters and the lilac counter (PlateGrid).
  *   studio, one piece   the opener's plate is that piece (a link, with its name, today's rate and
@@ -324,9 +325,10 @@ const crumbs = [
 
   {(mode === 'velvet' || mode === 'studio') && (
     <Section
-      tone={mode === 'velvet' ? 'stage' : 'ivory'}
+      tone={mode === 'velvet' ? 'stage-raised' : 'ivory'}
       class="pieces"
       labelledby="pieces-title"
+      seam={mode === 'velvet'}
       ruled={mode === 'studio'}
     >
       <h2 id="pieces-title" class="sr-only">

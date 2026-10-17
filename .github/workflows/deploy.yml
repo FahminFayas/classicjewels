@@ -53,9 +53,8 @@ jobs:
       - name: Leave the Apache-only files out of the upload
         # The PHP endpoint and .htaccess belong to the Apache host; on Pages the functions in
         # functions/ answer /api/contact.php and /gold-rates.php, and _headers/_redirects apply.
-        run: |
-          rm -f dist/.htaccess dist/api/contact.php
-          rmdir --ignore-fail-on-non-empty dist/api 2>/dev/null || true
+        # The same script runs in npm run pages:deploy, so a by-hand upload is pruned too.
+        run: node scripts/prune-pages-dist.mjs
       - name: Deploy
         uses: cloudflare/wrangler-action@v4
         with:

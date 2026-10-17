@@ -87,12 +87,14 @@ if (form) {
     if (!form.reportValidity()) return;
 
     if (visit && method === 'whatsapp') {
-      // Local noon, so the weekday is right in every time zone: "Sat Oct 17 2026".
+      // Local noon, so the weekday is right in every time zone; British English, as every other
+      // date on the site: "Saturday, 17 October 2026".
       const day = value('visit_day');
       const time = value('visit_window').toLowerCase();
       const lines = [
         `${form.dataset.greeting} I’d like to visit${value('branch') && ` the ${value('branch')} branch`}${
-          day && ` on ${new Date(`${day}T12:00`).toDateString()}`
+          day &&
+          ` on ${new Date(`${day}T12:00`).toLocaleDateString('en-GB', { dateStyle: 'full' })}`
         }${time && ` (${time})`}.`,
         ...[
           ['Reason', 'topic'],

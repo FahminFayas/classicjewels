@@ -11,7 +11,10 @@
  * language; guidance (yes); message (required for a brief and for the older forms).
  *
  * Answers: with "Accept: application/json" (src/scripts/form.ts) a JSON {ok, message} with the
- * status; otherwise 303 to /thank-you/ on success and a plain-text message on an error.
+ * status; otherwise (the form posted without JavaScript) 303 to /thank-you/ on success and, on an
+ * error, a small HTML page with the message, a link back to the form (the Referer, same-origin
+ * only, so the browser's Back keeps what was typed) and a link to the contact page for WhatsApp
+ * and the landline.
  * Spam defences, as in the PHP file: honeypot ("website"), minimum fill time (fill_ms), size
  * limits, header-injection stripping, a same-origin check.
  *
@@ -37,6 +40,7 @@ const FROM = 'Classic Jewels Website <no-reply@classicjewels.ae>';
 const SITE_ORIGIN = 'https://classicjewels.ae';
 const SUBJECT = 'Website enquiry - classicjewels.ae';
 const THANK_YOU_URL = '/thank-you/'; // routes.thankYou in src/lib/routes.ts
+const CONTACT_URL = '/contact/'; // routes.contact: WhatsApp and the landline, from site.ts
 const MIN_FILL_SECS = 3;
 const MAX_BODY_BYTES = 64 * 1024;
 const THANKS = 'Thank you. We have your message and reply during shop hours.';
@@ -47,7 +51,57 @@ const RESEND_TIMEOUT_MS = 10_000;
 const wantsJson = (request: Request): boolean =>
   (request.headers.get('Accept') ?? '').includes('application/json');
 
-function respond(status: number, message: string, asJson: boolean, request: Request): Response {
+const escapeHtml = (s: string): string => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+/** The page the form was posted from, when it is one of ours; otherwise the contact page. */
+function backUrl(request: Request, env: Env): string {
+  const referer = request.headers.get('Referer') ?? '';
+  const ours = new Set([new URL(request.url).origin, env.SITE_ORIGIN || SITE_ORIGIN]);
+  try {
+    const url = new URL(referer);
+    if (ours.has(url.origin)) return url.pathname + url.search;
+  } catch {
+    /* no usable Referer */
+  }
+  return CONTACT_URL;
+}
+
+/** Without JavaScript an error lands here: the message, the way back, and the way to a person. */
+function errorPage(message: string, back: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Message not sent</title>
+<style>
+body{margin:0;padding:3rem 1rem;font:1rem/1.6 system-ui,sans-serif}
+main{max-width:34rem;margin:0 auto}
+h1{font-size:1.5rem;font-weight:400}
+</style>
+</head>
+<body>
+<main>
+<h1>We could not send your message</h1>
+<p>${escapeHtml(message)}</p>
+<ul>
+<li><a href="${escapeHtml(back)}">Back to the form</a> (the Back button keeps what you typed)</li>
+<li><a href="${CONTACT_URL}">WhatsApp or call the counter instead</a></li>
+</ul>
+</main>
+</body>
+</html>
+`;
+}
+
+function respond(
+  status: number,
+  message: string,
+  asJson: boolean,
+  request: Request,
+  env: Env = {},
+): Response {
   const headers = new Headers({ 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
   if (asJson) {
     headers.set('Content-Type', 'application/json; charset=utf-8');
@@ -57,11 +111,13 @@ function respond(status: number, message: string, asJson: boolean, request: Requ
     headers.set('Location', new URL(THANK_YOU_URL, request.url).toString());
     return new Response(null, { status: 303, headers });
   }
-  headers.set('Content-Type', 'text/plain; charset=utf-8');
-  return new Response(`${message}\n\nPlease go back and try again, or WhatsApp us.`, {
-    status,
-    headers,
-  });
+  headers.set('Content-Type', 'text/html; charset=utf-8');
+  headers.set(
+    'Content-Security-Policy',
+    "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'",
+  );
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  return new Response(errorPage(message, backUrl(request, env)), { status, headers });
 }
 
 /** mb_substr: the first `max` characters, counted in code points. */
@@ -88,12 +144,12 @@ function isCalendarDay(s: string): boolean {
 const sentAt = (): string => new Date().toISOString().replace(/\.\d{3}Z$/, '+00:00');
 
 /** Any other method, as the PHP file answers it. */
-export const onRequest: PagesFunction<Env> = ({ request }) =>
-  respond(405, 'Method not allowed.', wantsJson(request), request);
+export const onRequest: PagesFunction<Env> = ({ request, env }) =>
+  respond(405, 'Method not allowed.', wantsJson(request), request, env);
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const asJson = wantsJson(request);
-  const reply = (status: number, message: string) => respond(status, message, asJson, request);
+  const reply = (status: number, message: string) => respond(status, message, asJson, request, env);
 
   // Same-origin only: browsers send Origin on cross-site POSTs; a missing header is a plain form
   // post. The deployment's own origin is accepted too, so preview deployments can be tested.

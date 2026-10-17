@@ -12,13 +12,18 @@
  *   [data-rate-date="2026-10-13"]      the baked posting date (the first one on the page is the
  *                                      reference); a [data-rate-date-text] child is rewritten
  *   [data-rate-time]                   the source time: "checked 15:40" (Dubai time of the fetch)
- *   [data-rate-lead][data-fresh]       text that changes when a stale page gets a fresh posting
- *   [data-stale]                       removed when a fresh posting arrives (the hollow marker)
+ *   [data-rate-lead][data-fresh]       text that changes when a stale page gets a fresh posting;
+ *            [data-stale-lead]         and the other way, when the page's posting goes stale
+ *   [data-stale]                       the hollow marker: removed when a fresh posting arrives,
+ *                                      set on every .marker when the page goes stale
  *   [data-rate-delta="22k"]            "Down AED 3.00 since 12:02", only when that value changed
  *   [data-sheen]                       set to "again" on a real change: the rule's sheen re-runs
  * and dispatches cj:rates on document with the new perGram (the estimator listens).
  *
- * A stale posting (more than two days old) is written without rolling or the sheen.
+ * A stale posting (more than two calendar days old, Dubai time) is written without rolling or the
+ * sheen, and the page says "Last published rate, {date}". The page also goes stale on its own
+ * when the feed cannot be reached, or answers with nothing newer, and the baked posting has aged
+ * past two days: a build left standing for a few days never presents an old posting as today's.
  */
 import { PUBLIC_GOLD_RATE_ENDPOINT } from 'astro:env/client';
 
@@ -56,6 +61,22 @@ addEventListener('change', ({ target }) => {
 });
 /** "2026-10-15": a moment's calendar day in Dubai. */
 const dubaiDay = (t: number) => new Date(t).toLocaleDateString('en-CA', { timeZone: 'Asia/Dubai' });
+/** More than two calendar days before today in Dubai (the same test as src/lib/rates.ts). */
+const isStale = (date: string) =>
+  (Date.parse(dubaiDay(Date.now())) - Date.parse(date)) / 86_400_000 > 2;
+
+/** The ISO time the page's status line was written with, "" when there is none. */
+const bakedTime = () =>
+  document.querySelector<HTMLTimeElement>('time[data-rate-time]')?.dateTime ?? '';
+
+/** The posting date the page was built with: the first [data-rate-date], else the status time. */
+function bakedDate(): string | null {
+  const at = bakedTime();
+  return (
+    document.querySelector<HTMLElement>('[data-rate-date]')?.dataset.rateDate ??
+    (at.includes('T') ? dubaiDay(Date.parse(at)) : at || null)
+  );
+}
 
 function readCache(): Fetched | null {
   try {
@@ -78,13 +99,30 @@ function writeCache({ rate, at }: Fetched) {
   }
 }
 
+/**
+ * "Last published rate, {date}" (§1.2 rule 6): every lead takes its stale wording, every marker
+ * hollows, and the status time becomes the posting date alone. The same presentation the build
+ * writes for a stale snapshot, so applying it twice changes nothing.
+ */
+function presentStale(date: string) {
+  for (const el of all('[data-rate-lead][data-stale-lead]')) el.textContent = el.dataset.staleLead!;
+  for (const el of all('.marker')) el.dataset.stale = '';
+  for (const el of all('time[data-rate-time]') as NodeListOf<HTMLTimeElement>) {
+    el.dateTime = date;
+    el.textContent = formatRateDate(date);
+  }
+}
+
+/** No newer posting: the baked one stands, but once it is more than two days old the page says so. */
+function settle(date = bakedDate()) {
+  if (date && isStale(date)) presentStale(date);
+}
+
 function apply({ rate, at }: Fetched) {
   // What the page was built with: its posting date, source time and figures.
-  const bakedAt = document.querySelector<HTMLTimeElement>('time[data-rate-time]')?.dateTime ?? '';
-  const date =
-    document.querySelector<HTMLElement>('[data-rate-date]')?.dataset.rateDate ??
-    (bakedAt.includes('T') ? dubaiDay(Date.parse(bakedAt)) : bakedAt || null);
-  if (date && rate.date < date) return; // never an older posting
+  const bakedAt = bakedTime();
+  const date = bakedDate();
+  if (date && rate.date < date) return settle(date); // never an older posting
 
   const baked: Partial<Record<Karat, number>> = {};
   for (const k of KARATS) {
@@ -94,7 +132,7 @@ function apply({ rate, at }: Fetched) {
   const newer = !date || rate.date > date;
   const changed = KARATS.some((k) => baked[k] !== undefined && baked[k] !== rate.perGram[k]);
   const today = dubaiDay(Date.now());
-  const stale = (Date.parse(today) - Date.parse(rate.date)) / 86_400_000 > 2;
+  const stale = isStale(rate.date);
 
   if (changed || newer) {
     for (const k of KARATS) {
@@ -137,31 +175,25 @@ function apply({ rate, at }: Fetched) {
     }
   }
 
-  for (const el of all('time[data-rate-time]') as NodeListOf<HTMLTimeElement>) {
-    if (stale) {
-      el.dateTime = rate.date;
-      el.textContent = formatRateDate(rate.date);
-    } else {
-      el.dateTime = new Date(at).toISOString();
-      el.textContent = `${rate.date == today ? '' : `${formatRateDate(rate.date)}, `}checked ${formatRateTime(new Date(at))}`;
-    }
-  }
+  if (stale) return presentStale(rate.date);
 
-  if (!stale) {
-    for (const el of all('[data-rate-lead][data-fresh]')) el.textContent = el.dataset.fresh!;
-    for (const el of all('[data-stale]')) el.removeAttribute('data-stale');
-    if (changed)
-      for (const el of all('[data-sheen]'))
-        el.dataset.sheen = el.dataset.sheen == 'again' ? '' : 'again';
+  for (const el of all('time[data-rate-time]') as NodeListOf<HTMLTimeElement>) {
+    el.dateTime = new Date(at).toISOString();
+    el.textContent = `${rate.date == today ? '' : `${formatRateDate(rate.date)}, `}checked ${formatRateTime(new Date(at))}`;
   }
+  for (const el of all('[data-rate-lead][data-fresh]')) el.textContent = el.dataset.fresh!;
+  for (const el of all('[data-stale]')) el.removeAttribute('data-stale');
+  if (changed)
+    for (const el of all('[data-sheen]'))
+      el.dataset.sheen = el.dataset.sheen == 'again' ? '' : 'again';
 }
 
 async function refresh() {
   if (!document.querySelector('[data-rate]')) return;
   const cached = readCache();
   if (cached) return apply(cached);
-  const rate = await fetchGoldRate(PUBLIC_GOLD_RATE_ENDPOINT, { timeoutMs: 6000 });
-  if (!rate) return;
+  const rate = await fetchGoldRate(PUBLIC_GOLD_RATE_ENDPOINT, { timeoutMs: 15000 });
+  if (!rate) return settle(); // feed down: the baked posting stands, and says its age
   const fetched = { rate, at: Date.now() };
   writeCache(fetched);
   apply(fetched);
